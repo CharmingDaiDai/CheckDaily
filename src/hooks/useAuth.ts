@@ -41,8 +41,12 @@ export async function signInWithPassword(email: string, password: string) {
 }
 
 export async function signUpWithPassword(email: string, password: string) {
-  const { error } = await supabase.auth.signUp({ email, password })
+  const { data, error } = await supabase.auth.signUp({ email, password })
   if (error) throw error
+  // identities 为空说明邮箱已注册（Supabase 防枚举机制会返回假成功）
+  if (data.user?.identities?.length === 0) {
+    throw new Error('该邮箱已注册，请直接登录或使用魔法链接')
+  }
 }
 
 export async function updateEmail(newEmail: string) {
