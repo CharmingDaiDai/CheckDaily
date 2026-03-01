@@ -1,0 +1,147 @@
+import { useState } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
+import { Plus, Pencil, Archive, MoreHorizontal, ListCheck } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Skeleton } from '@/components/ui/skeleton'
+import { HabitForm } from '@/components/habits/HabitForm'
+import { useHabits, useArchiveHabit } from '@/hooks/useHabits'
+import type { Habit } from '@/types'
+import { cn } from '@/lib/utils'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+
+function HabitsPage() {
+  const { data: habits, isLoading } = useHabits(false)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editHabit, setEditHabit] = useState<Habit | null>(null)
+  const archive = useArchiveHabit()
+
+  function handleArchive(id: string, name: string) {
+    if (window.confirm(`确认归档「${name}」？归档后将不再出现在今日打卡列表中。`)) {
+      void archive.mutateAsync(id)
+    }
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between animate-slide-up">
+        <div>
+          <h1 className="text-2xl font-extrabold text-stone-900">项目管理</h1>
+          <p className="text-sm text-stone-400 font-medium mt-0.5">
+            {habits?.length ?? 0} 个活跃项目
+          </p>
+        </div>
+
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogTrigger asChild>
+            <Button size="default">
+              <Plus className="w-4 h-4" strokeWidth={2.5} />
+              新建项目
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>新建打卡项目</DialogTitle>
+            </DialogHeader>
+            <HabitForm onClose={() => setCreateOpen(false)} />
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Edit dialog */}
+      <Dialog open={!!editHabit} onOpenChange={(o) => { if (!o) setEditHabit(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>编辑项目</DialogTitle>
+          </DialogHeader>
+          {editHabit && (
+            <HabitForm existing={editHabit} onClose={() => setEditHabit(null)} />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* List */}
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-2xl" />
+          ))}
+        </div>
+      ) : habits && habits.length > 0 ? (
+        <div className="space-y-3">
+          {habits.map((habit, i) => (
+            <div
+              key={habit.id}
+              className={cn(
+                'flex items-center gap-4 bg-white rounded-2xl px-4 py-3.5',
+                'shadow-[var(--shadow-card)] border border-stone-100/80 animate-slide-up'
+              )}
+              style={{ animationDelay: `${i * 50}ms` }}
+            >
+              {/* Color + icon */}
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"
+                style={{ backgroundColor: habit.color + '18', borderColor: habit.color + '30' }}
+              >
+                {habit.icon || '📌'}
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-stone-900 text-sm truncate">{habit.name}</div>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: habit.color }} />
+                  <span className="text-xs text-stone-400 font-medium">
+                    {new Date(habit.created_at).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} 创建
+                  </span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon-sm" className="shrink-0">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setEditHabit(habit)}>
+                    <Pencil className="w-3.5 h-3.5 mr-2" />
+                    编辑
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleArchive(habit.id, habit.name)}
+                    className="text-red-600 focus:text-red-700 focus:bg-red-50"
+                  >
+                    <Archive className="w-3.5 h-3.5 mr-2" />
+                    归档
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
+          <ListCheck className="w-12 h-12 text-stone-200 mb-4" strokeWidth={1.5} />
+          <div className="font-bold text-stone-700 text-lg mb-1">还没有打卡项目</div>
+          <div className="text-stone-400 text-sm mb-5">创建你的第一个习惯开始打卡</div>
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="w-4 h-4" strokeWidth={2.5} />
+            新建项目
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export const Route = createFileRoute('/habits')({
+  component: HabitsPage,
+})
