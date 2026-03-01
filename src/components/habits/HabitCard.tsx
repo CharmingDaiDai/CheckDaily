@@ -18,9 +18,10 @@ interface HabitCardProps {
   habit: Habit
   todayCount: number
   style?: React.CSSProperties
+  compact?: boolean
 }
 
-export function HabitCard({ habit, todayCount, style }: HabitCardProps) {
+export function HabitCard({ habit, todayCount, style, compact = false }: HabitCardProps) {
   const [open, setOpen] = useState(false)
   const [note, setNote] = useState('')
   const checkIn = useCheckIn()
@@ -32,6 +33,119 @@ export function HabitCard({ habit, todayCount, style }: HabitCardProps) {
     setOpen(false)
   }
 
+  const sheetContent = (
+    <BottomSheetContent>
+      <BottomSheetHeader>
+        <BottomSheetTitle>
+          <span className="mr-2">{habit.icon || '📌'}</span>
+          {habit.name}
+        </BottomSheetTitle>
+        <p className="text-sm text-stone-500">
+          今日已打卡 <strong>{todayCount}</strong> 次 · 确认新增一次打卡
+        </p>
+      </BottomSheetHeader>
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="note">备注（可选）</Label>
+          <Textarea
+            id="note"
+            placeholder="记录一下这次的感受、数据或备注…"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={3}
+          />
+        </div>
+
+        <div className="flex gap-3">
+          <Button variant="outline" className="flex-1" onClick={() => setOpen(false)}>
+            取消
+          </Button>
+          <Button
+            className="flex-1"
+            style={{ backgroundColor: habit.color }}
+            onClick={handleCheckIn}
+            disabled={checkIn.isPending}
+          >
+            {checkIn.isPending ? (
+              <span className="flex items-center gap-2">
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                打卡中…
+              </span>
+            ) : (
+              <>
+                <Check className="w-4 h-4" strokeWidth={2.5} />
+                确认打卡
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </BottomSheetContent>
+  )
+
+  // ── Compact mode ──────────────────────────────────────────
+  if (compact) {
+    return (
+      <BottomSheet open={open} onOpenChange={setOpen}>
+        <BottomSheetTrigger asChild>
+          <button
+            className={cn(
+              'group relative flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1',
+              'rounded-2xl border tap-scale transition-all duration-200 w-full select-none',
+              'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
+              'bg-white shadow-[var(--shadow-card)]',
+              isDone ? 'border-transparent' : 'border-stone-200',
+            )}
+            style={{
+              ...(isDone ? { borderColor: habit.color + '50' } : {}),
+              ...style,
+            }}
+            aria-label={`打卡：${habit.name}`}
+          >
+            {/* Color accent bar */}
+            <div
+              className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl transition-colors duration-300"
+              style={{ backgroundColor: isDone ? habit.color : '#e7e5e4' }}
+            />
+            {/* Icon + done badge */}
+            <div className="relative">
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl"
+                style={{ backgroundColor: habit.color + '18' }}
+              >
+                {habit.icon || '📌'}
+              </div>
+              {isDone && (
+                <div
+                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center animate-check-bounce"
+                  style={{ backgroundColor: habit.color }}
+                >
+                  <Check className="w-2.5 h-2.5 text-white" strokeWidth={3.5} />
+                </div>
+              )}
+            </div>
+            {/* Name */}
+            <div className="text-xs font-semibold text-stone-800 text-center line-clamp-2 w-full px-0.5 leading-snug">
+              {habit.name}
+            </div>
+            {/* Count badge (only when > 1) */}
+            {todayCount > 1 && (
+              <span
+                className="text-xs font-bold px-1.5 rounded-full leading-5"
+                style={{ backgroundColor: habit.color + '18', color: habit.color }}
+              >
+                ×{todayCount}
+              </span>
+            )}
+          </button>
+        </BottomSheetTrigger>
+        {sheetContent}
+      </BottomSheet>
+    )
+  }
+
+  // ── Normal mode ───────────────────────────────────────────
   return (
     <BottomSheet open={open} onOpenChange={setOpen}>
       <BottomSheetTrigger asChild>
@@ -63,9 +177,7 @@ export function HabitCard({ habit, todayCount, style }: HabitCardProps) {
             </div>
             {isDone && (
               <div
-                className={cn(
-                  'w-6 h-6 rounded-full flex items-center justify-center animate-check-bounce',
-                )}
+                className="w-6 h-6 rounded-full flex items-center justify-center animate-check-bounce"
                 style={{ backgroundColor: habit.color }}
               >
                 <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
@@ -96,60 +208,7 @@ export function HabitCard({ habit, todayCount, style }: HabitCardProps) {
           </div>
         </button>
       </BottomSheetTrigger>
-
-      {/* Check-in Sheet */}
-      <BottomSheetContent>
-        <BottomSheetHeader>
-          <BottomSheetTitle>
-            <span className="mr-2">{habit.icon || '📌'}</span>
-            {habit.name}
-          </BottomSheetTitle>
-          <p className="text-sm text-stone-500">
-            今日已打卡 <strong>{todayCount}</strong> 次 · 确认新增一次打卡
-          </p>
-        </BottomSheetHeader>
-
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="note">备注（可选）</Label>
-            <Textarea
-              id="note"
-              placeholder="记录一下这次的感受、数据或备注…"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => setOpen(false)}
-            >
-              取消
-            </Button>
-            <Button
-              className="flex-1"
-              style={{ backgroundColor: habit.color }}
-              onClick={handleCheckIn}
-              disabled={checkIn.isPending}
-            >
-              {checkIn.isPending ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  打卡中…
-                </span>
-              ) : (
-                <>
-                  <Check className="w-4 h-4" strokeWidth={2.5} />
-                  确认打卡
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      </BottomSheetContent>
+      {sheetContent}
     </BottomSheet>
   )
 }

@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { Flame, Trophy, Target, BarChart2, ChevronRight } from 'lucide-react'
+import { Flame, Trophy, Target, BarChart2, ChevronRight, Search, X } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Input } from '@/components/ui/input'
 import { HabitHeatmap } from '@/components/charts/HabitHeatmap'
 import { SimpleBarChart, StackedBarChart } from '@/components/charts/BarCharts'
 import { StatCard } from '@/components/charts/StatCard'
@@ -22,6 +23,7 @@ type TabValue = 'day' | 'week' | 'month' | 'year'
 
 function StatsPage() {
   const [activeTab, setActiveTab] = useState<TabValue>('week')
+  const [habitSearch, setHabitSearch] = useState('')
   const { data: habits } = useHabits()
   const year = new Date().getFullYear()
 
@@ -210,39 +212,65 @@ function StatsPage() {
       {/* Per-habit links */}
       {habits && habits.length > 0 && (
         <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-100/80 overflow-hidden animate-slide-up">
-          <div className="px-5 py-4 border-b border-stone-50">
-            <span className="font-bold text-stone-800 text-sm">各项目详情</span>
+          <div className="px-5 py-4 border-b border-stone-50 flex items-center justify-between gap-3">
+            <span className="font-bold text-stone-800 text-sm shrink-0">各项目详情</span>
+            <div className="relative flex-1 max-w-[180px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
+              <Input
+                placeholder="搜索项目…"
+                value={habitSearch}
+                onChange={(e) => setHabitSearch(e.target.value)}
+                className="pl-8 pr-7 h-8 text-xs"
+              />
+              {habitSearch && (
+                <button
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
+                  onClick={() => setHabitSearch('')}
+                  aria-label="清除搜索"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
           <div className="divide-y divide-stone-50">
-            {habits.map((h) => {
-              const cnt = (allCheckIns ?? []).filter((ci) => ci.habit_id === h.id).length
-              const habitDates = (allCheckIns ?? [])
-                .filter((ci) => ci.habit_id === h.id)
-                .map((ci) => formatDate(ci.checked_at))
-              const habitStreak = computeStreak(habitDates)
-              return (
-                <Link
-                  key={h.id}
-                  to="/stats/$habitId"
-                  params={{ habitId: h.id }}
-                  className="flex items-center gap-3 px-5 py-3.5 hover:bg-stone-50 transition-colors"
-                >
-                  <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
-                    style={{ backgroundColor: h.color + '18' }}
+            {habits
+              .filter(h => h.name.includes(habitSearch))
+              .map((h) => {
+                const cnt = (allCheckIns ?? []).filter((ci) => ci.habit_id === h.id).length
+                const habitDates = (allCheckIns ?? [])
+                  .filter((ci) => ci.habit_id === h.id)
+                  .map((ci) => formatDate(ci.checked_at))
+                const habitStreak = computeStreak(habitDates)
+                return (
+                  <Link
+                    key={h.id}
+                    to="/stats/$habitId"
+                    params={{ habitId: h.id }}
+                    className="flex items-center gap-3 px-5 py-3.5 hover:bg-stone-50 transition-colors"
                   >
-                    {h.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-stone-900 text-sm truncate">{h.name}</div>
-                    <div className="text-xs text-stone-400 font-medium mt-0.5">
-                      全年 {cnt} 次 · 连续 {habitStreak} 天
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
+                      style={{ backgroundColor: h.color + '18' }}
+                    >
+                      {h.icon}
                     </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-stone-300 shrink-0" />
-                </Link>
-              )
-            })}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-stone-900 text-sm truncate">{h.name}</div>
+                      <div className="text-xs text-stone-400 font-medium mt-0.5">
+                        全年 {cnt} 次 · 连续 {habitStreak} 天
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-stone-300 shrink-0" />
+                  </Link>
+                )
+              })}
+            {habitSearch && habits.filter(h => h.name.includes(habitSearch)).length === 0 && (
+              <div className="flex flex-col items-center py-8 text-stone-400 gap-2">
+                <Search className="w-8 h-8 text-stone-200" strokeWidth={1.5} />
+                <span className="text-sm font-medium">没有找到「{habitSearch}」</span>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { Plus, Pencil, Archive, MoreHorizontal, ListCheck } from 'lucide-react'
+import { Plus, Pencil, Archive, MoreHorizontal, ListCheck, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { HabitForm } from '@/components/habits/HabitForm'
@@ -19,7 +20,13 @@ function HabitsPage() {
   const { data: habits, isLoading } = useHabits(false)
   const [createOpen, setCreateOpen] = useState(false)
   const [editHabit, setEditHabit] = useState<Habit | null>(null)
+  const [search, setSearch] = useState('')
   const archive = useArchiveHabit()
+
+  const filtered = useMemo(
+    () => habits?.filter(h => h.name.includes(search)) ?? [],
+    [habits, search]
+  )
 
   function handleArchive(id: string, name: string) {
     if (window.confirm(`确认归档「${name}」？归档后将不再出现在今日打卡列表中。`)) {
@@ -66,6 +73,28 @@ function HabitsPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Search — only show when there are items */}
+      {!isLoading && (habits?.length ?? 0) > 0 && (
+        <div className="relative animate-slide-up">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+          <Input
+            placeholder="搜索项目…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10 pr-9"
+          />
+          {search && (
+            <button
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
+              onClick={() => setSearch('')}
+              aria-label="清除搜索"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* List */}
       {isLoading ? (
         <div className="space-y-3">
@@ -74,59 +103,72 @@ function HabitsPage() {
           ))}
         </div>
       ) : habits && habits.length > 0 ? (
-        <div className="space-y-3">
-          {habits.map((habit, i) => (
-            <div
-              key={habit.id}
-              className={cn(
-                'flex items-center gap-4 bg-white rounded-2xl px-4 py-3.5',
-                'shadow-[var(--shadow-card)] border border-stone-100/80 animate-slide-up'
-              )}
-              style={{ animationDelay: `${i * 50}ms` }}
-            >
-              {/* Color + icon */}
+        filtered.length > 0 ? (
+          <div className="space-y-3">
+            {filtered.map((habit, i) => (
               <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"
-                style={{ backgroundColor: habit.color + '18', borderColor: habit.color + '30' }}
+                key={habit.id}
+                className={cn(
+                  'flex items-center gap-4 bg-white rounded-2xl px-4 py-3.5',
+                  'shadow-[var(--shadow-card)] border border-stone-100/80 animate-slide-up'
+                )}
+                style={{ animationDelay: `${i * 40}ms` }}
               >
-                {habit.icon || '📌'}
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="font-bold text-stone-900 text-sm truncate">{habit.name}</div>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: habit.color }} />
-                  <span className="text-xs text-stone-400 font-medium">
-                    {new Date(habit.created_at).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} 创建
-                  </span>
+                {/* Color + icon */}
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"
+                  style={{ backgroundColor: habit.color + '18', borderColor: habit.color + '30' }}
+                >
+                  {habit.icon || '📌'}
                 </div>
-              </div>
 
-              {/* Actions */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon-sm" className="shrink-0">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setEditHabit(habit)}>
-                    <Pencil className="w-3.5 h-3.5 mr-2" />
-                    编辑
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleArchive(habit.id, habit.name)}
-                    className="text-red-600 focus:text-red-700 focus:bg-red-50"
-                  >
-                    <Archive className="w-3.5 h-3.5 mr-2" />
-                    归档
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          ))}
-        </div>
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-stone-900 text-sm truncate">{habit.name}</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: habit.color }} />
+                    <span className="text-xs text-stone-400 font-medium">
+                      {new Date(habit.created_at).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} 创建
+                    </span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon-sm" className="shrink-0">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setEditHabit(habit)}>
+                      <Pencil className="w-3.5 h-3.5 mr-2" />
+                      编辑
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleArchive(habit.id, habit.name)}
+                      className="text-red-600 focus:text-red-700 focus:bg-red-50"
+                    >
+                      <Archive className="w-3.5 h-3.5 mr-2" />
+                      归档
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-center animate-fade-in">
+            <Search className="w-10 h-10 text-stone-200 mb-3" strokeWidth={1.5} />
+            <div className="font-bold text-stone-700 mb-1">没有找到「{search}」</div>
+            <button
+              className="text-sm text-stone-400 hover:text-brand-500 font-medium mt-2 transition-colors"
+              onClick={() => setSearch('')}
+            >
+              清除搜索
+            </button>
+          </div>
+        )
       ) : (
         <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
           <ListCheck className="w-12 h-12 text-stone-200 mb-4" strokeWidth={1.5} />
