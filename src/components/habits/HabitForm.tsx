@@ -15,12 +15,16 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
   const [name, setName] = useState(existing?.name ?? '')
   const [color, setColor] = useState(existing?.color ?? HABIT_COLORS[0])
   const [icon, setIcon] = useState(existing?.icon ?? '🏃')
+  // custom input: pre-fill only if existing icon is not in presets
+  const [customIcon, setCustomIcon] = useState(
+    existing?.icon && !HABIT_ICONS.includes(existing.icon) ? existing.icon : ''
+  )
 
   const create = useCreateHabit()
   const update = useUpdateHabit()
   const isPending = create.isPending || update.isPending
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault()
     if (!name.trim()) return
     if (existing) {
@@ -29,6 +33,17 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
       await create.mutateAsync({ name: name.trim(), color, icon })
     }
     onClose()
+  }
+
+  function selectPreset(emoji: string) {
+    setIcon(emoji)
+    setCustomIcon('')
+  }
+
+  function handleCustomChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value
+    setCustomIcon(val)
+    if (val.trim()) setIcon(val.trim())
   }
 
   return (
@@ -50,16 +65,16 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
       {/* Icon picker */}
       <div className="space-y-2">
         <Label>选择图标</Label>
-        <div className="grid grid-cols-8 gap-2">
+        <div className="grid grid-cols-8 gap-1.5 max-h-44 overflow-y-auto pr-0.5">
           {HABIT_ICONS.map((e) => (
             <button
               key={e}
               type="button"
-              onClick={() => setIcon(e)}
+              onClick={() => selectPreset(e)}
               className={cn(
                 'w-10 h-10 rounded-xl flex items-center justify-center text-xl',
                 'border-2 transition-all duration-150 tap-scale',
-                icon === e
+                icon === e && !customIcon
                   ? 'border-brand-500 bg-brand-50'
                   : 'border-transparent bg-stone-100 hover:bg-stone-200'
               )}
@@ -67,6 +82,25 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
               {e}
             </button>
           ))}
+        </div>
+
+        {/* Custom emoji input */}
+        <div className="flex items-center gap-2 pt-1">
+          <span className="text-xs text-stone-500 font-medium shrink-0 w-16">自定义：</span>
+          <div className="relative flex-1">
+            <Input
+              placeholder="粘贴或输入任意 Emoji"
+              value={customIcon}
+              onChange={handleCustomChange}
+              className="text-base pr-10"
+              maxLength={8}
+            />
+            {customIcon && (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xl pointer-events-none">
+                {customIcon.trim()}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
