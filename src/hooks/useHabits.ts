@@ -82,3 +82,20 @@ export function useArchiveHabit() {
     },
   })
 }
+
+export function useRestoreHabit() {
+  const qc = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('habits')
+        .update({ archived: false } as HabitUpdate)
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['habits'] })
+    },
+  })
+}

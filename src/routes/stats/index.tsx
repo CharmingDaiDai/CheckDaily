@@ -214,24 +214,26 @@ function StatsPage() {
         <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-100/80 overflow-hidden animate-slide-up">
           <div className="px-5 py-4 border-b border-stone-50 flex items-center justify-between gap-3">
             <span className="font-bold text-stone-800 text-sm shrink-0">各项目详情</span>
-            <div className="relative flex-1 max-w-[180px]">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
-              <Input
-                placeholder="搜索项目…"
-                value={habitSearch}
-                onChange={(e) => setHabitSearch(e.target.value)}
-                className="pl-8 pr-7 h-8 text-xs"
-              />
-              {habitSearch && (
-                <button
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
-                  onClick={() => setHabitSearch('')}
-                  aria-label="清除搜索"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+            {habits.length > 5 && (
+              <div className="relative flex-1 max-w-[180px]">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
+                <Input
+                  placeholder="搜索项目…"
+                  value={habitSearch}
+                  onChange={(e) => setHabitSearch(e.target.value)}
+                  className="pl-8 pr-7 h-8 text-xs"
+                />
+                {habitSearch && (
+                  <button
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
+                    onClick={() => setHabitSearch('')}
+                    aria-label="清除搜索"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           <div className="divide-y divide-stone-50">
             {habits

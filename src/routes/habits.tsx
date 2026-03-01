@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { Plus, Pencil, Archive, MoreHorizontal, ListCheck, Search, X } from 'lucide-react'
+import { Plus, Pencil, Archive, MoreHorizontal, ListCheck, Search, X, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { HabitForm } from '@/components/habits/HabitForm'
-import { useHabits, useArchiveHabit } from '@/hooks/useHabits'
+import { useHabits, useArchiveHabit, useRestoreHabit } from '@/hooks/useHabits'
 import type { Habit } from '@/types'
 import { cn } from '@/lib/utils'
 import {
@@ -18,14 +18,22 @@ import {
 
 function HabitsPage() {
   const { data: habits, isLoading } = useHabits(false)
+  const { data: allHabits } = useHabits(true)
   const [createOpen, setCreateOpen] = useState(false)
   const [editHabit, setEditHabit] = useState<Habit | null>(null)
   const [search, setSearch] = useState('')
+  const [showArchived, setShowArchived] = useState(false)
   const archive = useArchiveHabit()
+  const restore = useRestoreHabit()
 
   const filtered = useMemo(
     () => habits?.filter(h => h.name.includes(search)) ?? [],
     [habits, search]
+  )
+
+  const archivedHabits = useMemo(
+    () => allHabits?.filter(h => h.archived) ?? [],
+    [allHabits]
   )
 
   function handleArchive(id: string, name: string) {
@@ -178,6 +186,51 @@ function HabitsPage() {
             <Plus className="w-4 h-4" strokeWidth={2.5} />
             新建项目
           </Button>
+        </div>
+      )}
+
+      {/* Archived habits */}
+      {archivedHabits.length > 0 && (
+        <div className="animate-slide-up">
+          <button
+            className="flex items-center gap-2 w-full text-sm font-semibold text-stone-400 hover:text-stone-600 transition-colors py-1"
+            onClick={() => setShowArchived(v => !v)}
+          >
+            {showArchived ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            已归档项目（{archivedHabits.length}）
+          </button>
+
+          {showArchived && (
+            <div className="space-y-3 mt-3">
+              {archivedHabits.map((habit) => (
+                <div
+                  key={habit.id}
+                  className="flex items-center gap-4 bg-stone-50 rounded-2xl px-4 py-3.5 border border-stone-100"
+                >
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 opacity-60"
+                    style={{ backgroundColor: habit.color + '18' }}
+                  >
+                    {habit.icon || '📌'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-stone-400 text-sm truncate">{habit.name}</div>
+                    <div className="text-xs text-stone-300 font-medium mt-0.5">已归档</div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 gap-1.5"
+                    onClick={() => void restore.mutateAsync(habit.id)}
+                    disabled={restore.isPending}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    恢复
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

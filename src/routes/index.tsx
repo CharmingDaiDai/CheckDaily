@@ -12,7 +12,7 @@ import { formatDate, getLast7Days } from '@/lib/utils'
 function Dashboard() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
-  const [compact, setCompact] = useState(false)
+  const [compact, setCompact] = useState(() => localStorage.getItem('dashboard-compact') === 'true')
 
   // Redirect if not logged in
   useEffect(() => {
@@ -33,6 +33,15 @@ function Dashboard() {
     const map: Record<string, number> = {}
     for (const ci of todayCheckIns ?? []) {
       map[ci.habit_id] = (map[ci.habit_id] ?? 0) + 1
+    }
+    return map
+  }, [todayCheckIns])
+
+  // Latest check-in id per habit (for undo) — todayCheckIns is ordered desc by checked_at
+  const latestCheckInMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const ci of todayCheckIns ?? []) {
+      if (!map[ci.habit_id]) map[ci.habit_id] = ci.id
     }
     return map
   }, [todayCheckIns])
@@ -89,7 +98,11 @@ function Dashboard() {
           <h1 className="text-2xl font-extrabold text-stone-900">今日打卡</h1>
           {totalCount > 0 && !isLoading && (
             <button
-              onClick={() => setCompact(v => !v)}
+              onClick={() => setCompact(v => {
+                const next = !v
+                localStorage.setItem('dashboard-compact', String(next))
+                return next
+              })}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors"
               aria-label={compact ? '切换到卡片视图' : '切换到紧凑视图'}
             >
@@ -141,6 +154,7 @@ function Dashboard() {
                   habit={habit}
                   todayCount={todayCountMap[habit.id] ?? 0}
                   compact={compact}
+                  latestCheckInId={latestCheckInMap[habit.id]}
                   style={{ animationDelay: `${i * 40}ms` }}
                 />
               ))}
@@ -165,6 +179,7 @@ function Dashboard() {
                   habit={habit}
                   todayCount={todayCountMap[habit.id] ?? 0}
                   compact={compact}
+                  latestCheckInId={latestCheckInMap[habit.id]}
                   style={{ animationDelay: `${i * 40}ms` }}
                 />
               ))}

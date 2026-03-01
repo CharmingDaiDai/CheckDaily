@@ -64,15 +64,22 @@ export function getLast30Days(): string[] {
 export function computeStreak(dates: string[]): number {
   if (!dates.length) return 0
   const sorted = [...new Set(dates)].sort().reverse()
+  const todayStr = today()
+  // 宽容逻辑：若今天还没打卡，从昨天开始计算，给用户当天时间
+  const yesterday = (() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 1)
+    return formatDate(d)
+  })()
+  let current = sorted[0] === todayStr ? todayStr : yesterday
   let streak = 0
-  let current = today()
   for (const d of sorted) {
     if (d === current) {
       streak++
       const prev = new Date(current)
       prev.setDate(prev.getDate() - 1)
       current = formatDate(prev)
-    } else {
+    } else if (d < current) {
       break
     }
   }

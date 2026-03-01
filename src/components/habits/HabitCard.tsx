@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, Plus } from 'lucide-react'
+import { Check, Plus, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Habit } from '@/types'
 import {
@@ -12,24 +12,32 @@ import {
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useCheckIn } from '@/hooks/useCheckIns'
+import { useCheckIn, useDeleteCheckIn } from '@/hooks/useCheckIns'
 
 interface HabitCardProps {
   habit: Habit
   todayCount: number
   style?: React.CSSProperties
   compact?: boolean
+  latestCheckInId?: string
 }
 
-export function HabitCard({ habit, todayCount, style, compact = false }: HabitCardProps) {
+export function HabitCard({ habit, todayCount, style, compact = false, latestCheckInId }: HabitCardProps) {
   const [open, setOpen] = useState(false)
   const [note, setNote] = useState('')
   const checkIn = useCheckIn()
+  const deleteCheckIn = useDeleteCheckIn()
   const isDone = todayCount > 0
 
   async function handleCheckIn() {
     await checkIn.mutateAsync({ habit_id: habit.id, note: note.trim() || undefined })
     setNote('')
+    setOpen(false)
+  }
+
+  async function handleUndo() {
+    if (!latestCheckInId) return
+    await deleteCheckIn.mutateAsync(latestCheckInId)
     setOpen(false)
   }
 
@@ -80,6 +88,17 @@ export function HabitCard({ habit, todayCount, style, compact = false }: HabitCa
             )}
           </Button>
         </div>
+
+        {isDone && latestCheckInId && (
+          <button
+            className="w-full flex items-center justify-center gap-1.5 py-1 text-xs text-stone-400 hover:text-stone-600 transition-colors disabled:opacity-50"
+            onClick={handleUndo}
+            disabled={deleteCheckIn.isPending}
+          >
+            <RotateCcw className="w-3 h-3" />
+            撤销最近一次打卡
+          </button>
+        )}
       </div>
     </BottomSheetContent>
   )
