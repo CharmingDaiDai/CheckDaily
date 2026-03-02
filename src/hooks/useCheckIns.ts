@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { formatDate } from '@/lib/utils'
+import { toast } from '@/hooks/useToast'
 import type { CheckIn, CheckInInsert } from '@/types'
 
 export function useCheckIns(opts?: { habitId?: string; startDate?: string; endDate?: string }) {
@@ -56,6 +57,9 @@ export function useCheckIn() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['checkIns'] })
     },
+    onError: () => {
+      toast.error('打卡失败，请稍后重试')
+    },
   })
 }
 
@@ -70,24 +74,27 @@ export function useDeleteCheckIn() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['checkIns'] })
     },
+    onError: () => {
+      toast.error('删除失败，请稍后重试')
+    },
   })
 }
 
 /** Returns { [date: string]: number } map for a year range */
-export function useYearlyCheckInCounts(habitId?: string) {
+export function useYearlyCheckInCounts(habitId?: string, year?: number) {
   const userId = useAuthStore((s) => s.user?.id)
-  const year = new Date().getFullYear()
+  const resolvedYear = year ?? new Date().getFullYear()
 
   return useQuery({
-    queryKey: ['yearCounts', userId, habitId, year],
+    queryKey: ['yearCounts', userId, habitId, resolvedYear],
     queryFn: async () => {
       if (!userId) return {} as Record<string, number>
       let q = supabase
         .from('check_ins')
         .select('checked_at')
         .eq('user_id', userId)
-        .gte('checked_at', `${year}-01-01T00:00:00.000Z`)
-        .lte('checked_at', `${year}-12-31T23:59:59.999Z`)
+        .gte('checked_at', `${resolvedYear}-01-01T00:00:00.000Z`)
+        .lte('checked_at', `${resolvedYear}-12-31T23:59:59.999Z`)
       if (habitId) q = q.eq('habit_id', habitId)
       const { data, error } = await q
       if (error) throw error

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
+import { toast } from '@/hooks/useToast'
 import type { Habit, HabitInsert, HabitUpdate } from '@/types'
 
 export function useHabits(includeArchived = false) {
@@ -42,6 +43,9 @@ export function useCreateHabit() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['habits'] })
     },
+    onError: () => {
+      toast.error('创建失败，请稍后重试')
+    },
   })
 }
 
@@ -62,6 +66,9 @@ export function useUpdateHabit() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['habits'] })
     },
+    onError: () => {
+      toast.error('更新失败，请稍后重试')
+    },
   })
 }
 
@@ -80,6 +87,9 @@ export function useArchiveHabit() {
       void qc.invalidateQueries({ queryKey: ['habits'] })
       void qc.invalidateQueries({ queryKey: ['checkIns'] })
     },
+    onError: () => {
+      toast.error('归档失败，请稍后重试')
+    },
   })
 }
 
@@ -96,6 +106,9 @@ export function useRestoreHabit() {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['habits'] })
+    },
+    onError: () => {
+      toast.error('恢复失败，请稍后重试')
     },
   })
 }
