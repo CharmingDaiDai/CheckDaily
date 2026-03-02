@@ -14,7 +14,7 @@ export function Sidebar() {
   const pathname = location.pathname
 
   return (
-    <aside className="hidden sm:flex flex-col w-56 shrink-0 bg-white border-r border-stone-100 min-h-screen">
+    <aside className="hidden md:flex flex-col w-48 lg:w-56 shrink-0 bg-white border-r border-stone-100 min-h-screen">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-6">
         <div className="w-9 h-9 rounded-xl bg-brand-500 flex items-center justify-center shadow-sm">

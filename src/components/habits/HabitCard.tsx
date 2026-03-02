@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Check, Plus, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Habit } from '@/types'
@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useCheckIn, useDeleteCheckIn } from '@/hooks/useCheckIns'
+import { toast } from '@/hooks/useToast'
 
 interface HabitCardProps {
   habit: Habit
@@ -25,20 +26,52 @@ interface HabitCardProps {
 export function HabitCard({ habit, todayCount, style, compact = false, latestCheckInId }: HabitCardProps) {
   const [open, setOpen] = useState(false)
   const [note, setNote] = useState('')
+  const [showNote, setShowNote] = useState(false)
+  const [celebrating, setCelebrating] = useState(false)
+  const prevDoneRef = useRef(todayCount > 0)
   const checkIn = useCheckIn()
   const deleteCheckIn = useDeleteCheckIn()
   const isDone = todayCount > 0
 
+  // Reset sheet state when closed
+  useEffect(() => {
+    if (!open) {
+      setNote('')
+      setShowNote(false)
+    }
+  }, [open])
+
+  // Trigger celebration when first check-in of the day happens
+  useEffect(() => {
+    const wasZero = !prevDoneRef.current
+    const isNowDone = isDone
+    if (wasZero && isNowDone) {
+      setCelebrating(true)
+      const timer = setTimeout(() => setCelebrating(false), 600)
+      prevDoneRef.current = isNowDone
+      return () => clearTimeout(timer)
+    }
+    prevDoneRef.current = isNowDone
+  }, [isDone])
+
   async function handleCheckIn() {
-    await checkIn.mutateAsync({ habit_id: habit.id, note: note.trim() || undefined })
-    setNote('')
-    setOpen(false)
+    try {
+      await checkIn.mutateAsync({ habit_id: habit.id, note: note.trim() || undefined })
+      setOpen(false)
+      navigator.vibrate?.(15)
+    } catch {
+      toast.error('打卡失败，请重试')
+    }
   }
 
   async function handleUndo() {
     if (!latestCheckInId) return
-    await deleteCheckIn.mutateAsync(latestCheckInId)
-    setOpen(false)
+    try {
+      await deleteCheckIn.mutateAsync(latestCheckInId)
+      setOpen(false)
+    } catch {
+      toast.error('撤销失败，请重试')
+    }
   }
 
   const sheetContent = (
@@ -54,16 +87,27 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
       </BottomSheetHeader>
 
       <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="note">备注（可选）</Label>
-          <Textarea
-            id="note"
-            placeholder="记录一下这次的感受、数据或备注…"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={3}
-          />
-        </div>
+        {showNote ? (
+          <div className="space-y-2">
+            <Label htmlFor="note">备注</Label>
+            <Textarea
+              id="note"
+              placeholder="记录一下这次的感受、数据或备注…"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              autoFocus
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="text-xs text-stone-400 hover:text-brand-500 transition-colors font-medium"
+            onClick={() => setShowNote(true)}
+          >
+            + 添加备注
+          </button>
+        )}
 
         <div className="flex gap-3">
           <Button variant="outline" className="flex-1" onClick={() => setOpen(false)}>
@@ -115,6 +159,7 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
               'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
               'bg-white shadow-[var(--shadow-card)]',
               isDone ? 'border-transparent' : 'border-stone-200',
+              celebrating && 'animate-celebrate',
             )}
             style={{
               ...(isDone ? { borderColor: habit.color + '50' } : {}),
@@ -175,7 +220,8 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
             'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
             isDone
               ? 'bg-white border-stone-200 shadow-[var(--shadow-card)]'
-              : 'bg-white border-stone-200 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]'
+              : 'bg-white border-stone-200 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]',
+            celebrating && 'animate-celebrate',
           )}
           style={style}
           aria-label={`打卡：${habit.name}`}

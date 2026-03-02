@@ -14,7 +14,7 @@ export function BottomNav() {
   const pathname = location.pathname
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-xl border-t border-stone-100 pb-safe sm:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-xl border-t border-stone-100 pb-safe md:hidden">
       <div className="flex items-center justify-around h-[60px] max-w-lg mx-auto">
         {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
           const active = to === '/' ? pathname === '/' : pathname.startsWith(to)
