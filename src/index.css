@@ -101,6 +101,13 @@ body {
   scrollbar-color: #d6d3d1 transparent;
 }
 
+/* Remove focus outline on Recharts SVG elements */
+.recharts-wrapper,
+.recharts-wrapper *,
+.recharts-wrapper *:focus {
+  outline: none;
+}
+
 /* Respect reduced-motion preference */
 @media (prefers-reduced-motion: reduce) {
   .animate-check-bounce,
