@@ -4,6 +4,7 @@ import { Plus, Pencil, Archive, MoreHorizontal, ListCheck, Search, X, RotateCcw,
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { HabitForm } from '@/components/habits/HabitForm'
 import { useHabits, useArchiveHabit, useRestoreHabit } from '@/hooks/useHabits'
@@ -23,11 +24,12 @@ function HabitsPage() {
   const [editHabit, setEditHabit] = useState<Habit | null>(null)
   const [search, setSearch] = useState('')
   const [showArchived, setShowArchived] = useState(false)
+  const [archiveTarget, setArchiveTarget] = useState<{ id: string; name: string } | null>(null)
   const archive = useArchiveHabit()
   const restore = useRestoreHabit()
 
   const filtered = useMemo(
-    () => habits?.filter(h => h.name.includes(search)) ?? [],
+    () => habits?.filter(h => h.name.toLowerCase().includes(search.toLowerCase())) ?? [],
     [habits, search]
   )
 
@@ -37,9 +39,7 @@ function HabitsPage() {
   )
 
   function handleArchive(id: string, name: string) {
-    if (window.confirm(`确认归档「${name}」？归档后将不再出现在今日打卡列表中。`)) {
-      void archive.mutateAsync(id)
-    }
+    setArchiveTarget({ id, name })
   }
 
   return (
@@ -80,6 +80,19 @@ function HabitsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Archive confirm dialog */}
+      <ConfirmDialog
+        open={!!archiveTarget}
+        onOpenChange={(open) => { if (!open) setArchiveTarget(null) }}
+        title={`确认归档「${archiveTarget?.name ?? ''}」？`}
+        description="归档后将不再出现在今日打卡列表中。你可以在已归档区域恢复。"
+        confirmText="归档"
+        variant="danger"
+        onConfirm={async () => {
+          if (archiveTarget) await archive.mutateAsync(archiveTarget.id)
+        }}
+      />
 
       {/* Search — only show when there are items */}
       {!isLoading && (habits?.length ?? 0) > 0 && (

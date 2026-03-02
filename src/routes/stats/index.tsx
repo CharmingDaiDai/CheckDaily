@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { Flame, Trophy, Target, BarChart2, ChevronRight, Search, X } from 'lucide-react'
+import { Flame, Trophy, Target, BarChart2, ChevronRight, ChevronLeft, Search, X } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { HabitHeatmap } from '@/components/charts/HabitHeatmap'
@@ -22,16 +22,21 @@ import type { CalendarDatum } from '@/types'
 type TabValue = 'day' | 'week' | 'month' | 'year'
 
 function StatsPage() {
-  const [activeTab, setActiveTab] = useState<TabValue>('week')
+  const currentYear = new Date().getFullYear()
+  const [activeTab, setActiveTab] = useState<TabValue>(
+    () => (sessionStorage.getItem('stats-tab') as TabValue) ?? 'week'
+  )
   const [habitSearch, setHabitSearch] = useState('')
+  const [selectedYear, setSelectedYear] = useState(currentYear)
   const { data: habits } = useHabits()
-  const year = new Date().getFullYear()
 
-  // Fetch all check-ins for this year
+  // Fetch all check-ins for selected year (extended to Dec 1 of prior year for cross-year streak)
+  const queryStart = selectedYear === currentYear ? `${selectedYear - 1}-12-01` : `${selectedYear}-01-01`
   const { data: allCheckIns, isLoading } = useCheckIns({
-    startDate: `${year}-01-01`,
-    endDate: `${year}-12-31`,
+    startDate: queryStart,
+    endDate: `${selectedYear}-12-31`,
   })
+  const yearStart = `${selectedYear}-01-01`
 
   // Today's check-ins
   const todayStr = formatDate(new Date())
@@ -56,7 +61,7 @@ function StatsPage() {
   )
 
   // Yearly heatmap data
-  const { data: yearCounts } = useYearlyCheckInCounts()
+  const { data: yearCounts } = useYearlyCheckInCounts(undefined, selectedYear)
   const heatmapData = useMemo<CalendarDatum[]>(() => {
     return Object.entries(yearCounts ?? {}).map(([day, value]) => ({ day, value }))
   }, [yearCounts])
@@ -111,7 +116,24 @@ function StatsPage() {
       {/* Header */}
       <div className="animate-slide-up">
         <h1 className="text-2xl font-extrabold text-stone-900">统计分析</h1>
-        <p className="text-sm text-stone-400 font-medium mt-0.5">{year} 年度数据</p>
+        <div className="flex items-center gap-2 mt-0.5">
+          <button
+            className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors"
+            onClick={() => setSelectedYear(y => y - 1)}
+            aria-label="上一年"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="text-sm text-stone-400 font-medium">{selectedYear} 年度数据</span>
+          <button
+            className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            onClick={() => setSelectedYear(y => y + 1)}
+            disabled={selectedYear >= currentYear}
+            aria-label="下一年"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Stat Cards */}
@@ -119,12 +141,15 @@ function StatsPage() {
         <StatCard label="当前连续" value={`${streak} 天`} icon={Flame} iconColor="#f97316" loading={isLoading} />
         <StatCard label="本月打卡" value={thisMonthCount} sublabel="次" icon={Target} iconColor="#3b82f6" loading={isLoading} />
         <StatCard label="最长连续" value={`${longest} 天`} icon={Trophy} iconColor="#eab308" loading={isLoading} />
-        <StatCard label="全年总计" value={allCheckIns?.length ?? 0} sublabel="次" icon={BarChart2} iconColor="#22c55e" loading={isLoading} />
+        <StatCard label="全年总计" value={(allCheckIns ?? []).filter(ci => formatDate(ci.checked_at) >= yearStart).length} sublabel="次" icon={BarChart2} iconColor="#22c55e" loading={isLoading} />
       </div>
 
       {/* Tabs */}
       <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-100/80 animate-slide-up">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
+        <Tabs value={activeTab} onValueChange={(v) => {
+          setActiveTab(v as TabValue)
+          sessionStorage.setItem('stats-tab', v)
+        }}>
           <TabsList className="w-full mb-5">
             <TabsTrigger value="day" className="flex-1">今日</TabsTrigger>
             <TabsTrigger value="week" className="flex-1">本周</TabsTrigger>
@@ -194,15 +219,15 @@ function StatsPage() {
           {/* Year view */}
           <TabsContent value="year">
             <div className="text-sm font-semibold text-stone-500 mb-3">
-              {year} 年全年打卡热力图
+              {selectedYear} 年全年打卡热力图
             </div>
             {isLoading ? (
               <Skeleton className="h-40 w-full" />
             ) : (
               <HabitHeatmap
                 data={heatmapData}
-                from={`${year}-01-01`}
-                to={`${year}-12-31`}
+                from={`${selectedYear}-01-01`}
+                to={`${selectedYear}-12-31`}
               />
             )}
           </TabsContent>
@@ -237,9 +262,11 @@ function StatsPage() {
           </div>
           <div className="divide-y divide-stone-50">
             {habits
-              .filter(h => h.name.includes(habitSearch))
+              .filter(h => h.name.toLowerCase().includes(habitSearch.toLowerCase()))
               .map((h) => {
-                const cnt = (allCheckIns ?? []).filter((ci) => ci.habit_id === h.id).length
+                const cnt = (allCheckIns ?? []).filter(
+                  (ci) => ci.habit_id === h.id && formatDate(ci.checked_at) >= yearStart
+                ).length
                 const habitDates = (allCheckIns ?? [])
                   .filter((ci) => ci.habit_id === h.id)
                   .map((ci) => formatDate(ci.checked_at))
@@ -267,7 +294,7 @@ function StatsPage() {
                   </Link>
                 )
               })}
-            {habitSearch && habits.filter(h => h.name.includes(habitSearch)).length === 0 && (
+            {habitSearch && habits.filter(h => h.name.toLowerCase().includes(habitSearch.toLowerCase())).length === 0 && (
               <div className="flex flex-col items-center py-8 text-stone-400 gap-2">
                 <Search className="w-8 h-8 text-stone-200" strokeWidth={1.5} />
                 <span className="text-sm font-medium">没有找到「{habitSearch}」</span>

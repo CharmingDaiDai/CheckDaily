@@ -1,6 +1,9 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router'
 import { useAuthInit } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/authStore'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { Toaster } from '@/components/ui/toast'
+import { OfflineBanner } from '@/components/OfflineBanner'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
 
@@ -22,17 +25,26 @@ function RootLayout() {
   }
 
   if (!user) {
-    return <Outlet />
+    return (
+      <ErrorBoundary>
+        <Outlet />
+        <Toaster />
+      </ErrorBoundary>
+    )
   }
 
   return (
-    <div className="flex min-h-screen bg-stone-50">
-      <Sidebar />
-      <main className="flex-1 pb-[80px] sm:pb-0 min-h-screen">
-        <Outlet />
-      </main>
-      <BottomNav />
-    </div>
+    <ErrorBoundary>
+      <OfflineBanner />
+      <div className="flex min-h-screen bg-stone-50">
+        <Sidebar />
+        <main className="flex-1 pb-[80px] md:pb-0 min-h-screen">
+          <Outlet />
+        </main>
+        <BottomNav />
+      </div>
+      <Toaster />
+    </ErrorBoundary>
   )
 }
 

@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useNavigate } from '@tanstack/react-router'
-import { LogOut, User, Mail, Info, Shield, ChevronRight, Eye, EyeOff, Lock } from 'lucide-react'
+import { LogOut, User, Mail, Info, Shield, ChevronRight, Eye, EyeOff, Lock, Download, Database } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useAuthStore } from '@/store/authStore'
 import { signOut, updateEmail, updatePassword } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase'
+import { toast } from '@/hooks/useToast'
 
 function ProfilePage() {
   const user = useAuthStore((s) => s.user)
@@ -30,11 +33,48 @@ function ProfilePage() {
   const [pwMsg, setPwMsg] = useState('')
   const [pwError, setPwError] = useState('')
 
-  async function handleSignOut() {
-    if (window.confirm('确认退出登录？')) {
-      await signOut()
-      void navigate({ to: '/login' })
+  // Sign out dialog
+  const [signOutOpen, setSignOutOpen] = useState(false)
+
+  // Export data
+  const [exporting, setExporting] = useState(false)
+
+  async function handleExport() {
+    if (!user) return
+    setExporting(true)
+    try {
+      const [habitsRes, checkInsRes] = await Promise.all([
+        supabase.from('habits').select('*').eq('user_id', user.id).order('created_at'),
+        supabase.from('check_ins').select('*').eq('user_id', user.id).order('checked_at'),
+      ])
+      if (habitsRes.error) throw habitsRes.error
+      if (checkInsRes.error) throw checkInsRes.error
+
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        habits: habitsRes.data,
+        checkIns: checkInsRes.data,
+      }
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const dateStr = new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')
+      a.download = `打卡数据-${dateStr}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success('数据导出成功')
+    } catch {
+      toast.error('导出失败，请稍后重试')
+    } finally {
+      setExporting(false)
     }
+  }
+
+  async function handleSignOut() {
+    await signOut()
+    void navigate({ to: '/login' })
   }
 
   async function handleEmailUpdate(e: React.SyntheticEvent) {
@@ -145,6 +185,32 @@ function ProfilePage() {
         </button>
       </div>
 
+      {/* Data management */}
+      <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-100/80 overflow-hidden animate-slide-up">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-stone-50">
+          <Database className="w-4 h-4 text-stone-400" />
+          <span className="font-semibold text-stone-700 text-sm">数据管理</span>
+        </div>
+        <button
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-stone-50 transition-colors text-left disabled:opacity-50"
+          onClick={handleExport}
+          disabled={exporting}
+        >
+          <div className="flex items-center gap-3">
+            <Download className="w-4 h-4 text-stone-400" />
+            <div>
+              <div className="text-sm font-medium text-stone-700">导出数据</div>
+              <div className="text-xs text-stone-400 mt-0.5">下载全部习惯和打卡记录 (JSON)</div>
+            </div>
+          </div>
+          {exporting ? (
+            <span className="w-4 h-4 border-2 border-stone-300 border-t-stone-500 rounded-full animate-spin" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-stone-300" />
+          )}
+        </button>
+      </div>
+
       {/* App info */}
       <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-100/80 overflow-hidden animate-slide-up">
         <div className="flex items-center gap-3 px-5 py-4 border-b border-stone-50">
@@ -172,11 +238,21 @@ function ProfilePage() {
         variant="danger-ghost"
         size="lg"
         className="w-full"
-        onClick={handleSignOut}
+        onClick={() => setSignOutOpen(true)}
       >
         <LogOut className="w-4 h-4" strokeWidth={2} />
         退出登录
       </Button>
+
+      <ConfirmDialog
+        open={signOutOpen}
+        onOpenChange={setSignOutOpen}
+        title="确认退出登录？"
+        description="退出后需要重新登录才能使用。"
+        confirmText="退出"
+        variant="danger"
+        onConfirm={handleSignOut}
+      />
 
       {/* Update email dialog */}
       <Dialog open={emailOpen} onOpenChange={(o) => { if (!o) setEmailOpen(false) }}>

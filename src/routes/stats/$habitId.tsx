@@ -1,11 +1,12 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ArrowLeft, Flame, Trophy, Target, Hash, Trash2 } from 'lucide-react'
+import { ArrowLeft, Flame, Trophy, Target, Hash, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { HabitHeatmap } from '@/components/charts/HabitHeatmap'
 import { TrendLineChart } from '@/components/charts/LineCharts'
 import { StatCard } from '@/components/charts/StatCard'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useHabits } from '@/hooks/useHabits'
 import { useCheckIns, useYearlyCheckInCounts, useDeleteCheckIn } from '@/hooks/useCheckIns'
 import {
@@ -22,14 +23,18 @@ function HabitStatsPage() {
   const { data: habits } = useHabits()
   const habit = habits?.find((h) => h.id === habitId)
 
-  const year = new Date().getFullYear()
+  const currentYear = new Date().getFullYear()
+  const [selectedYear, setSelectedYear] = useState(currentYear)
+  const queryStart = selectedYear === currentYear ? `${selectedYear - 1}-12-01` : `${selectedYear}-01-01`
   const { data: allCheckIns, isLoading } = useCheckIns({
     habitId,
-    startDate: `${year}-01-01`,
-    endDate: `${year}-12-31`,
+    startDate: queryStart,
+    endDate: `${selectedYear}-12-31`,
   })
-  const { data: yearCounts } = useYearlyCheckInCounts(habitId)
+  const { data: yearCounts } = useYearlyCheckInCounts(habitId, selectedYear)
   const deleteCheckIn = useDeleteCheckIn()
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [displayCount, setDisplayCount] = useState(60)
 
   const allDates = useMemo(
     () => (allCheckIns ?? []).map((ci) => formatDate(ci.checked_at)),
@@ -37,8 +42,15 @@ function HabitStatsPage() {
   )
   const streak = computeStreak(allDates)
   const longest = computeLongestStreak(allDates)
-  const total = allCheckIns?.length ?? 0
-  const uniqueDays = new Set(allDates).size
+  const yearStart = `${selectedYear}-01-01`
+  const total = useMemo(
+    () => (allCheckIns ?? []).filter((ci) => formatDate(ci.checked_at) >= yearStart).length,
+    [allCheckIns, yearStart]
+  )
+  const uniqueDays = useMemo(
+    () => new Set((allCheckIns ?? []).filter((ci) => formatDate(ci.checked_at) >= yearStart).map((ci) => formatDate(ci.checked_at))).size,
+    [allCheckIns, yearStart]
+  )
   const avgPerDay = uniqueDays > 0 ? (total / uniqueDays).toFixed(1) : '0'
 
   // Heatmap
@@ -63,18 +75,17 @@ function HabitStatsPage() {
   // Group by date for history list
   const groupedHistory = useMemo(() => {
     const groups: Record<string, typeof allCheckIns> = {}
-    for (const ci of (allCheckIns ?? []).slice(0, 60)) {
+    const yearRecords = (allCheckIns ?? []).filter((ci) => formatDate(ci.checked_at) >= yearStart)
+    for (const ci of yearRecords.slice(0, displayCount)) {
       const d = formatDate(ci.checked_at)
       if (!groups[d]) groups[d] = []
       groups[d]!.push(ci)
     }
     return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]))
-  }, [allCheckIns])
+  }, [allCheckIns, displayCount, yearStart])
 
   function handleDelete(id: string) {
-    if (window.confirm('确认删除这条打卡记录？')) {
-      void deleteCheckIn.mutateAsync(id)
-    }
+    setDeleteTarget(id)
   }
 
   const color = habit?.color ?? '#f97316'
@@ -98,7 +109,24 @@ function HabitStatsPage() {
             </div>
             <div>
               <h1 className="text-2xl font-extrabold text-stone-900">{habit.name}</h1>
-              <p className="text-sm text-stone-400 font-medium mt-0.5">{year} 年度统计</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <button
+                  className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors"
+                  onClick={() => setSelectedYear(y => y - 1)}
+                  aria-label="上一年"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-sm text-stone-400 font-medium">{selectedYear} 年度统计</span>
+                <button
+                  className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  onClick={() => setSelectedYear(y => y + 1)}
+                  disabled={selectedYear >= currentYear}
+                  aria-label="下一年"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         ) : (
@@ -116,14 +144,14 @@ function HabitStatsPage() {
 
       {/* Heatmap */}
       <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-100/80 animate-slide-up">
-        <div className="text-sm font-semibold text-stone-500 mb-4">{year} 年日历热力图</div>
+        <div className="text-sm font-semibold text-stone-500 mb-4">{selectedYear} 年日历热力图</div>
         {isLoading ? (
           <Skeleton className="h-40 w-full" />
         ) : (
           <HabitHeatmap
             data={heatmapData}
-            from={`${year}-01-01`}
-            to={`${year}-12-31`}
+            from={`${selectedYear}-01-01`}
+            to={`${selectedYear}-12-31`}
             color={color}
           />
         )}
@@ -143,7 +171,9 @@ function HabitStatsPage() {
       <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-100/80 overflow-hidden animate-slide-up">
         <div className="px-5 py-4 border-b border-stone-50">
           <span className="font-bold text-stone-800 text-sm">打卡历史</span>
-          <span className="text-xs text-stone-400 font-medium ml-2">最近60条</span>
+          <span className="text-xs text-stone-400 font-medium ml-2">
+            {total} 条
+          </span>
         </div>
 
         {isLoading ? (
@@ -180,7 +210,7 @@ function HabitStatsPage() {
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-stone-300 hover:text-red-500 hover:bg-red-50"
+                      className="shrink-0 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-stone-300 hover:text-red-500 hover:bg-red-50"
                       onClick={() => handleDelete(ci.id)}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -189,9 +219,29 @@ function HabitStatsPage() {
                 ))}
               </div>
             ))}
+            {total > displayCount && (
+              <button
+                className="w-full py-3 text-xs font-semibold text-stone-400 hover:text-brand-500 transition-colors border-t border-stone-50"
+                onClick={() => setDisplayCount(n => n + 60)}
+              >
+                加载更多（还有 {total - displayCount} 条）
+              </button>
+            )}
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}
+        title="确认删除这条打卡记录？"
+        description="删除后无法恢复。"
+        confirmText="删除"
+        variant="danger"
+        onConfirm={async () => {
+          if (deleteTarget) await deleteCheckIn.mutateAsync(deleteTarget)
+        }}
+      />
     </div>
   )
 }

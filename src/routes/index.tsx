@@ -124,7 +124,14 @@ function Dashboard() {
                 </span>
               </div>
               {totalCount > 0 && (
-                <div className="h-1.5 flex-1 bg-stone-100 rounded-full overflow-hidden">
+                <div
+                  className="h-1.5 flex-1 bg-stone-100 rounded-full overflow-hidden"
+                  role="progressbar"
+                  aria-valuenow={doneCount}
+                  aria-valuemin={0}
+                  aria-valuemax={totalCount}
+                  aria-label={`今日进度：${doneCount}/${totalCount} 项已完成`}
+                >
                   <div
                     className="h-full rounded-full bg-brand-400 transition-all duration-700"
                     style={{ width: `${totalCount > 0 ? (doneCount / totalCount) * 100 : 0}%` }}
@@ -197,6 +204,14 @@ function Dashboard() {
           >
             添加项目
           </button>
+        </div>
+      )}
+
+      {/* Onboarding hint */}
+      {!isLoading && sortedHabits.length > 0 && doneCount === 0 && (
+        <div className="flex items-center justify-center gap-1.5 py-1 text-stone-300 animate-fade-in">
+          <span className="text-sm">👆</span>
+          <span className="text-xs font-medium">轻触卡片即可完成今日打卡</span>
         </div>
       )}
 
