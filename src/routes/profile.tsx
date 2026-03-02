@@ -220,15 +220,15 @@ function ProfilePage() {
         <div className="px-5 py-4 space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-stone-500 font-medium">应用版本</span>
-            <span className="font-semibold text-stone-700">1.0.0</span>
+            <span className="font-semibold text-stone-700">0.1.6</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-stone-500 font-medium">数据存储</span>
-            <span className="font-semibold text-stone-700">Supabase</span>
+            <span className="text-stone-500 font-medium">开发者</span>
+            <span className="font-semibold text-stone-700">CharmingDaiDai</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-stone-500 font-medium">框架</span>
-            <span className="font-semibold text-stone-700">React 19 + Vite</span>
+            <span className="text-stone-500 font-medium">主页</span>
+            <span className="font-semibold text-stone-700">https://github.com/CharmingDaiDai</span>
           </div>
         </div>
       </div>
