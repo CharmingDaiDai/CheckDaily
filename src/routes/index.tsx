@@ -143,6 +143,17 @@ function Dashboard() {
         </div>
       </div>
 
+      {/* Last 7 days mini chart */}
+      {totalCount > 0 && (
+        <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-100/80 animate-slide-up">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="w-4 h-4 text-brand-500" strokeWidth={2.5} />
+            <span className="font-bold text-stone-800 text-sm">近7天打卡</span>
+          </div>
+          <SimpleBarChart data={weekData} height={130} highlightToday />
+        </div>
+      )}
+
       {/* Habit grid */}
       {isLoading ? (
         <div className={gridClass}>
@@ -212,17 +223,6 @@ function Dashboard() {
         <div className="flex items-center justify-center gap-1.5 py-1 text-stone-300 animate-fade-in">
           <span className="text-sm">👆</span>
           <span className="text-xs font-medium">轻触卡片即可完成今日打卡</span>
-        </div>
-      )}
-
-      {/* Last 7 days mini chart */}
-      {totalCount > 0 && (
-        <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-100/80 animate-slide-up">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-4 h-4 text-brand-500" strokeWidth={2.5} />
-            <span className="font-bold text-stone-800 text-sm">近7天打卡</span>
-          </div>
-          <SimpleBarChart data={weekData} height={130} highlightToday />
         </div>
       )}
     </div>
