@@ -206,6 +206,11 @@ function HabitStatsPage() {
                       ) : (
                         <div className="text-sm text-stone-400 font-medium">无备注</div>
                       )}
+                      {formatDate(ci.checked_at) !== formatDate(ci.created_at) && (
+                        <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium">
+                          补
+                        </span>
+                      )}
                     </div>
                     <Button
                       variant="ghost"

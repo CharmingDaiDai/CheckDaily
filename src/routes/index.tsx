@@ -1,18 +1,20 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarDays, TrendingUp, LayoutGrid, List } from 'lucide-react'
+import { CalendarDays, TrendingUp, LayoutGrid, List, CalendarClock } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useHabits } from '@/hooks/useHabits'
 import { useTodayCheckIns, useCheckIns } from '@/hooks/useCheckIns'
 import { HabitCard } from '@/components/habits/HabitCard'
 import { SimpleBarChart } from '@/components/charts/BarCharts'
 import { Skeleton } from '@/components/ui/skeleton'
+import { BackdateSheet } from '@/components/habits/BackdateSheet'
 import { formatDate, getLast7Days } from '@/lib/utils'
 
 function Dashboard() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const [compact, setCompact] = useState(() => localStorage.getItem('dashboard-compact') === 'true')
+  const [backdateOpen, setBackdateOpen] = useState(false)
 
   // Redirect if not logged in
   useEffect(() => {
@@ -97,21 +99,31 @@ function Dashboard() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-extrabold text-stone-900">今日打卡</h1>
           {totalCount > 0 && !isLoading && (
-            <button
-              onClick={() => setCompact(v => {
-                const next = !v
-                localStorage.setItem('dashboard-compact', String(next))
-                return next
-              })}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors"
-              aria-label={compact ? '切换到卡片视图' : '切换到紧凑视图'}
-            >
-              {compact
-                ? <LayoutGrid className="w-4 h-4" strokeWidth={2} />
-                : <List className="w-4 h-4" strokeWidth={2} />
-              }
-              <span className="text-xs font-medium">{compact ? '卡片' : '紧凑'}</span>
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setBackdateOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors"
+                aria-label="补卡"
+              >
+                <CalendarClock className="w-4 h-4" strokeWidth={2} />
+                <span className="text-xs font-medium">补卡</span>
+              </button>
+              <button
+                onClick={() => setCompact(v => {
+                  const next = !v
+                  localStorage.setItem('dashboard-compact', String(next))
+                  return next
+                })}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors"
+                aria-label={compact ? '切换到卡片视图' : '切换到紧凑视图'}
+              >
+                {compact
+                  ? <LayoutGrid className="w-4 h-4" strokeWidth={2} />
+                  : <List className="w-4 h-4" strokeWidth={2} />
+                }
+                <span className="text-xs font-medium">{compact ? '卡片' : '紧凑'}</span>
+              </button>
+            </div>
           )}
         </div>
         <div className="mt-2 flex items-center gap-3">
@@ -224,6 +236,11 @@ function Dashboard() {
           <span className="text-sm">👆</span>
           <span className="text-xs font-medium">轻触卡片即可完成今日打卡</span>
         </div>
+      )}
+
+      {/* Backdate sheet */}
+      {habits && (
+        <BackdateSheet open={backdateOpen} onOpenChange={setBackdateOpen} habits={habits} />
       )}
     </div>
   )

@@ -181,7 +181,14 @@ function StatsPage() {
                         {h?.icon ?? '📌'}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-bold text-stone-800 text-sm">{h?.name ?? '未知项目'}</div>
+                        <div className="font-bold text-stone-800 text-sm">
+                          {h?.name ?? '未知项目'}
+                          {formatDate(ci.checked_at) !== formatDate(ci.created_at) && (
+                            <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium align-middle">
+                              补
+                            </span>
+                          )}
+                        </div>
                         {ci.note && (
                           <div className="text-xs text-stone-500 mt-0.5 font-medium">{ci.note}</div>
                         )}
