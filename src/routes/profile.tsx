@@ -220,7 +220,7 @@ function ProfilePage() {
         <div className="px-5 py-4 space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-stone-500 font-medium">应用版本</span>
-            <span className="font-semibold text-stone-700">0.1.6</span>
+            <span className="font-semibold text-stone-700">0.1.7</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-stone-500 font-medium">开发者</span>
