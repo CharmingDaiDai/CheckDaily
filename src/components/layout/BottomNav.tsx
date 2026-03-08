@@ -33,6 +33,10 @@ export function BottomNav() {
                 strokeWidth={active ? 2.5 : 1.8}
               />
               <span className="leading-none">{label}</span>
+              <div className={cn(
+                'w-1 h-1 rounded-full transition-all duration-300 mt-0.5',
+                active ? 'bg-brand-500 scale-100' : 'bg-transparent scale-0'
+              )} />
             </Link>
           )
         })}

@@ -38,8 +38,8 @@ export function Sidebar() {
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold',
                 'transition-all duration-150',
                 active
-                  ? 'bg-brand-50 text-brand-600'
-                  : 'text-stone-500 hover:bg-stone-50 hover:text-stone-800'
+                  ? 'bg-brand-50 text-brand-600 border-l-3 border-l-brand-500'
+                  : 'text-stone-500 hover:bg-stone-50 hover:text-stone-800 border-l-3 border-l-transparent'
               )}
             >
               <Icon
