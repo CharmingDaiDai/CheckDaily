@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 
 interface ConfirmDialogProps {
   open: boolean
@@ -69,7 +70,7 @@ export function ConfirmDialog({
           >
             {isLoading ? (
               <span className="flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                <Spinner />
                 处理中…
               </span>
             ) : confirmText}

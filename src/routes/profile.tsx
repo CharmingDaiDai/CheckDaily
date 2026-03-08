@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { useState, useEffect } from 'react'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useNavigate } from '@tanstack/react-router'
 import { LogOut, User, Mail, Info, Shield, ChevronRight, Eye, EyeOff, Lock, Download, Database } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -11,27 +11,27 @@ import { useAuthStore } from '@/store/authStore'
 import { signOut, updateEmail, updatePassword } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/useToast'
+import { Spinner } from '@/components/ui/spinner'
+import { useFormDialog } from '@/hooks/useFormDialog'
 
 function ProfilePage() {
   const user = useAuthStore((s) => s.user)
   const navigate = useNavigate()
 
   // Email dialog
-  const [emailOpen, setEmailOpen] = useState(false)
+  const emailDialog = useFormDialog()
   const [newEmail, setNewEmail] = useState('')
-  const [emailLoading, setEmailLoading] = useState(false)
-  const [emailMsg, setEmailMsg] = useState('')
-  const [emailError, setEmailError] = useState('')
 
   // Password dialog
-  const [pwOpen, setPwOpen] = useState(false)
+  const pwDialog = useFormDialog()
   const [newPw, setNewPw] = useState('')
   const [confirmPw, setConfirmPw] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
-  const [pwLoading, setPwLoading] = useState(false)
-  const [pwMsg, setPwMsg] = useState('')
-  const [pwError, setPwError] = useState('')
+
+  // Reset field values when dialogs close
+  useEffect(() => { if (!emailDialog.open) setNewEmail('') }, [emailDialog.open])
+  useEffect(() => { if (!pwDialog.open) { setNewPw(''); setConfirmPw(''); setShowPw(false); setShowConfirm(false) } }, [pwDialog.open])
 
   // Sign out dialog
   const [signOutOpen, setSignOutOpen] = useState(false)
@@ -79,61 +79,45 @@ function ProfilePage() {
 
   async function handleEmailUpdate(e: React.SyntheticEvent) {
     e.preventDefault()
-    setEmailError('')
-    setEmailMsg('')
-    setEmailLoading(true)
+    emailDialog.setError('')
+    emailDialog.setMsg('')
+    emailDialog.setLoading(true)
     try {
       await updateEmail(newEmail.trim())
-      setEmailMsg(`验证邮件已发送至 ${newEmail.trim()}，点击邮件中的链接完成修改`)
+      emailDialog.setMsg(`验证邮件已发送至 ${newEmail.trim()}，点击邮件中的链接完成修改`)
       setNewEmail('')
     } catch (err) {
-      setEmailError(err instanceof Error ? err.message : '修改失败，请重试')
+      emailDialog.setError(err instanceof Error ? err.message : '修改失败，请重试')
     } finally {
-      setEmailLoading(false)
+      emailDialog.setLoading(false)
     }
   }
 
   async function handlePasswordUpdate(e: React.SyntheticEvent) {
     e.preventDefault()
-    setPwError('')
-    setPwMsg('')
+    pwDialog.setError('')
+    pwDialog.setMsg('')
     if (newPw.length < 8) {
-      setPwError('密码至少需要 8 位')
+      pwDialog.setError('密码至少需要 8 位')
       return
     }
     if (newPw !== confirmPw) {
-      setPwError('两次输入的密码不一致')
+      pwDialog.setError('两次输入的密码不一致')
       return
     }
-    setPwLoading(true)
+    pwDialog.setLoading(true)
     try {
       await updatePassword(newPw)
-      setPwMsg('密码修改成功')
+      pwDialog.setMsg('密码修改成功')
       setNewPw('')
       setConfirmPw('')
     } catch (err) {
-      setPwError(err instanceof Error ? err.message : '修改失败，请重试')
+      pwDialog.setError(err instanceof Error ? err.message : '修改失败，请重试')
     } finally {
-      setPwLoading(false)
+      pwDialog.setLoading(false)
     }
   }
 
-  function openEmail() {
-    setNewEmail('')
-    setEmailMsg('')
-    setEmailError('')
-    setEmailOpen(true)
-  }
-
-  function openPw() {
-    setNewPw('')
-    setConfirmPw('')
-    setPwMsg('')
-    setPwError('')
-    setShowPw(false)
-    setShowConfirm(false)
-    setPwOpen(true)
-  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6">
@@ -165,7 +149,7 @@ function ProfilePage() {
         </div>
         <button
           className="w-full flex items-center justify-between px-5 py-4 border-b border-stone-50 hover:bg-stone-50 transition-colors text-left"
-          onClick={openEmail}
+          onClick={emailDialog.openDialog}
         >
           <div className="flex items-center gap-3">
             <Mail className="w-4 h-4 text-stone-400" />
@@ -175,7 +159,7 @@ function ProfilePage() {
         </button>
         <button
           className="w-full flex items-center justify-between px-5 py-4 hover:bg-stone-50 transition-colors text-left"
-          onClick={openPw}
+          onClick={pwDialog.openDialog}
         >
           <div className="flex items-center gap-3">
             <Lock className="w-4 h-4 text-stone-400" />
@@ -204,7 +188,7 @@ function ProfilePage() {
             </div>
           </div>
           {exporting ? (
-            <span className="w-4 h-4 border-2 border-stone-300 border-t-stone-500 rounded-full animate-spin" />
+            <Spinner variant="muted" />
           ) : (
             <ChevronRight className="w-4 h-4 text-stone-300" />
           )}
@@ -220,7 +204,7 @@ function ProfilePage() {
         <div className="px-5 py-4 space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-stone-500 font-medium">应用版本</span>
-            <span className="font-semibold text-stone-700">0.1.7</span>
+            <span className="font-semibold text-stone-700">{__APP_VERSION__}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-stone-500 font-medium">开发者</span>
@@ -255,15 +239,15 @@ function ProfilePage() {
       />
 
       {/* Update email dialog */}
-      <Dialog open={emailOpen} onOpenChange={(o) => { if (!o) setEmailOpen(false) }}>
+      <Dialog open={emailDialog.open} onOpenChange={(o) => { if (!o) emailDialog.close() }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>修改邮箱</DialogTitle>
           </DialogHeader>
-          {emailMsg ? (
+          {emailDialog.msg ? (
             <div className="py-4 text-center space-y-3">
-              <div className="text-sm text-stone-600 leading-relaxed">{emailMsg}</div>
-              <Button variant="outline" className="w-full" onClick={() => setEmailOpen(false)}>
+              <div className="text-sm text-stone-600 leading-relaxed">{emailDialog.msg}</div>
+              <Button variant="outline" className="w-full" onClick={() => emailDialog.close()}>
                 知道了
               </Button>
             </div>
@@ -286,15 +270,15 @@ function ProfilePage() {
                   />
                 </div>
               </div>
-              {emailError && (
+              {emailDialog.error && (
                 <div className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-xl font-medium">
-                  {emailError}
+                  {emailDialog.error}
                 </div>
               )}
-              <Button type="submit" className="w-full" disabled={emailLoading || !newEmail.trim()}>
-                {emailLoading ? (
+              <Button type="submit" className="w-full" disabled={emailDialog.loading || !newEmail.trim()}>
+                {emailDialog.loading ? (
                   <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    <Spinner />
                     发送验证邮件…
                   </span>
                 ) : '发送验证邮件'}
@@ -305,15 +289,15 @@ function ProfilePage() {
       </Dialog>
 
       {/* Update password dialog */}
-      <Dialog open={pwOpen} onOpenChange={(o) => { if (!o) setPwOpen(false) }}>
+      <Dialog open={pwDialog.open} onOpenChange={(o) => { if (!o) pwDialog.close() }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>修改密码</DialogTitle>
           </DialogHeader>
-          {pwMsg ? (
+          {pwDialog.msg ? (
             <div className="py-4 text-center space-y-3">
-              <div className="text-sm text-green-600 font-medium">{pwMsg}</div>
-              <Button variant="outline" className="w-full" onClick={() => setPwOpen(false)}>
+              <div className="text-sm text-green-600 font-medium">{pwDialog.msg}</div>
+              <Button variant="outline" className="w-full" onClick={() => pwDialog.close()}>
                 完成
               </Button>
             </div>
@@ -365,15 +349,15 @@ function ProfilePage() {
                   </button>
                 </div>
               </div>
-              {pwError && (
+              {pwDialog.error && (
                 <div className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-xl font-medium">
-                  {pwError}
+                  {pwDialog.error}
                 </div>
               )}
-              <Button type="submit" className="w-full" disabled={pwLoading || !newPw || !confirmPw}>
-                {pwLoading ? (
+              <Button type="submit" className="w-full" disabled={pwDialog.loading || !newPw || !confirmPw}>
+                {pwDialog.loading ? (
                   <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    <Spinner />
                     修改中…
                   </span>
                 ) : '确认修改'}
@@ -388,4 +372,8 @@ function ProfilePage() {
 
 export const Route = createFileRoute('/profile')({
   component: ProfilePage,
+  beforeLoad: ({ context }) => {
+    if (context.auth.loading) return
+    if (!context.auth.user) throw redirect({ to: '/login' })
+  },
 })

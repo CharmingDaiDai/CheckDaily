@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Check, Plus, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Spinner } from '@/components/ui/spinner'
 import type { Habit } from '@/types'
 import {
   BottomSheet,
@@ -121,7 +122,7 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
           >
             {checkIn.isPending ? (
               <span className="flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                <Spinner />
                 打卡中…
               </span>
             ) : (
