@@ -1,18 +1,22 @@
-import { useState } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useState, useEffect } from 'react'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { Mail, Lock, Flame, ArrowRight, CheckCircle2, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { sendMagicLink, signInWithPassword, signUpWithPassword } from '@/hooks/useAuth'
+import { Spinner } from '@/components/ui/spinner'
 import { useAuthStore } from '@/store/authStore'
-import { useEffect } from 'react'
 
 function LoginPage() {
-  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
+  const navigate = useNavigate()
 
+  // Redirect to home when user becomes authenticated (e.g. after password login)
+  useEffect(() => {
+    if (user) void navigate({ to: '/' })
+  }, [user, navigate])
   // Magic link state
   const [mlEmail, setMlEmail] = useState('')
   const [mlLoading, setMlLoading] = useState(false)
@@ -29,10 +33,6 @@ function LoginPage() {
   const [pwLoading, setPwLoading] = useState(false)
   const [pwError, setPwError] = useState('')
   const [registered, setRegistered] = useState(false)
-
-  useEffect(() => {
-    if (user) void navigate({ to: '/' })
-  }, [user, navigate])
 
   async function handleMagicLink(e: React.SyntheticEvent) {
     e.preventDefault()
@@ -162,7 +162,7 @@ function LoginPage() {
                   <Button type="submit" size="xl" className="w-full" disabled={mlLoading || !mlEmail.trim()}>
                     {mlLoading ? (
                       <span className="flex items-center gap-2">
-                        <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        <Spinner size="default" />
                         发送中…
                       </span>
                     ) : (
@@ -292,7 +292,7 @@ function LoginPage() {
                   >
                     {pwLoading ? (
                       <span className="flex items-center gap-2">
-                        <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        <Spinner size="default" />
                         {mode === 'login' ? '登录中…' : '注册中…'}
                       </span>
                     ) : (
@@ -339,4 +339,8 @@ function LoginPage() {
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
+  beforeLoad: ({ context }) => {
+    if (context.auth.loading) return
+    if (context.auth.user) throw redirect({ to: '/' })
+  },
 })

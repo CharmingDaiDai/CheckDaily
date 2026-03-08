@@ -57,3 +57,5 @@ function generateColorScale(hex: string): string[] {
   }
   return scales[hex] ?? scales['#f97316']
 }
+
+export default HabitHeatmap

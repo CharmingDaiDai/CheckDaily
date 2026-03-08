@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState, useMemo, lazy, Suspense } from 'react'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { Flame, Trophy, Target, BarChart2, ChevronRight, ChevronLeft, Search, X } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
-import { HabitHeatmap } from '@/components/charts/HabitHeatmap'
+const HabitHeatmap = lazy(() => import('@/components/charts/HabitHeatmap'))
 import { SimpleBarChart, StackedBarChart } from '@/components/charts/BarCharts'
 import { StatCard } from '@/components/charts/StatCard'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -11,6 +11,7 @@ import { useHabits } from '@/hooks/useHabits'
 import { useCheckIns, useYearlyCheckInCounts } from '@/hooks/useCheckIns'
 import {
   formatDate,
+  today,
   getLast7Days,
   getLast30Days,
   getMonthRange,
@@ -37,9 +38,22 @@ function StatsPage() {
     endDate: `${selectedYear}-12-31`,
   })
   const yearStart = `${selectedYear}-01-01`
+  const last7 = useMemo(() => getLast7Days(), [])
+  const last30 = useMemo(() => getLast30Days(), [])
+
+  const checkInsByHabit = useMemo(() => {
+    const map = new Map<string, string[]>()
+    for (const ci of allCheckIns ?? []) {
+      const d = formatDate(ci.checked_at)
+      const arr = map.get(ci.habit_id)
+      if (arr) arr.push(d)
+      else map.set(ci.habit_id, [d])
+    }
+    return map
+  }, [allCheckIns])
 
   // Today's check-ins
-  const todayStr = formatDate(new Date())
+  const todayStr = today()
   const todayCheckIns = useMemo(
     () => allCheckIns?.filter((ci) => formatDate(ci.checked_at) === todayStr) ?? [],
     [allCheckIns, todayStr]
@@ -74,12 +88,12 @@ function StatsPage() {
       countByDate[d] = (countByDate[d] ?? 0) + 1
     }
     const days = ['日', '一', '二', '三', '四', '五', '六']
-    return getLast7Days().map((d) => ({
+    return last7.map((d) => ({
       label: days[new Date(d).getDay()],
       count: countByDate[d] ?? 0,
       date: d,
     }))
-  }, [allCheckIns])
+  }, [allCheckIns, last7])
 
   // Month stacked bar data
   const habitsMap = useMemo(() => {
@@ -90,7 +104,6 @@ function StatsPage() {
 
   // Month stacked bar data
   const monthData = useMemo(() => {
-    const last30 = getLast30Days()
     const map: Record<string, Record<string, number>> = {}
     for (const d of last30) map[d] = {}
     for (const ci of allCheckIns ?? []) {
@@ -104,7 +117,7 @@ function StatsPage() {
       label: i % 5 === 0 ? String(new Date(d).getDate()) : '',
       ...(map[d] ?? {}),
     }))
-  }, [allCheckIns, habitsMap])
+  }, [allCheckIns, habitsMap, last30])
 
   // Day timeline
   const todayTimeline = useMemo(() => {
@@ -124,7 +137,7 @@ function StatsPage() {
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="text-sm text-stone-400 font-medium">{selectedYear} 年度数据</span>
+          <span className="text-sm text-stone-400 font-medium" aria-live="polite">{selectedYear} 年度数据</span>
           <button
             className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             onClick={() => setSelectedYear(y => y + 1)}
@@ -231,11 +244,13 @@ function StatsPage() {
             {isLoading ? (
               <Skeleton className="h-40 w-full" />
             ) : (
-              <HabitHeatmap
-                data={heatmapData}
-                from={`${selectedYear}-01-01`}
-                to={`${selectedYear}-12-31`}
-              />
+              <Suspense fallback={<Skeleton className="h-40 w-full" />}>
+                <HabitHeatmap
+                  data={heatmapData}
+                  from={`${selectedYear}-01-01`}
+                  to={`${selectedYear}-12-31`}
+                />
+              </Suspense>
             )}
           </TabsContent>
         </Tabs>
@@ -271,12 +286,8 @@ function StatsPage() {
             {habits
               .filter(h => h.name.toLowerCase().includes(habitSearch.toLowerCase()))
               .map((h) => {
-                const cnt = (allCheckIns ?? []).filter(
-                  (ci) => ci.habit_id === h.id && formatDate(ci.checked_at) >= yearStart
-                ).length
-                const habitDates = (allCheckIns ?? [])
-                  .filter((ci) => ci.habit_id === h.id)
-                  .map((ci) => formatDate(ci.checked_at))
+                const habitDates = checkInsByHabit.get(h.id) ?? []
+                const cnt = habitDates.filter(d => d >= yearStart).length
                 const habitStreak = computeStreak(habitDates)
                 return (
                   <Link
@@ -316,4 +327,8 @@ function StatsPage() {
 
 export const Route = createFileRoute('/stats/')({
   component: StatsPage,
+  beforeLoad: ({ context }) => {
+    if (context.auth.loading) return
+    if (!context.auth.user) throw redirect({ to: '/login' })
+  },
 })

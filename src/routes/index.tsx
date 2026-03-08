@@ -1,7 +1,6 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect, useMemo, useState } from 'react'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { useMemo, useState } from 'react'
 import { CalendarDays, TrendingUp, LayoutGrid, List, CalendarClock } from 'lucide-react'
-import { useAuthStore } from '@/store/authStore'
 import { useHabits } from '@/hooks/useHabits'
 import { useTodayCheckIns, useCheckIns } from '@/hooks/useCheckIns'
 import { HabitCard } from '@/components/habits/HabitCard'
@@ -12,19 +11,13 @@ import { formatDate, getLast7Days } from '@/lib/utils'
 
 function Dashboard() {
   const navigate = useNavigate()
-  const user = useAuthStore((s) => s.user)
   const [compact, setCompact] = useState(() => localStorage.getItem('dashboard-compact') === 'true')
   const [backdateOpen, setBackdateOpen] = useState(false)
-
-  // Redirect if not logged in
-  useEffect(() => {
-    if (!user) void navigate({ to: '/login' })
-  }, [user, navigate])
 
   const { data: habits, isLoading: habitsLoading } = useHabits()
   const { data: todayCheckIns, isLoading: todayLoading } = useTodayCheckIns()
 
-  const last7 = getLast7Days()
+  const last7 = useMemo(() => getLast7Days(), [])
   const { data: recentCheckIns } = useCheckIns({
     startDate: last7[0],
     endDate: last7[last7.length - 1],
@@ -248,4 +241,8 @@ function Dashboard() {
 
 export const Route = createFileRoute('/')({
   component: Dashboard,
+  beforeLoad: ({ context }) => {
+    if (context.auth.loading) return
+    if (!context.auth.user) throw redirect({ to: '/login' })
+  },
 })

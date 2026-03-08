@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { CalendarClock, Check } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { formatDate } from '@/lib/utils'
+import { cn, formatDate } from '@/lib/utils'
+import { Spinner } from '@/components/ui/spinner'
 import type { Habit } from '@/types'
 import {
   BottomSheet,
@@ -103,13 +103,15 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
     if (selectedHabits.size === 0) return
     setSubmitting(true)
     try {
-      for (const habitId of selectedHabits) {
-        await checkIn.mutateAsync({
-          habit_id: habitId,
-          checked_at: `${selectedDate}T12:00:00.000Z`,
-          note: note.trim() || undefined,
-        })
-      }
+      await Promise.all(
+        [...selectedHabits].map(habitId =>
+          checkIn.mutateAsync({
+            habit_id: habitId,
+            checked_at: `${selectedDate}T12:00:00.000Z`,
+            note: note.trim() || undefined,
+          })
+        )
+      )
       toast.success(`已补卡 ${selectedHabits.size} 项`)
       onOpenChange(false)
     } catch {
@@ -158,6 +160,7 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
                 return (
                   <button
                     key={date}
+                    aria-label={`${month}月${day}日 周${weekday}${dayRemaining <= 0 ? ' 已满' : ''}`}
                     className={cn(
                       'flex-1 flex flex-col items-center gap-0.5 py-2.5 px-2 rounded-xl border-2 transition-all',
                       isSelected
@@ -292,7 +295,7 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
             >
               {submitting ? (
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  <Spinner />
                   补卡中…
                 </span>
               ) : (

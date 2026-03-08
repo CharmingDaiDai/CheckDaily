@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { useMemo, useState, lazy, Suspense } from 'react'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { ArrowLeft, Flame, Trophy, Target, Hash, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
-import { HabitHeatmap } from '@/components/charts/HabitHeatmap'
+const HabitHeatmap = lazy(() => import('@/components/charts/HabitHeatmap'))
 import { TrendLineChart } from '@/components/charts/LineCharts'
 import { StatCard } from '@/components/charts/StatCard'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -59,7 +59,7 @@ function HabitStatsPage() {
   }, [yearCounts])
 
   // 30 day line chart
-  const last30 = getLast30Days()
+  const last30 = useMemo(() => getLast30Days(), [])
   const lineData = useMemo(() => {
     const countByDate: Record<string, number> = {}
     for (const ci of allCheckIns ?? []) {
@@ -148,12 +148,14 @@ function HabitStatsPage() {
         {isLoading ? (
           <Skeleton className="h-40 w-full" />
         ) : (
-          <HabitHeatmap
-            data={heatmapData}
-            from={`${selectedYear}-01-01`}
-            to={`${selectedYear}-12-31`}
-            color={color}
-          />
+          <Suspense fallback={<Skeleton className="h-40 w-full" />}>
+            <HabitHeatmap
+              data={heatmapData}
+              from={`${selectedYear}-01-01`}
+              to={`${selectedYear}-12-31`}
+              color={color}
+            />
+          </Suspense>
         )}
       </div>
 
@@ -253,4 +255,8 @@ function HabitStatsPage() {
 
 export const Route = createFileRoute('/stats/$habitId')({
   component: HabitStatsPage,
+  beforeLoad: ({ context }) => {
+    if (context.auth.loading) return
+    if (!context.auth.user) throw redirect({ to: '/login' })
+  },
 })

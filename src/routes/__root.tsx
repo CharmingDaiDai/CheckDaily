@@ -1,4 +1,4 @@
-import { createRootRoute, Outlet } from '@tanstack/react-router'
+import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
 import { useAuthInit } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/authStore'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toast'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
+import type { RouterContext } from '@/main'
 
 function RootLayout() {
   useAuthInit()
@@ -48,6 +49,6 @@ function RootLayout() {
   )
 }
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
 })

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Plus, Pencil, Archive, MoreHorizontal, ListCheck, Search, X, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -252,4 +252,8 @@ function HabitsPage() {
 
 export const Route = createFileRoute('/habits')({
   component: HabitsPage,
+  beforeLoad: ({ context }) => {
+    if (context.auth.loading) return
+    if (!context.auth.user) throw redirect({ to: '/login' })
+  },
 })
