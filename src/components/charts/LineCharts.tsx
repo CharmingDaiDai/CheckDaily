@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import {
   LineChart,
   Line,
@@ -8,6 +9,7 @@ import {
   ResponsiveContainer,
   Dot,
 } from 'recharts'
+import { SimpleChartTooltip } from './ChartTooltip'
 
 interface LineData {
   label: string
@@ -21,11 +23,12 @@ interface TrendLineChartProps {
 }
 
 export function TrendLineChart({ data, color = '#f97316', height = 180 }: TrendLineChartProps) {
+  const gradId = useId()
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 8, right: 8, left: -28, bottom: 0 }}>
         <defs>
-          <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor={color} stopOpacity={0.15} />
             <stop offset="95%" stopColor={color} stopOpacity={0} />
           </linearGradient>
@@ -46,17 +49,7 @@ export function TrendLineChart({ data, color = '#f97316', height = 180 }: TrendL
         />
         <Tooltip
           cursor={{ stroke: '#e7e5e4', strokeWidth: 2 }}
-          content={({ active, payload, label }) => {
-            if (active && payload?.length) {
-              return (
-                <div className="bg-stone-900 text-white text-xs px-3 py-2 rounded-xl shadow-lg font-medium">
-                  <div className="text-stone-300 mb-0.5">{label}</div>
-                  <div>{payload[0]?.value} 次</div>
-                </div>
-              )
-            }
-            return null
-          }}
+          content={<SimpleChartTooltip />}
         />
         <Line
           type="monotone"

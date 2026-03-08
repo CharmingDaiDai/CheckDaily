@@ -3,8 +3,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn, HABIT_COLORS, HABIT_ICONS } from '@/lib/utils'
+import { Spinner } from '@/components/ui/spinner'
 import type { Habit } from '@/types'
 import { useCreateHabit, useUpdateHabit } from '@/hooks/useHabits'
+
+const COLOR_NAMES: Record<string, string> = {
+  '#f97316': '橙色', '#ef4444': '红色', '#ec4899': '粉色', '#a855f7': '紫色',
+  '#6366f1': '靛蓝', '#3b82f6': '蓝色', '#06b6d4': '青色', '#14b8a6': '绿松石',
+  '#22c55e': '绿色', '#84cc16': '黄绿', '#eab308': '黄色', '#f59e0b': '琥珀',
+}
 
 interface HabitFormProps {
   existing?: Habit
@@ -27,12 +34,16 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault()
     if (!name.trim()) return
-    if (existing) {
-      await update.mutateAsync({ id: existing.id, name: name.trim(), color, icon })
-    } else {
-      await create.mutateAsync({ name: name.trim(), color, icon })
+    try {
+      if (existing) {
+        await update.mutateAsync({ id: existing.id, name: name.trim(), color, icon })
+      } else {
+        await create.mutateAsync({ name: name.trim(), color, icon })
+      }
+      onClose()
+    } catch {
+      // toast.error is handled by the mutation's onError
     }
-    onClose()
   }
 
   function selectPreset(emoji: string) {
@@ -119,7 +130,7 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
                 color === c ? 'ring-2 ring-stone-700 scale-110' : 'hover:scale-105'
               )}
               style={{ backgroundColor: c }}
-              aria-label={c}
+              aria-label={COLOR_NAMES[c] ?? c}
             />
           ))}
         </div>
@@ -148,7 +159,7 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
           style={{ backgroundColor: color }}>
           {isPending ? (
             <span className="flex items-center gap-2">
-              <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              <Spinner />
               保存中…
             </span>
           ) : (
