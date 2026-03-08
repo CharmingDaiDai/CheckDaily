@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { Check, Plus, RotateCcw } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { Check, Plus, RotateCcw, MoreHorizontal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Spinner } from '@/components/ui/spinner'
 import type { Habit } from '@/types'
@@ -8,7 +8,6 @@ import {
   BottomSheetContent,
   BottomSheetHeader,
   BottomSheetTitle,
-  BottomSheetTrigger,
 } from '@/components/ui/bottom-sheet'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/input'
@@ -30,6 +29,8 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
   const [showNote, setShowNote] = useState(false)
   const [celebrating, setCelebrating] = useState(false)
   const prevDoneRef = useRef(todayCount > 0)
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const didLongPress = useRef(false)
   const checkIn = useCheckIn()
   const deleteCheckIn = useDeleteCheckIn()
   const isDone = todayCount > 0
@@ -55,6 +56,18 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
     prevDoneRef.current = isNowDone
   }, [isDone])
 
+  // One-tap check-in (directly on card click)
+  const handleQuickCheckIn = useCallback(async () => {
+    if (checkIn.isPending) return
+    try {
+      await checkIn.mutateAsync({ habit_id: habit.id })
+      navigator.vibrate?.(15)
+    } catch {
+      toast.error('打卡失败，请重试')
+    }
+  }, [checkIn, habit.id])
+
+  // Check-in with note (from bottom sheet)
   async function handleCheckIn() {
     try {
       await checkIn.mutateAsync({ habit_id: habit.id, note: note.trim() || undefined })
@@ -74,6 +87,31 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
       toast.error('撤销失败，请重试')
     }
   }
+
+  // Long-press handlers
+  const onPointerDown = useCallback(() => {
+    didLongPress.current = false
+    longPressTimer.current = setTimeout(() => {
+      didLongPress.current = true
+      setOpen(true)
+    }, 500)
+  }, [])
+
+  const onPointerUpOrLeave = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }, [])
+
+  const handleCardClick = useCallback(() => {
+    // If long-press just fired, don't also do a quick check-in
+    if (didLongPress.current) {
+      didLongPress.current = false
+      return
+    }
+    handleQuickCheckIn()
+  }, [handleQuickCheckIn])
 
   const sheetContent = (
     <BottomSheetContent>
@@ -148,133 +186,192 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
     </BottomSheetContent>
   )
 
+  // More-options trigger (opens BottomSheet) — uses div+role to avoid nested <button>
+  const moreButton = (
+    <div
+      role="button"
+      tabIndex={0}
+      className={cn(
+        'absolute top-2 right-2 z-10 w-6 h-6 rounded-lg bg-white/80 backdrop-blur-sm',
+        'flex items-center justify-center cursor-pointer',
+        'text-stone-400 hover:text-stone-600 hover:bg-white',
+        'transition-opacity duration-150',
+        isDone ? 'opacity-60' : 'opacity-0 group-hover:opacity-100',
+      )}
+      onClick={(e) => {
+        e.stopPropagation()
+        setOpen(true)
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          e.stopPropagation()
+          setOpen(true)
+        }
+      }}
+      aria-label="更多选项"
+    >
+      <MoreHorizontal className="w-3.5 h-3.5" />
+    </div>
+  )
+
+  // Ripple element shown during celebration
+  const rippleElement = celebrating ? (
+    <span
+      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full animate-ripple pointer-events-none"
+      style={{ backgroundColor: habit.color + '30' }}
+    />
+  ) : null
+
   // ── Compact mode ──────────────────────────────────────────
   if (compact) {
     return (
-      <BottomSheet open={open} onOpenChange={setOpen}>
-        <BottomSheetTrigger asChild>
-          <button
-            className={cn(
-              'group relative flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1',
-              'rounded-2xl border tap-scale transition-all duration-200 w-full select-none',
-              'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
-              'bg-white shadow-[var(--shadow-card)]',
-              isDone ? 'border-transparent' : 'border-stone-200',
-              celebrating && 'animate-celebrate',
-            )}
-            style={{
-              ...(isDone ? { borderColor: habit.color + '50' } : {}),
-              ...style,
-            }}
-            aria-label={`打卡：${habit.name}`}
-          >
-            {/* Color accent bar */}
-            <div
-              className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl transition-colors duration-300"
-              style={{ backgroundColor: isDone ? habit.color : '#e7e5e4' }}
-            />
-            {/* Icon + done badge */}
-            <div className="relative">
-              <div
-                className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl"
-                style={{ backgroundColor: habit.color + '18' }}
-              >
-                {habit.icon || '📌'}
-              </div>
-              {isDone && (
-                <div
-                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center animate-check-bounce"
-                  style={{ backgroundColor: habit.color }}
-                >
-                  <Check className="w-2.5 h-2.5 text-white" strokeWidth={3.5} />
-                </div>
-              )}
-            </div>
-            {/* Name */}
-            <div className="text-xs font-semibold text-stone-800 text-center line-clamp-2 w-full px-0.5 leading-snug">
-              {habit.name}
-            </div>
-            {/* Count badge (only when > 1) */}
-            {todayCount > 1 && (
-              <span
-                className="text-xs font-bold px-1.5 rounded-full leading-5"
-                style={{ backgroundColor: habit.color + '18', color: habit.color }}
-              >
-                ×{todayCount}
-              </span>
-            )}
-          </button>
-        </BottomSheetTrigger>
-        {sheetContent}
-      </BottomSheet>
-    )
-  }
-
-  // ── Normal mode ───────────────────────────────────────────
-  return (
-    <BottomSheet open={open} onOpenChange={setOpen}>
-      <BottomSheetTrigger asChild>
+      <>
         <button
           className={cn(
-            'group relative flex flex-col items-start p-4 rounded-2xl tap-scale',
-            'border transition-all duration-200 text-left w-full select-none',
+            'group relative flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1',
+            'rounded-2xl border tap-scale transition-all duration-200 w-full select-none',
             'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
+            'animate-slide-up',
             isDone
-              ? 'bg-white border-stone-200 shadow-[var(--shadow-card)]'
-              : 'bg-white border-stone-200 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]',
+              ? 'border-transparent shadow-sm'
+              : 'bg-white border-stone-200 shadow-[var(--shadow-card)]',
             celebrating && 'animate-celebrate',
           )}
-          style={style}
+          style={{
+            ...(isDone
+              ? { borderColor: habit.color + '50', backgroundColor: habit.color + '06' }
+              : {}),
+            ...style,
+          }}
           aria-label={`打卡：${habit.name}`}
+          onClick={handleCardClick}
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUpOrLeave}
+          onPointerLeave={onPointerUpOrLeave}
         >
+          {moreButton}
+          {rippleElement}
           {/* Color accent bar */}
           <div
-            className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl transition-all duration-300"
+            className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl transition-colors duration-300"
             style={{ backgroundColor: isDone ? habit.color : '#e7e5e4' }}
           />
-
-          {/* Icon + Done badge */}
-          <div className="flex w-full items-start justify-between mt-1">
+          {/* Icon + done badge */}
+          <div className="relative">
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+              className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl"
               style={{ backgroundColor: habit.color + '18' }}
             >
               {habit.icon || '📌'}
             </div>
             {isDone && (
               <div
-                className="w-6 h-6 rounded-full flex items-center justify-center animate-check-bounce"
+                className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center animate-check-bounce"
                 style={{ backgroundColor: habit.color }}
               >
-                <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                <Check className="w-2.5 h-2.5 text-white" strokeWidth={3.5} />
               </div>
             )}
           </div>
-
           {/* Name */}
-          <div className="mt-3 font-bold text-stone-900 text-sm leading-snug line-clamp-2">
+          <div className="text-xs font-semibold text-stone-800 text-center line-clamp-2 w-full px-0.5 leading-snug">
             {habit.name}
           </div>
-
-          {/* Count */}
-          <div className="mt-1.5 flex items-center gap-1.5">
-            {isDone ? (
-              <span
-                className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: habit.color + '18', color: habit.color }}
-              >
-                今日 ×{todayCount}
-              </span>
-            ) : (
-              <span className="text-xs text-stone-400 font-medium flex items-center gap-1">
-                <Plus className="w-3 h-3" strokeWidth={2.5} />
-                点击打卡
-              </span>
-            )}
-          </div>
+          {/* Count badge (only when > 1) */}
+          {todayCount > 1 && (
+            <span
+              className="text-xs font-bold px-1.5 rounded-full leading-5"
+              style={{ backgroundColor: habit.color + '18', color: habit.color }}
+            >
+              ×{todayCount}
+            </span>
+          )}
         </button>
-      </BottomSheetTrigger>
-      {sheetContent}
-    </BottomSheet>
+        <BottomSheet open={open} onOpenChange={setOpen}>
+          {sheetContent}
+        </BottomSheet>
+      </>
+    )
+  }
+
+  // ── Normal mode ───────────────────────────────────────────
+  return (
+    <>
+      <button
+        className={cn(
+          'group relative flex flex-col items-start p-4 rounded-2xl tap-scale',
+          'border text-left w-full select-none',
+          'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
+          'animate-slide-up',
+          isDone
+            ? 'border-transparent shadow-sm'
+            : 'bg-white border-stone-200 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200',
+          celebrating && 'animate-celebrate',
+        )}
+        style={{
+          ...(isDone
+            ? { borderColor: habit.color + '50', backgroundColor: habit.color + '06' }
+            : {}),
+          ...style,
+        }}
+        aria-label={`打卡：${habit.name}`}
+        onClick={handleCardClick}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUpOrLeave}
+        onPointerLeave={onPointerUpOrLeave}
+      >
+        {moreButton}
+        {rippleElement}
+        {/* Color accent bar */}
+        <div
+          className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl transition-all duration-300"
+          style={{ backgroundColor: isDone ? habit.color : '#e7e5e4' }}
+        />
+
+        {/* Icon + Done badge */}
+        <div className="flex w-full items-start justify-between mt-1">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+            style={{ backgroundColor: habit.color + '18' }}
+          >
+            {habit.icon || '📌'}
+          </div>
+          {isDone && (
+            <div
+              className="w-6 h-6 rounded-full flex items-center justify-center animate-check-bounce"
+              style={{ backgroundColor: habit.color }}
+            >
+              <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+            </div>
+          )}
+        </div>
+
+        {/* Name */}
+        <div className="mt-3 font-bold text-stone-900 text-sm leading-snug line-clamp-2">
+          {habit.name}
+        </div>
+
+        {/* Count */}
+        <div className="mt-1.5 flex items-center gap-1.5">
+          {isDone ? (
+            <span
+              className="text-xs font-semibold px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: habit.color + '18', color: habit.color }}
+            >
+              今日 ×{todayCount}
+            </span>
+          ) : (
+            <span className="text-xs text-stone-400 font-medium flex items-center gap-1">
+              <Plus className="w-3 h-3" strokeWidth={2.5} />
+              点击打卡
+            </span>
+          )}
+        </div>
+      </button>
+      <BottomSheet open={open} onOpenChange={setOpen}>
+        {sheetContent}
+      </BottomSheet>
+    </>
   )
 }
