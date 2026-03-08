@@ -92,15 +92,18 @@ function LoginPage() {
       <div className="w-full max-w-sm animate-slide-up">
         {/* Logo + title */}
         <div className="flex flex-col items-center mb-10">
-          <div className="w-16 h-16 rounded-2xl bg-brand-500 flex items-center justify-center shadow-[0_8px_24px_rgb(249_115_22/0.35)] mb-5">
-            <Flame className="w-9 h-9 text-white" strokeWidth={2.5} />
+          <div className="relative mb-5">
+            <div className="absolute inset-0 w-32 h-32 -left-8 -top-8 rounded-full bg-brand-200/30 blur-3xl" />
+            <div className="relative w-16 h-16 rounded-2xl bg-brand-500 flex items-center justify-center shadow-[0_8px_24px_rgb(249_115_22/0.35)]">
+              <Flame className="w-9 h-9 text-white" strokeWidth={2.5} />
+            </div>
           </div>
           <h1 className="text-3xl font-extrabold text-stone-900 tracking-tight">打卡</h1>
           <p className="text-stone-500 text-sm mt-1.5 font-medium">坚持好习惯，记录每一天</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-3xl shadow-[var(--shadow-elevated)] p-7 border border-stone-100/80">
+        <div className="bg-white rounded-3xl shadow-[var(--shadow-elevated)] p-7 border border-stone-200/60">
           <Tabs defaultValue="magic">
             <TabsList className="w-full mb-6">
               <TabsTrigger value="magic" className="flex-1">魔法链接</TabsTrigger>

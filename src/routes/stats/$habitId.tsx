@@ -91,7 +91,7 @@ function HabitStatsPage() {
   const color = habit?.color ?? '#f97316'
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6">
+    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6 animate-page-enter">
       {/* Header */}
       <div className="animate-slide-up">
         <Link to="/stats" className="inline-flex items-center gap-1.5 text-sm text-stone-400 font-semibold hover:text-stone-600 mb-4">
@@ -136,15 +136,15 @@ function HabitStatsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="当前连续" value={`${streak} 天`} icon={Flame} iconColor={color} loading={isLoading} />
+        <StatCard label="当前连续" value={`${streak} 天`} icon={Flame} iconColor={color} loading={isLoading} primary />
         <StatCard label="全年总计" value={total} sublabel="次" icon={Hash} iconColor={color} loading={isLoading} />
         <StatCard label="最长连续" value={`${longest} 天`} icon={Trophy} iconColor={color} loading={isLoading} />
         <StatCard label="日均次数" value={avgPerDay} sublabel="次/打卡日" icon={Target} iconColor={color} loading={isLoading} />
       </div>
 
       {/* Heatmap */}
-      <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-100/80 animate-slide-up">
-        <div className="text-sm font-semibold text-stone-500 mb-4">{selectedYear} 年日历热力图</div>
+      <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-200/60 animate-slide-up">
+        <div className="text-sm font-semibold text-stone-500 mb-4 pb-3 border-b border-stone-50">{selectedYear} 年日历热力图</div>
         {isLoading ? (
           <Skeleton className="h-40 w-full" />
         ) : (
@@ -160,8 +160,8 @@ function HabitStatsPage() {
       </div>
 
       {/* 30-day trend */}
-      <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-100/80 animate-slide-up">
-        <div className="text-sm font-semibold text-stone-500 mb-4">近30天趋势</div>
+      <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-200/60 animate-slide-up">
+        <div className="text-sm font-semibold text-stone-500 mb-4 pb-3 border-b border-stone-50">近30天趋势</div>
         {isLoading ? (
           <Skeleton className="h-48 w-full" />
         ) : (
@@ -170,7 +170,7 @@ function HabitStatsPage() {
       </div>
 
       {/* History list */}
-      <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-100/80 overflow-hidden animate-slide-up">
+      <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-200/60 overflow-hidden animate-slide-up">
         <div className="px-5 py-4 border-b border-stone-50">
           <span className="font-bold text-stone-800 text-sm">打卡历史</span>
           <span className="text-xs text-stone-400 font-medium ml-2">
@@ -185,8 +185,10 @@ function HabitStatsPage() {
             ))}
           </div>
         ) : groupedHistory.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-stone-400 gap-2">
-            <span className="text-3xl">📭</span>
+          <div className="flex flex-col items-center justify-center py-10 text-stone-400 gap-3">
+            <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center">
+              <span className="text-2xl">📭</span>
+            </div>
             <span className="text-sm font-medium">暂无记录</span>
           </div>
         ) : (

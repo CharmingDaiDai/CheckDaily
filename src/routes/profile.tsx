@@ -120,13 +120,13 @@ function ProfilePage() {
 
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6">
+    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6 animate-page-enter">
       <div className="animate-slide-up">
         <h1 className="text-2xl font-extrabold text-stone-900">我的</h1>
       </div>
 
       {/* User card */}
-      <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-100/80 animate-slide-up">
+      <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-200/60 animate-slide-up">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-brand-100 flex items-center justify-center">
             <User className="w-7 h-7 text-brand-500" strokeWidth={1.8} />
@@ -142,7 +142,7 @@ function ProfilePage() {
       </div>
 
       {/* Account security */}
-      <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-100/80 overflow-hidden animate-slide-up">
+      <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-200/60 overflow-hidden animate-slide-up">
         <div className="flex items-center gap-3 px-5 py-4 border-b border-stone-50">
           <Shield className="w-4 h-4 text-stone-400" />
           <span className="font-semibold text-stone-700 text-sm">账户安全</span>
@@ -170,7 +170,7 @@ function ProfilePage() {
       </div>
 
       {/* Data management */}
-      <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-100/80 overflow-hidden animate-slide-up">
+      <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-200/60 overflow-hidden animate-slide-up">
         <div className="flex items-center gap-3 px-5 py-4 border-b border-stone-50">
           <Database className="w-4 h-4 text-stone-400" />
           <span className="font-semibold text-stone-700 text-sm">数据管理</span>
@@ -196,7 +196,7 @@ function ProfilePage() {
       </div>
 
       {/* App info */}
-      <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-100/80 overflow-hidden animate-slide-up">
+      <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-200/60 overflow-hidden animate-slide-up">
         <div className="flex items-center gap-3 px-5 py-4 border-b border-stone-50">
           <Info className="w-4 h-4 text-stone-400" />
           <span className="font-semibold text-stone-700 text-sm">关于</span>
@@ -221,7 +221,7 @@ function ProfilePage() {
       <Button
         variant="danger-ghost"
         size="lg"
-        className="w-full"
+        className="w-full max-w-xs mx-auto"
         onClick={() => setSignOutOpen(true)}
       >
         <LogOut className="w-4 h-4" strokeWidth={2} />

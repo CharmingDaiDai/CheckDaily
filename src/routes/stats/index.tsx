@@ -1,4 +1,4 @@
-import { useState, useMemo, lazy, Suspense } from 'react'
+import { useState, useMemo, useRef, lazy, Suspense } from 'react'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { Flame, Trophy, Target, BarChart2, ChevronRight, ChevronLeft, Search, X } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -27,6 +27,9 @@ function StatsPage() {
   const [activeTab, setActiveTab] = useState<TabValue>(
     () => (sessionStorage.getItem('stats-tab') as TabValue) ?? 'week'
   )
+  const tabOrder: TabValue[] = ['day', 'week', 'month', 'year']
+  const prevTabIdx = useRef(tabOrder.indexOf(activeTab))
+  const [slideDir, setSlideDir] = useState<'right' | 'left'>('right')
   const [habitSearch, setHabitSearch] = useState('')
   const [selectedYear, setSelectedYear] = useState(currentYear)
   const { data: habits } = useHabits()
@@ -125,7 +128,7 @@ function StatsPage() {
   }, [todayCheckIns])
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6">
+    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6 animate-page-enter">
       {/* Header */}
       <div className="animate-slide-up">
         <h1 className="text-2xl font-extrabold text-stone-900">统计分析</h1>
@@ -151,15 +154,18 @@ function StatsPage() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="当前连续" value={`${streak} 天`} icon={Flame} iconColor="#f97316" loading={isLoading} />
+        <StatCard label="当前连续" value={`${streak} 天`} icon={Flame} iconColor="#f97316" loading={isLoading} primary />
         <StatCard label="本月打卡" value={thisMonthCount} sublabel="次" icon={Target} iconColor="#3b82f6" loading={isLoading} />
         <StatCard label="最长连续" value={`${longest} 天`} icon={Trophy} iconColor="#eab308" loading={isLoading} />
         <StatCard label="全年总计" value={(allCheckIns ?? []).filter(ci => formatDate(ci.checked_at) >= yearStart).length} sublabel="次" icon={BarChart2} iconColor="#22c55e" loading={isLoading} />
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-100/80 animate-slide-up">
+      <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-200/60 animate-slide-up">
         <Tabs value={activeTab} onValueChange={(v) => {
+          const newIdx = tabOrder.indexOf(v as TabValue)
+          setSlideDir(newIdx > prevTabIdx.current ? 'right' : 'left')
+          prevTabIdx.current = newIdx
           setActiveTab(v as TabValue)
           sessionStorage.setItem('stats-tab', v)
         }}>
@@ -171,13 +177,15 @@ function StatsPage() {
           </TabsList>
 
           {/* Day view */}
-          <TabsContent value="day">
+          <TabsContent value="day" className={slideDir === 'right' ? 'animate-slide-in-right' : 'animate-slide-in-left'}>
             <div className="text-sm font-semibold text-stone-500 mb-3">
               今日打卡 {todayTimeline.length} 次
             </div>
             {todayTimeline.length === 0 ? (
-              <div className="flex flex-col items-center py-8 text-stone-400 gap-2">
-                <span className="text-3xl">📭</span>
+              <div className="flex flex-col items-center py-8 text-stone-400 gap-3">
+                <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center">
+                  <span className="text-2xl">📭</span>
+                </div>
                 <span className="text-sm font-medium">今天还没有打卡记录</span>
               </div>
             ) : (
@@ -217,13 +225,13 @@ function StatsPage() {
           </TabsContent>
 
           {/* Week view */}
-          <TabsContent value="week">
+          <TabsContent value="week" className={slideDir === 'right' ? 'animate-slide-in-right' : 'animate-slide-in-left'}>
             <div className="text-sm font-semibold text-stone-500 mb-3">过去7天打卡趋势</div>
             {isLoading ? <Skeleton className="h-40 w-full" /> : <SimpleBarChart data={weekData} height={160} highlightToday />}
           </TabsContent>
 
           {/* Month view */}
-          <TabsContent value="month">
+          <TabsContent value="month" className={slideDir === 'right' ? 'animate-slide-in-right' : 'animate-slide-in-left'}>
             <div className="text-sm font-semibold text-stone-500 mb-3">近30天 · 各项目堆叠</div>
             {isLoading ? (
               <Skeleton className="h-48 w-full" />
@@ -237,7 +245,7 @@ function StatsPage() {
           </TabsContent>
 
           {/* Year view */}
-          <TabsContent value="year">
+          <TabsContent value="year" className={slideDir === 'right' ? 'animate-slide-in-right' : 'animate-slide-in-left'}>
             <div className="text-sm font-semibold text-stone-500 mb-3">
               {selectedYear} 年全年打卡热力图
             </div>
@@ -258,7 +266,7 @@ function StatsPage() {
 
       {/* Per-habit links */}
       {habits && habits.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-100/80 overflow-hidden animate-slide-up">
+        <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-200/60 overflow-hidden animate-slide-up">
           <div className="px-5 py-4 border-b border-stone-50 flex items-center justify-between gap-3">
             <span className="font-bold text-stone-800 text-sm shrink-0">各项目详情</span>
             {habits.length > 5 && (

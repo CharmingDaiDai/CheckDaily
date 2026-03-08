@@ -43,7 +43,7 @@ function HabitsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6">
+    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6 animate-page-enter">
       {/* Header */}
       <div className="flex items-center justify-between animate-slide-up">
         <div>
@@ -131,7 +131,7 @@ function HabitsPage() {
                 key={habit.id}
                 className={cn(
                   'flex items-center gap-4 bg-white rounded-2xl px-4 py-3.5',
-                  'shadow-[var(--shadow-card)] border border-stone-100/80 animate-slide-up'
+                  'shadow-[var(--shadow-card)] border border-stone-200/60 animate-slide-up'
                 )}
                 style={{ animationDelay: `${i * 40}ms` }}
               >
@@ -192,7 +192,9 @@ function HabitsPage() {
         )
       ) : (
         <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
-          <ListCheck className="w-12 h-12 text-stone-200 mb-4" strokeWidth={1.5} />
+          <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mb-4">
+            <ListCheck className="w-10 h-10 text-stone-300" strokeWidth={1.5} />
+          </div>
           <div className="font-bold text-stone-700 text-lg mb-1">还没有打卡项目</div>
           <div className="text-stone-400 text-sm mb-5">创建你的第一个习惯开始打卡</div>
           <Button onClick={() => setCreateOpen(true)}>
