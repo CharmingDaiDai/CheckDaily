@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, TrendingUp, LayoutGrid, List, CalendarClock } from 'lucide-react'
 import { useHabits } from '@/hooks/useHabits'
 import { useTodayCheckIns, useCheckIns } from '@/hooks/useCheckIns'
@@ -13,6 +13,12 @@ function Dashboard() {
   const navigate = useNavigate()
   const [compact, setCompact] = useState(() => localStorage.getItem('dashboard-compact') === 'true')
   const [backdateOpen, setBackdateOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 300)
+    return () => clearTimeout(timer)
+  }, [])
 
   const { data: habits, isLoading: habitsLoading } = useHabits()
   const { data: todayCheckIns, isLoading: todayLoading } = useTodayCheckIns()
@@ -82,7 +88,7 @@ function Dashboard() {
     : 'grid grid-cols-2 sm:grid-cols-3 gap-3'
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6">
+    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6 animate-page-enter">
       {/* Header */}
       <div className="animate-slide-up">
         <div className="flex items-center gap-2 text-sm text-stone-400 font-medium mb-1">
@@ -130,7 +136,7 @@ function Dashboard() {
               </div>
               {totalCount > 0 && (
                 <div
-                  className="h-1.5 flex-1 bg-stone-100 rounded-full overflow-hidden"
+                  className="h-2 flex-1 bg-stone-100 rounded-full overflow-hidden"
                   role="progressbar"
                   aria-valuenow={doneCount}
                   aria-valuemin={0}
@@ -138,8 +144,8 @@ function Dashboard() {
                   aria-label={`今日进度：${doneCount}/${totalCount} 项已完成`}
                 >
                   <div
-                    className="h-full rounded-full bg-brand-400 transition-all duration-700"
-                    style={{ width: `${totalCount > 0 ? (doneCount / totalCount) * 100 : 0}%` }}
+                    className={`h-full rounded-full transition-all duration-700 ${doneCount === totalCount ? 'bg-gradient-to-r from-brand-400 to-brand-500 animate-shimmer' : 'bg-gradient-to-r from-brand-400 to-brand-500'}`}
+                    style={{ width: mounted ? `${(doneCount / totalCount) * 100}%` : '0%' }}
                   />
                 </div>
               )}
@@ -148,10 +154,34 @@ function Dashboard() {
         </div>
       </div>
 
+      {/* All Done celebration banner */}
+      {!isLoading && doneCount === totalCount && totalCount > 0 && (
+        <div className="relative overflow-hidden bg-gradient-to-r from-brand-50 to-amber-50 rounded-2xl px-5 py-4 animate-fade-in">
+          {/* Confetti particles */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <span
+                key={i}
+                className="absolute w-2 h-2 rounded-sm animate-confetti"
+                style={{
+                  backgroundColor: ['#f97316', '#eab308', '#3b82f6', '#22c55e', '#ec4899', '#8b5cf6'][i % 6],
+                  left: `${8 + i * 7.5}%`,
+                  top: `-8px`,
+                  animationDelay: `${i * 80}ms`,
+                  animationDuration: `${1000 + (i % 3) * 200}ms`,
+                }}
+              />
+            ))}
+          </div>
+          <div className="font-bold text-stone-800">🎉 今日已全部完成！</div>
+          <div className="text-sm text-stone-500 mt-0.5">继续保持，养成好习惯</div>
+        </div>
+      )}
+
       {/* Last 7 days mini chart */}
       {totalCount > 0 && (
-        <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-100/80 animate-slide-up">
-          <div className="flex items-center gap-2 mb-4">
+        <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-200/60 animate-slide-up">
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-stone-50">
             <TrendingUp className="w-4 h-4 text-brand-500" strokeWidth={2.5} />
             <span className="font-bold text-stone-800 text-sm">近7天打卡</span>
           </div>
@@ -211,7 +241,9 @@ function Dashboard() {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
-          <div className="text-5xl mb-4">📋</div>
+          <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mb-4">
+            <span className="text-4xl">📋</span>
+          </div>
           <div className="font-bold text-stone-700 text-lg mb-1">还没有打卡项目</div>
           <div className="text-stone-400 text-sm mb-5">去添加你的第一个习惯吧</div>
           <button
