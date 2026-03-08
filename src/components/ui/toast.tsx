@@ -36,7 +36,7 @@ export function Toaster() {
         </ToastPrimitive.Root>
       ))}
 
-      <ToastPrimitive.Viewport className="fixed top-4 right-4 z-[100] flex flex-col gap-2 w-[360px] max-w-[calc(100vw-2rem)] outline-none" />
+      <ToastPrimitive.Viewport className="fixed z-[100] flex flex-col gap-2 w-[calc(100vw-2rem)] max-w-[360px] outline-none bottom-[88px] left-1/2 -translate-x-1/2 md:bottom-auto md:top-4 md:right-4 md:left-auto md:translate-x-0" />
     </ToastPrimitive.Provider>
   )
 }
