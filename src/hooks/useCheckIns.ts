@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
-import { formatDate } from '@/lib/utils'
+import { formatDate, today } from '@/lib/utils'
 import { toast } from '@/hooks/useToast'
 import type { CheckIn, CheckInInsert } from '@/types'
 
@@ -21,6 +21,7 @@ export function useCheckIns(opts?: { habitId?: string; startDate?: string; endDa
       if (habitId) q = q.eq('habit_id', habitId)
       if (startDate) q = q.gte('checked_at', startDate + 'T00:00:00.000Z')
       if (endDate) q = q.lte('checked_at', endDate + 'T23:59:59.999Z')
+      q = q.limit(10000)
       const { data, error } = await q
       if (error) throw error
       return (data ?? []) as CheckIn[]
@@ -30,8 +31,8 @@ export function useCheckIns(opts?: { habitId?: string; startDate?: string; endDa
 }
 
 export function useTodayCheckIns() {
-  const today = formatDate(new Date())
-  return useCheckIns({ startDate: today, endDate: today })
+  const todayStr = today()
+  return useCheckIns({ startDate: todayStr, endDate: todayStr })
 }
 
 export function useCheckIn() {
@@ -96,6 +97,7 @@ export function useYearlyCheckInCounts(habitId?: string, year?: number) {
         .gte('checked_at', `${resolvedYear}-01-01T00:00:00.000Z`)
         .lte('checked_at', `${resolvedYear}-12-31T23:59:59.999Z`)
       if (habitId) q = q.eq('habit_id', habitId)
+      q = q.limit(10000)
       const { data, error } = await q
       if (error) throw error
       const counts: Record<string, number> = {}

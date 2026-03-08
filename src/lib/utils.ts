@@ -5,8 +5,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/** Parse a yyyy-MM-dd string as local date (avoids UTC midnight interpretation) */
+function parseLocalDate(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
 export function formatDate(date: Date | string, fmt = 'yyyy-MM-dd') {
-  const d = typeof date === 'string' ? new Date(date) : date
+  const d = typeof date === 'string'
+    ? /^\d{4}-\d{2}-\d{2}$/.test(date) ? parseLocalDate(date) : new Date(date)
+    : date
   const year = d.getFullYear()
   const month = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
@@ -76,7 +84,7 @@ export function computeStreak(dates: string[]): number {
   for (const d of sorted) {
     if (d === current) {
       streak++
-      const prev = new Date(current)
+      const prev = parseLocalDate(current)
       prev.setDate(prev.getDate() - 1)
       current = formatDate(prev)
     } else if (d < current) {
@@ -92,7 +100,7 @@ export function computeLongestStreak(dates: string[]): number {
   let max = 1
   let cur = 1
   for (let i = 1; i < sorted.length; i++) {
-    const prev = new Date(sorted[i - 1])
+    const prev = parseLocalDate(sorted[i - 1])
     prev.setDate(prev.getDate() + 1)
     if (formatDate(prev) === sorted[i]) {
       cur++
