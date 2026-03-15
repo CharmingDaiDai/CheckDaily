@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Check, Plus, RotateCcw, MoreHorizontal } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { celebrate } from '@/lib/celebrate'
 import { Spinner } from '@/components/ui/spinner'
 import type { Habit } from '@/types'
 import {
@@ -28,6 +29,7 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
   const [note, setNote] = useState('')
   const [showNote, setShowNote] = useState(false)
   const [celebrating, setCelebrating] = useState(false)
+  const cardRef = useRef<HTMLButtonElement>(null)
   const prevDoneRef = useRef(todayCount > 0)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const didLongPress = useRef(false)
@@ -49,7 +51,7 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
     const isNowDone = isDone
     if (wasZero && isNowDone) {
       setCelebrating(true)
-      const timer = setTimeout(() => setCelebrating(false), 600)
+      const timer = setTimeout(() => setCelebrating(false), 800)
       prevDoneRef.current = isNowDone
       return () => clearTimeout(timer)
     }
@@ -59,20 +61,41 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
   // One-tap check-in (directly on card click)
   const handleQuickCheckIn = useCallback(async () => {
     if (checkIn.isPending) return
+    const wasFirstCheckIn = !isDone
     try {
       await checkIn.mutateAsync({ habit_id: habit.id })
-      navigator.vibrate?.(15)
+      navigator.vibrate?.(wasFirstCheckIn ? [10, 30, 20] : 15)
+
+      // Fire confetti on first check-in of the day
+      if (wasFirstCheckIn && cardRef.current) {
+        const rect = cardRef.current.getBoundingClientRect()
+        celebrate({
+          colors: [habit.color || '#f97316', '#fbbf24', '#ffffff'],
+          origin: {
+            x: (rect.left + rect.width / 2) / window.innerWidth,
+            y: (rect.top + rect.height / 2) / window.innerHeight,
+          },
+        })
+      }
     } catch {
       toast.error('打卡失败，请重试')
     }
-  }, [checkIn, habit.id])
+  }, [checkIn, habit.id, habit.color, isDone])
 
   // Check-in with note (from bottom sheet)
   async function handleCheckIn() {
+    const wasFirstCheckIn = !isDone
     try {
       await checkIn.mutateAsync({ habit_id: habit.id, note: note.trim() || undefined })
       setOpen(false)
-      navigator.vibrate?.(15)
+      navigator.vibrate?.(wasFirstCheckIn ? [10, 30, 20] : 15)
+
+      if (wasFirstCheckIn) {
+        celebrate({
+          colors: [habit.color || '#f97316', '#fbbf24', '#ffffff'],
+          origin: { x: 0.5, y: 0.6 },
+        })
+      }
     } catch {
       toast.error('打卡失败，请重试')
     }
@@ -218,8 +241,8 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
   // Ripple element shown during celebration
   const rippleElement = celebrating ? (
     <span
-      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full animate-ripple pointer-events-none"
-      style={{ backgroundColor: habit.color + '30' }}
+      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full animate-ripple pointer-events-none"
+      style={{ backgroundColor: habit.color + '60' }}
     />
   ) : null
 
@@ -228,6 +251,7 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
     return (
       <>
         <button
+          ref={cardRef}
           className={cn(
             'group relative flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1',
             'rounded-2xl border tap-scale transition-all duration-200 w-full select-none',
@@ -299,6 +323,7 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
   return (
     <>
       <button
+        ref={cardRef}
         className={cn(
           'group relative flex flex-col items-start p-4 rounded-2xl tap-scale',
           'border text-left w-full select-none',
