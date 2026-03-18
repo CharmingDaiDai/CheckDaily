@@ -38,18 +38,18 @@ export function SimpleBarChart({
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 4, right: 0, left: -28, bottom: 0 }} barCategoryGap="30%">
-        <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f4" vertical={false} />
+        <CartesianGrid strokeDasharray="2 4" stroke="rgba(28,25,23,0.08)" vertical={false} />
         <XAxis
           dataKey="label"
           axisLine={false}
           tickLine={false}
-          tick={{ fontSize: 11, fill: '#a8a29e', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}
+          tick={{ fontSize: 11, fill: '#7d6b58', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}
         />
         <YAxis
           allowDecimals={false}
           axisLine={false}
           tickLine={false}
-          tick={{ fontSize: 11, fill: '#a8a29e', fontFamily: 'Plus Jakarta Sans, sans-serif' }}
+          tick={{ fontSize: 11, fill: '#7d6b58', fontFamily: 'Plus Jakarta Sans, sans-serif' }}
         />
         <YAxis yAxisId="hit" hide domain={[0, 1]} />
         <Tooltip
@@ -60,6 +60,8 @@ export function SimpleBarChart({
           dataKey="count"
           radius={[6, 6, 3, 3]}
           maxBarSize={40}
+          animationDuration={700}
+          animationEasing="ease-out"
           onClick={(entry) => {
             const date = (entry as { payload?: { date?: string } })?.payload?.date
             if (date && onBarClick) onBarClick(date)
@@ -121,18 +123,18 @@ export function StackedBarChart({ data, habits, height = 200, activeDate, onBarC
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 4, right: 0, left: -28, bottom: 0 }} barCategoryGap="30%">
-        <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f4" vertical={false} />
+        <CartesianGrid strokeDasharray="2 4" stroke="rgba(28,25,23,0.08)" vertical={false} />
         <XAxis
           dataKey="label"
           axisLine={false}
           tickLine={false}
-          tick={{ fontSize: 11, fill: '#a8a29e', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}
+          tick={{ fontSize: 11, fill: '#7d6b58', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}
         />
         <YAxis
           allowDecimals={false}
           axisLine={false}
           tickLine={false}
-          tick={{ fontSize: 11, fill: '#a8a29e', fontFamily: 'Plus Jakarta Sans, sans-serif' }}
+          tick={{ fontSize: 11, fill: '#7d6b58', fontFamily: 'Plus Jakarta Sans, sans-serif' }}
         />
         <YAxis yAxisId="hit" hide domain={[0, 1]} />
         <Tooltip
@@ -148,6 +150,8 @@ export function StackedBarChart({ data, habits, height = 200, activeDate, onBarC
             fill={h.color}
             radius={[0, 0, 0, 0]}
             maxBarSize={40}
+            animationDuration={680}
+            animationEasing="ease-out"
             onClick={(entry) => {
               const date = (entry as { payload?: { date?: string } })?.payload?.date
               if (date && onBarClick) onBarClick(date)

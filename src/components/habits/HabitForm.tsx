@@ -61,7 +61,7 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Name */}
       <div className="space-y-2">
-        <Label htmlFor="habit-name">项目名称</Label>
+        <Label htmlFor="habit-name">项目名称 <span aria-hidden="true" className="text-brand-600">*</span></Label>
         <Input
           id="habit-name"
           placeholder="例：晨跑、俯卧撑、冥想…"
@@ -76,7 +76,9 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
       {/* Icon picker */}
       <div className="space-y-2">
         <Label>选择图标</Label>
-        <div className="grid grid-cols-8 gap-1.5 max-h-44 overflow-y-auto pr-0.5">
+        <fieldset className="space-y-2">
+          <legend className="sr-only">图标选择器</legend>
+          <div className="grid grid-cols-8 gap-1.5 max-h-44 overflow-y-auto pr-0.5">
           {HABIT_ICONS.map((e) => (
             <button
               key={e}
@@ -89,11 +91,13 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
                   ? 'border-brand-500 bg-brand-50'
                   : 'border-transparent bg-stone-100 hover:bg-stone-200'
               )}
+              aria-label={`选择图标 ${e}`}
             >
               {e}
             </button>
           ))}
-        </div>
+          </div>
+        </fieldset>
 
         {/* Custom emoji input */}
         <div className="flex items-center gap-2 pt-1">
@@ -105,6 +109,7 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
               onChange={handleCustomChange}
               className="text-base pr-10"
               maxLength={8}
+              aria-label="自定义图标"
             />
             {customIcon && (
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xl pointer-events-none">
@@ -112,6 +117,9 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
               </span>
             )}
           </div>
+        </div>
+        <div className="text-xs text-[var(--color-ink-500)] font-medium" aria-live="polite">
+          自定义图标长度：{customIcon.length}/8
         </div>
       </div>
 

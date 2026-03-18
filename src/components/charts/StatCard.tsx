@@ -34,7 +34,7 @@ function AnimatedValue({ value }: { value: string | number }) {
 export function StatCard({ label, value, sublabel, icon: Icon, iconColor = '#f97316', loading, className, primary }: StatCardProps) {
   if (loading) {
     return (
-      <div className={cn('bg-white rounded-2xl p-4 shadow-[var(--shadow-card)] border border-stone-200/60', className)}>
+      <div className={cn('glass-card rounded-[var(--radius-card)] p-4', className)}>
         <Skeleton className="h-3 w-16 mb-3" />
         <Skeleton className="h-7 w-12 mb-1" />
         <Skeleton className="h-3 w-20" />
@@ -44,11 +44,11 @@ export function StatCard({ label, value, sublabel, icon: Icon, iconColor = '#f97
 
   return (
     <div
-      className={cn('bg-white rounded-2xl p-4 shadow-[var(--shadow-card)] border border-stone-200/60 animate-fade-in', className)}
-      style={primary ? { background: `linear-gradient(135deg, ${iconColor}08 0%, white 100%)` } : undefined}
+      className={cn('rounded-[var(--radius-card)] p-4 animate-fade-in transition-transform duration-[var(--duration-fast)] hover:-translate-y-0.5', className, primary ? '' : 'glass-card')}
+      style={primary ? { background: `linear-gradient(135deg, ${iconColor}12 0%, rgba(255,255,255,0.92) 48%, rgba(255,255,255,0.84) 100%)`, border: '1px solid var(--color-line-soft)', boxShadow: 'var(--shadow-card)' } : undefined}
     >
       <div className="flex items-start justify-between">
-        <div className="text-xs font-semibold text-stone-400 uppercase tracking-wide">{label}</div>
+        <div className="text-xs font-semibold text-[var(--color-ink-500)] uppercase tracking-wide">{label}</div>
         {Icon && (
           <div
             className="w-7 h-7 rounded-lg flex items-center justify-center"
@@ -58,10 +58,10 @@ export function StatCard({ label, value, sublabel, icon: Icon, iconColor = '#f97
           </div>
         )}
       </div>
-      <div className={cn('mt-2 font-extrabold text-stone-900 leading-none tabular-nums', primary ? 'text-3xl' : 'text-2xl')}>
+      <div className={cn('mt-2 font-extrabold text-[var(--color-ink-900)] leading-none tabular-nums', primary ? 'text-3xl' : 'text-2xl')}>
         <AnimatedValue value={value} />
       </div>
-      {sublabel && <div className="mt-1 text-xs text-stone-400 font-medium">{sublabel}</div>}
+      {sublabel && <div className="mt-1 text-xs text-[var(--color-ink-500)] font-medium">{sublabel}</div>}
     </div>
   )
 }

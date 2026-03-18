@@ -215,10 +215,10 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
       role="button"
       tabIndex={0}
       className={cn(
-        'absolute top-2 right-2 z-10 w-6 h-6 rounded-lg bg-white/80 backdrop-blur-sm',
+        'absolute top-1.5 right-1.5 z-10 w-10 h-10 rounded-xl bg-white/80 backdrop-blur-sm',
         'flex items-center justify-center cursor-pointer',
         'text-stone-400 hover:text-stone-600 hover:bg-white',
-        'transition-opacity duration-150',
+        'transition-opacity duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
         isDone ? 'opacity-60' : 'opacity-0 group-hover:opacity-100',
       )}
       onClick={(e) => {
@@ -234,7 +234,7 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
       }}
       aria-label="更多选项"
     >
-      <MoreHorizontal className="w-3.5 h-3.5" />
+      <MoreHorizontal className="w-4 h-4" />
     </div>
   )
 
