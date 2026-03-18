@@ -11,6 +11,18 @@ function parseLocalDate(s: string): Date {
   return new Date(y, m - 1, d)
 }
 
+/** Build an inclusive yyyy-MM-dd date list between start and end using local dates. */
+export function getDateRangeDays(start: string, end: string): string[] {
+  const result: string[] = []
+  const cursor = parseLocalDate(start)
+  const endDate = parseLocalDate(end)
+  while (cursor <= endDate) {
+    result.push(formatDate(cursor))
+    cursor.setDate(cursor.getDate() + 1)
+  }
+  return result
+}
+
 export function formatDate(date: Date | string, fmt = 'yyyy-MM-dd') {
   const d = typeof date === 'string'
     ? /^\d{4}-\d{2}-\d{2}$/.test(date) ? parseLocalDate(date) : new Date(date)

@@ -22,6 +22,8 @@ interface SimpleBarChartProps {
   color?: string
   height?: number
   highlightToday?: boolean
+  activeDate?: string
+  onBarClick?: (date: string) => void
 }
 
 export function SimpleBarChart({
@@ -29,6 +31,8 @@ export function SimpleBarChart({
   color = '#f97316',
   height = 180,
   highlightToday = true,
+  activeDate,
+  onBarClick,
 }: SimpleBarChartProps) {
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -50,13 +54,24 @@ export function SimpleBarChart({
           cursor={{ fill: '#f5f5f4', radius: 8 }}
           content={<SimpleChartTooltip />}
         />
-        <Bar dataKey="count" radius={[6, 6, 3, 3]} maxBarSize={40}>
+        <Bar
+          dataKey="count"
+          radius={[6, 6, 3, 3]}
+          maxBarSize={40}
+          onClick={(entry) => {
+            const date = (entry as { payload?: { date?: string } })?.payload?.date
+            if (date && onBarClick) onBarClick(date)
+          }}
+          style={onBarClick ? { cursor: 'pointer' } : undefined}
+        >
           {data.map((entry, index) => {
             const isToday = highlightToday && entry.date === today()
+            const isActive = activeDate !== undefined && entry.date === activeDate
             return (
               <Cell
                 key={`cell-${index}`}
-                fill={isToday ? color : color + '55'}
+                fill={isActive ? color : isToday ? color : color + '55'}
+                opacity={isActive ? 1 : 0.95}
               />
             )
           })}

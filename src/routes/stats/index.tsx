@@ -1,8 +1,14 @@
-import { useState, useMemo, useRef, lazy, Suspense } from 'react'
+import { useState, useMemo, useRef, useEffect, lazy, Suspense } from 'react'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { Flame, Trophy, Target, BarChart2, ChevronRight, ChevronLeft, Search, X } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
+import {
+  BottomSheet,
+  BottomSheetContent,
+  BottomSheetHeader,
+  BottomSheetTitle,
+} from '@/components/ui/bottom-sheet'
 const HabitHeatmap = lazy(() => import('@/components/charts/HabitHeatmap'))
 import { SimpleBarChart, StackedBarChart } from '@/components/charts/BarCharts'
 import { StatCard } from '@/components/charts/StatCard'
@@ -11,8 +17,10 @@ import { useHabits } from '@/hooks/useHabits'
 import { useCheckIns, useYearlyCheckInCounts } from '@/hooks/useCheckIns'
 import {
   formatDate,
+  formatTime,
   today,
-  getLast7Days,
+  getWeekRange,
+  getDateRangeDays,
   getLast30Days,
   getMonthRange,
   computeStreak,
@@ -21,6 +29,18 @@ import {
 import type { CalendarDatum } from '@/types'
 
 type TabValue = 'day' | 'week' | 'month' | 'year'
+
+const weekLabels = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+
+function parseDateKey(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
+function formatDateOption(dateStr: string): string {
+  const d = parseDateKey(dateStr)
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${weekLabels[d.getDay()]}`
+}
 
 function StatsPage() {
   const currentYear = new Date().getFullYear()
@@ -32,6 +52,7 @@ function StatsPage() {
   const [slideDir, setSlideDir] = useState<'right' | 'left'>('right')
   const [habitSearch, setHabitSearch] = useState('')
   const [selectedYear, setSelectedYear] = useState(currentYear)
+  const [isDayDetailOpen, setIsDayDetailOpen] = useState(false)
   const { data: habits } = useHabits()
 
   // Fetch all check-ins for selected year (extended to Dec 1 of prior year for cross-year streak)
@@ -41,8 +62,17 @@ function StatsPage() {
     endDate: `${selectedYear}-12-31`,
   })
   const yearStart = `${selectedYear}-01-01`
-  const last7 = useMemo(() => getLast7Days(), [])
+  const yearEnd = `${selectedYear}-12-31`
+  const weekRange = useMemo(() => getWeekRange(), [])
+  const weekDays = useMemo(
+    () => getDateRangeDays(weekRange.start, weekRange.end),
+    [weekRange.start, weekRange.end]
+  )
   const last30 = useMemo(() => getLast30Days(), [])
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const todayStr = today()
+    return weekDays.includes(todayStr) ? todayStr : (weekDays[weekDays.length - 1] ?? todayStr)
+  })
 
   const checkInsByHabit = useMemo(() => {
     const map = new Map<string, string[]>()
@@ -90,13 +120,12 @@ function StatsPage() {
       const d = formatDate(ci.checked_at)
       countByDate[d] = (countByDate[d] ?? 0) + 1
     }
-    const days = ['日', '一', '二', '三', '四', '五', '六']
-    return last7.map((d) => ({
-      label: days[new Date(d).getDay()],
+    return weekDays.map((d) => ({
+      label: weekLabels[parseDateKey(d).getDay()],
       count: countByDate[d] ?? 0,
       date: d,
     }))
-  }, [allCheckIns, last7])
+  }, [allCheckIns, weekDays])
 
   // Month stacked bar data
   const habitsMap = useMemo(() => {
@@ -126,6 +155,34 @@ function StatsPage() {
   const todayTimeline = useMemo(() => {
     return todayCheckIns.sort((a, b) => a.checked_at.localeCompare(b.checked_at))
   }, [todayCheckIns])
+
+  const yearDates = useMemo(() => {
+    const items = new Set<string>()
+    for (const ci of allCheckIns ?? []) {
+      const d = formatDate(ci.checked_at)
+      if (d >= yearStart && d <= yearEnd) items.add(d)
+    }
+    return Array.from(items).sort((a, b) => b.localeCompare(a))
+  }, [allCheckIns, yearStart, yearEnd])
+
+  const dateOptions = useMemo(() => {
+    if (activeTab === 'week') return weekDays
+    if (activeTab === 'month') return [...last30].reverse()
+    if (activeTab === 'year') return yearDates.length > 0 ? yearDates : [today()]
+    return []
+  }, [activeTab, weekDays, last30, yearDates])
+
+  useEffect(() => {
+    if (activeTab === 'day') return
+    if (!dateOptions.includes(selectedDate)) {
+      setSelectedDate(dateOptions[0] ?? today())
+    }
+  }, [activeTab, dateOptions, selectedDate])
+
+  const selectedDateCheckIns = useMemo(() => {
+    const list = (allCheckIns ?? []).filter((ci) => formatDate(ci.checked_at) === selectedDate)
+    return list.sort((a, b) => a.checked_at.localeCompare(b.checked_at))
+  }, [allCheckIns, selectedDate])
 
   return (
     <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6 animate-page-enter">
@@ -226,8 +283,39 @@ function StatsPage() {
 
           {/* Week view */}
           <TabsContent value="week" className={slideDir === 'right' ? 'animate-slide-in-right' : 'animate-slide-in-left'}>
-            <div className="text-sm font-semibold text-stone-500 mb-3">过去7天打卡趋势</div>
-            {isLoading ? <Skeleton className="h-40 w-full" /> : <SimpleBarChart data={weekData} height={160} highlightToday />}
+            <div className="text-sm font-semibold text-stone-500 mb-3">本周打卡趋势</div>
+            {isLoading ? (
+              <Skeleton className="h-40 w-full" />
+            ) : (
+              <SimpleBarChart
+                data={weekData}
+                height={160}
+                highlightToday
+                activeDate={selectedDate}
+                onBarClick={(date) => {
+                  setSelectedDate(date)
+                  setIsDayDetailOpen(true)
+                }}
+              />
+            )}
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <span className="text-xs text-stone-500 font-medium">按日期查看项目</span>
+              <select
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="h-8 rounded-lg border border-stone-200 bg-white px-2.5 text-xs font-medium text-stone-700"
+              >
+                {dateOptions.map((d) => (
+                  <option key={d} value={d}>{formatDateOption(d)}</option>
+                ))}
+              </select>
+              <button
+                className="h-8 rounded-lg border border-stone-200 px-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                onClick={() => setIsDayDetailOpen(true)}
+              >
+                查看
+              </button>
+            </div>
           </TabsContent>
 
           {/* Month view */}
@@ -242,6 +330,24 @@ function StatsPage() {
                 height={180}
               />
             )}
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <span className="text-xs text-stone-500 font-medium">按日期查看项目</span>
+              <select
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="h-8 rounded-lg border border-stone-200 bg-white px-2.5 text-xs font-medium text-stone-700"
+              >
+                {dateOptions.map((d) => (
+                  <option key={d} value={d}>{formatDateOption(d)}</option>
+                ))}
+              </select>
+              <button
+                className="h-8 rounded-lg border border-stone-200 px-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                onClick={() => setIsDayDetailOpen(true)}
+              >
+                查看
+              </button>
+            </div>
           </TabsContent>
 
           {/* Year view */}
@@ -260,9 +366,73 @@ function StatsPage() {
                 />
               </Suspense>
             )}
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <span className="text-xs text-stone-500 font-medium">按日期查看项目</span>
+              <select
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="h-8 rounded-lg border border-stone-200 bg-white px-2.5 text-xs font-medium text-stone-700"
+              >
+                {dateOptions.map((d) => (
+                  <option key={d} value={d}>{formatDateOption(d)}</option>
+                ))}
+              </select>
+              <button
+                className="h-8 rounded-lg border border-stone-200 px-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                onClick={() => setIsDayDetailOpen(true)}
+              >
+                查看
+              </button>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
+
+      <BottomSheet open={isDayDetailOpen} onOpenChange={setIsDayDetailOpen}>
+        <BottomSheetContent>
+          <BottomSheetHeader>
+            <BottomSheetTitle>{formatDateOption(selectedDate)} 打卡明细</BottomSheetTitle>
+            <div className="text-xs text-stone-500 font-medium">共 {selectedDateCheckIns.length} 次</div>
+          </BottomSheetHeader>
+
+          {selectedDateCheckIns.length === 0 ? (
+            <div className="py-8 text-center text-sm text-stone-400 font-medium">这一天还没有打卡记录</div>
+          ) : (
+            <div className="space-y-2.5 pb-2">
+              {selectedDateCheckIns.map((ci) => {
+                const h = habitsMap[ci.habit_id]
+                return (
+                  <div key={ci.id} className="flex items-start gap-3 py-2">
+                    <div className="w-1 h-full self-stretch bg-stone-100 rounded-full mt-1 shrink-0" />
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
+                      style={{ backgroundColor: (h?.color ?? '#ccc') + '20' }}
+                    >
+                      {h?.icon ?? '📌'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-stone-800 text-sm">
+                        {h?.name ?? '未知项目'}
+                        {formatDate(ci.checked_at) !== formatDate(ci.created_at) && (
+                          <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium align-middle">
+                            补
+                          </span>
+                        )}
+                      </div>
+                      {ci.note && (
+                        <div className="text-xs text-stone-500 mt-0.5 font-medium">{ci.note}</div>
+                      )}
+                    </div>
+                    <div className="text-xs text-stone-400 font-medium shrink-0">
+                      {formatTime(ci.checked_at)}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </BottomSheetContent>
+      </BottomSheet>
 
       {/* Per-habit links */}
       {habits && habits.length > 0 && (
