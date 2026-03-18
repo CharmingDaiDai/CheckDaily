@@ -124,6 +124,7 @@ function StatsPage() {
       label: weekLabels[parseDateKey(d).getDay()],
       count: countByDate[d] ?? 0,
       date: d,
+      clickTarget: 1,
     }))
   }, [allCheckIns, weekDays])
 
@@ -146,7 +147,9 @@ function StatsPage() {
       }
     }
     return last30.map((d, i) => ({
+      date: d,
       label: i % 5 === 0 ? String(new Date(d).getDate()) : '',
+      clickTarget: 1,
       ...(map[d] ?? {}),
     }))
   }, [allCheckIns, habitsMap, last30])
@@ -328,6 +331,11 @@ function StatsPage() {
                 data={monthData}
                 habits={habits?.map((h) => ({ id: h.id, name: h.name, color: h.color })) ?? []}
                 height={180}
+                activeDate={selectedDate}
+                onBarClick={(date) => {
+                  setSelectedDate(date)
+                  setIsDayDetailOpen(true)
+                }}
               />
             )}
             <div className="mt-4 flex items-center justify-between gap-3">

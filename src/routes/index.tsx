@@ -6,13 +6,20 @@ import { useTodayCheckIns, useCheckIns } from '@/hooks/useCheckIns'
 import { HabitCard } from '@/components/habits/HabitCard'
 import { SimpleBarChart } from '@/components/charts/BarCharts'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  BottomSheet,
+  BottomSheetContent,
+  BottomSheetHeader,
+  BottomSheetTitle,
+} from '@/components/ui/bottom-sheet'
 import { BackdateSheet } from '@/components/habits/BackdateSheet'
-import { formatDate, getLast7Days } from '@/lib/utils'
+import { formatDate, formatTime, getLast7Days } from '@/lib/utils'
 
 function Dashboard() {
   const navigate = useNavigate()
   const [compact, setCompact] = useState(() => localStorage.getItem('dashboard-compact') === 'true')
   const [backdateOpen, setBackdateOpen] = useState(false)
+  const [dayDetailOpen, setDayDetailOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -28,6 +35,7 @@ function Dashboard() {
     startDate: last7[0],
     endDate: last7[last7.length - 1],
   })
+  const [selectedDate, setSelectedDate] = useState(() => formatDate(new Date()))
 
   // Today's counts per habit
   const todayCountMap = useMemo(() => {
@@ -69,8 +77,22 @@ function Dashboard() {
       label: days[new Date(d).getDay()],
       count: countByDate[d] ?? 0,
       date: d,
+      clickTarget: 1,
     }))
   }, [recentCheckIns, last7])
+
+  const habitsMap = useMemo(() => {
+    const map: Record<string, { name: string; color: string; icon: string }> = {}
+    for (const h of habits ?? []) {
+      map[h.id] = { name: h.name, color: h.color, icon: h.icon }
+    }
+    return map
+  }, [habits])
+
+  const selectedDateCheckIns = useMemo(() => {
+    const list = (recentCheckIns ?? []).filter((ci) => formatDate(ci.checked_at) === selectedDate)
+    return list.sort((a, b) => a.checked_at.localeCompare(b.checked_at))
+  }, [recentCheckIns, selectedDate])
 
   const today = new Date()
   const todayStr = today.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' })
@@ -185,9 +207,64 @@ function Dashboard() {
             <TrendingUp className="w-4 h-4 text-brand-500" strokeWidth={2.5} />
             <span className="font-bold text-stone-800 text-sm">近7天打卡</span>
           </div>
-          <SimpleBarChart data={weekData} height={130} highlightToday />
+          <SimpleBarChart
+            data={weekData}
+            height={130}
+            highlightToday
+            activeDate={selectedDate}
+            onBarClick={(date) => {
+              setSelectedDate(date)
+              setDayDetailOpen(true)
+            }}
+          />
         </div>
       )}
+
+      <BottomSheet open={dayDetailOpen} onOpenChange={setDayDetailOpen}>
+        <BottomSheetContent>
+          <BottomSheetHeader>
+            <BottomSheetTitle>{selectedDate} 打卡明细</BottomSheetTitle>
+            <div className="text-xs text-stone-500 font-medium">共 {selectedDateCheckIns.length} 次</div>
+          </BottomSheetHeader>
+
+          {selectedDateCheckIns.length === 0 ? (
+            <div className="py-8 text-center text-sm text-stone-400 font-medium">这一天还没有打卡记录</div>
+          ) : (
+            <div className="space-y-2.5 pb-2">
+              {selectedDateCheckIns.map((ci) => {
+                const h = habitsMap[ci.habit_id]
+                return (
+                  <div key={ci.id} className="flex items-start gap-3 py-2">
+                    <div className="w-1 h-full self-stretch bg-stone-100 rounded-full mt-1 shrink-0" />
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
+                      style={{ backgroundColor: (h?.color ?? '#ccc') + '20' }}
+                    >
+                      {h?.icon ?? '📌'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-stone-800 text-sm">
+                        {h?.name ?? '未知项目'}
+                        {formatDate(ci.checked_at) !== formatDate(ci.created_at) && (
+                          <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium align-middle">
+                            补
+                          </span>
+                        )}
+                      </div>
+                      {ci.note && (
+                        <div className="text-xs text-stone-500 mt-0.5 font-medium">{ci.note}</div>
+                      )}
+                    </div>
+                    <div className="text-xs text-stone-400 font-medium shrink-0">
+                      {formatTime(ci.checked_at)}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </BottomSheetContent>
+      </BottomSheet>
 
       {/* Habit grid */}
       {isLoading ? (
