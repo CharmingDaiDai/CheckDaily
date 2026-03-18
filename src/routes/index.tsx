@@ -118,12 +118,12 @@ function Dashboard() {
           {todayStr}
         </div>
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-stone-900">今日打卡</h1>
+            <h1 className="text-2xl font-extrabold text-[var(--color-ink-950)] tracking-tight">今日打卡</h1>
           {totalCount > 0 && !isLoading && (
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setBackdateOpen(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[var(--radius-control)] text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/70 transition-colors"
                 aria-label="补卡"
               >
                 <CalendarClock className="w-4 h-4" strokeWidth={2} />
@@ -135,7 +135,7 @@ function Dashboard() {
                   localStorage.setItem('dashboard-compact', String(next))
                   return next
                 })}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[var(--radius-control)] text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/70 transition-colors"
                 aria-label={compact ? '切换到卡片视图' : '切换到紧凑视图'}
               >
                 {compact
@@ -152,13 +152,13 @@ function Dashboard() {
             <>
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-brand-500" />
-                <span className="text-sm font-semibold text-stone-600">
+                <span className="text-sm font-semibold text-[var(--color-ink-700)]">
                   已完成 {doneCount} / {totalCount} 项
                 </span>
               </div>
               {totalCount > 0 && (
                 <div
-                  className="h-2 flex-1 bg-stone-100 rounded-full overflow-hidden"
+                  className="h-2.5 flex-1 bg-white/72 rounded-full overflow-hidden border border-[var(--color-line-soft)]"
                   role="progressbar"
                   aria-valuenow={doneCount}
                   aria-valuemin={0}
@@ -178,7 +178,7 @@ function Dashboard() {
 
       {/* All Done celebration banner */}
       {!isLoading && doneCount === totalCount && totalCount > 0 && (
-        <div className="relative overflow-hidden bg-gradient-to-r from-brand-50 to-amber-50 rounded-2xl px-5 py-4 animate-fade-in">
+        <div className="relative overflow-hidden glass-card rounded-[var(--radius-card-lg)] px-5 py-4 animate-fade-in">
           {/* Confetti particles */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             {Array.from({ length: 12 }).map((_, i) => (
@@ -195,17 +195,17 @@ function Dashboard() {
               />
             ))}
           </div>
-          <div className="font-bold text-stone-800">🎉 今日已全部完成！</div>
-          <div className="text-sm text-stone-500 mt-0.5">继续保持，养成好习惯</div>
+          <div className="font-bold text-[var(--color-ink-900)]">🎉 今日已全部完成！</div>
+          <div className="text-sm text-[var(--color-ink-600)] mt-0.5">继续保持，养成好习惯</div>
         </div>
       )}
 
       {/* Last 7 days mini chart */}
       {totalCount > 0 && (
-        <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-200/60 animate-slide-up">
-          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-stone-50">
+        <div className="glass-card rounded-[var(--radius-card-lg)] p-5 animate-slide-up">
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b luxury-divider">
             <TrendingUp className="w-4 h-4 text-brand-500" strokeWidth={2.5} />
-            <span className="font-bold text-stone-800 text-sm">近7天打卡</span>
+            <span className="font-bold text-[var(--color-ink-900)] text-sm">近7天打卡</span>
           </div>
           <SimpleBarChart
             data={weekData}

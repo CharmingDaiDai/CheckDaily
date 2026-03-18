@@ -88,7 +88,7 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-brand-50 to-stone-50 flex items-center justify-center p-5">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_20%_-10%,rgb(251_146_60/0.28),transparent_35%),radial-gradient(circle_at_80%_0%,rgb(253_186_116/0.26),transparent_40%),linear-gradient(180deg,#fffdf9_0%,#f6f3ee_55%,#f1ede7_100%)] flex items-center justify-center p-5">
       <div className="w-full max-w-sm animate-slide-up">
         {/* Logo + title */}
         <div className="flex flex-col items-center mb-10">
@@ -103,7 +103,7 @@ function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-3xl shadow-[var(--shadow-elevated)] p-7 border border-stone-200/60">
+        <div className="glass-card rounded-3xl shadow-[var(--shadow-elevated)] p-7">
           <Tabs defaultValue="magic">
             <TabsList className="w-full mb-6">
               <TabsTrigger value="magic" className="flex-1">魔法链接</TabsTrigger>
@@ -245,7 +245,7 @@ function LoginPage() {
                         />
                         <button
                           type="button"
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/80"
                           onClick={() => setShowPw((v) => !v)}
                           tabIndex={-1}
                         >
@@ -270,7 +270,7 @@ function LoginPage() {
                           />
                           <button
                             type="button"
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/80"
                             onClick={() => setShowConfirm((v) => !v)}
                             tabIndex={-1}
                           >

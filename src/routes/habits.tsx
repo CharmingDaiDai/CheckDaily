@@ -47,8 +47,8 @@ function HabitsPage() {
       {/* Header */}
       <div className="flex items-center justify-between animate-slide-up">
         <div>
-          <h1 className="text-2xl font-extrabold text-stone-900">项目管理</h1>
-          <p className="text-sm text-stone-400 font-medium mt-0.5">
+          <h1 className="text-2xl font-extrabold text-[var(--color-ink-950)] tracking-tight">项目管理</h1>
+          <p className="text-sm text-[var(--color-ink-500)] font-medium mt-0.5">
             {habits?.length ?? 0} 个活跃项目
           </p>
         </div>
@@ -106,7 +106,7 @@ function HabitsPage() {
           />
           {search && (
             <button
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white transition-colors"
               onClick={() => setSearch('')}
               aria-label="清除搜索"
             >
@@ -130,8 +130,7 @@ function HabitsPage() {
               <div
                 key={habit.id}
                 className={cn(
-                  'flex items-center gap-4 bg-white rounded-2xl px-4 py-3.5',
-                  'shadow-[var(--shadow-card)] border border-stone-200/60 animate-slide-up'
+                  'flex items-center gap-4 glass-card rounded-[var(--radius-card-lg)] px-4 py-3.5 animate-slide-up'
                 )}
                 style={{ animationDelay: `${i * 40}ms` }}
               >
@@ -148,7 +147,7 @@ function HabitsPage() {
                   <div className="font-bold text-stone-900 text-sm truncate">{habit.name}</div>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: habit.color }} />
-                    <span className="text-xs text-stone-400 font-medium">
+                      <span className="text-xs text-[var(--color-ink-500)] font-medium">
                       {new Date(habit.created_at).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} 创建
                     </span>
                   </div>
@@ -220,7 +219,7 @@ function HabitsPage() {
               {archivedHabits.map((habit) => (
                 <div
                   key={habit.id}
-                  className="flex items-center gap-4 bg-stone-50 rounded-2xl px-4 py-3.5 border border-stone-100"
+                  className="flex items-center gap-4 bg-white/45 rounded-[var(--radius-card)] px-4 py-3.5 border border-[var(--color-line-soft)]"
                 >
                   <div
                     className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 opacity-60"

@@ -122,11 +122,11 @@ function ProfilePage() {
   return (
     <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6 animate-page-enter">
       <div className="animate-slide-up">
-        <h1 className="text-2xl font-extrabold text-stone-900">我的</h1>
+        <h1 className="text-2xl font-extrabold text-[var(--color-ink-950)] tracking-tight">我的</h1>
       </div>
 
       {/* User card */}
-      <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-200/60 animate-slide-up">
+      <div className="glass-card rounded-[var(--radius-card-lg)] p-5 animate-slide-up">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-brand-100 flex items-center justify-center">
             <User className="w-7 h-7 text-brand-500" strokeWidth={1.8} />
@@ -142,13 +142,13 @@ function ProfilePage() {
       </div>
 
       {/* Account security */}
-      <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-200/60 overflow-hidden animate-slide-up">
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-stone-50">
+      <div className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden animate-slide-up">
+        <div className="flex items-center gap-3 px-5 py-4 border-b luxury-divider">
           <Shield className="w-4 h-4 text-stone-400" />
           <span className="font-semibold text-stone-700 text-sm">账户安全</span>
         </div>
         <button
-          className="w-full flex items-center justify-between px-5 py-4 border-b border-stone-50 hover:bg-stone-50 transition-colors text-left"
+          className="w-full flex items-center justify-between px-5 py-4 border-b luxury-divider hover:bg-white/65 transition-colors text-left"
           onClick={emailDialog.openDialog}
         >
           <div className="flex items-center gap-3">
@@ -158,7 +158,7 @@ function ProfilePage() {
           <ChevronRight className="w-4 h-4 text-stone-300" />
         </button>
         <button
-          className="w-full flex items-center justify-between px-5 py-4 hover:bg-stone-50 transition-colors text-left"
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/65 transition-colors text-left"
           onClick={pwDialog.openDialog}
         >
           <div className="flex items-center gap-3">
@@ -170,13 +170,13 @@ function ProfilePage() {
       </div>
 
       {/* Data management */}
-      <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-200/60 overflow-hidden animate-slide-up">
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-stone-50">
+      <div className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden animate-slide-up">
+        <div className="flex items-center gap-3 px-5 py-4 border-b luxury-divider">
           <Database className="w-4 h-4 text-stone-400" />
           <span className="font-semibold text-stone-700 text-sm">数据管理</span>
         </div>
         <button
-          className="w-full flex items-center justify-between px-5 py-4 hover:bg-stone-50 transition-colors text-left disabled:opacity-50"
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/65 transition-colors text-left disabled:opacity-50"
           onClick={handleExport}
           disabled={exporting}
         >
@@ -196,8 +196,8 @@ function ProfilePage() {
       </div>
 
       {/* App info */}
-      <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-200/60 overflow-hidden animate-slide-up">
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-stone-50">
+      <div className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden animate-slide-up">
+        <div className="flex items-center gap-3 px-5 py-4 border-b luxury-divider">
           <Info className="w-4 h-4 text-stone-400" />
           <span className="font-semibold text-stone-700 text-sm">关于</span>
         </div>
@@ -318,7 +318,7 @@ function ProfilePage() {
                   />
                   <button
                     type="button"
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white"
                     onClick={() => setShowPw((v) => !v)}
                     tabIndex={-1}
                   >
@@ -341,7 +341,7 @@ function ProfilePage() {
                   />
                   <button
                     type="button"
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white"
                     onClick={() => setShowConfirm((v) => !v)}
                     tabIndex={-1}
                   >

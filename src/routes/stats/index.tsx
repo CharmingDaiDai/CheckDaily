@@ -191,7 +191,7 @@ function StatsPage() {
     <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6 animate-page-enter">
       {/* Header */}
       <div className="animate-slide-up">
-        <h1 className="text-2xl font-extrabold text-stone-900">统计分析</h1>
+        <h1 className="text-2xl font-extrabold text-[var(--color-ink-950)] tracking-tight">统计分析</h1>
         <div className="flex items-center gap-2 mt-0.5">
           <button
             className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors"
@@ -200,7 +200,7 @@ function StatsPage() {
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="text-sm text-stone-400 font-medium" aria-live="polite">{selectedYear} 年度数据</span>
+          <span className="text-sm text-[var(--color-ink-500)] font-medium" aria-live="polite">{selectedYear} 年度数据</span>
           <button
             className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             onClick={() => setSelectedYear(y => y + 1)}
@@ -221,7 +221,7 @@ function StatsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-200/60 animate-slide-up">
+      <div className="glass-card rounded-[var(--radius-card-lg)] p-5 animate-slide-up">
         <Tabs value={activeTab} onValueChange={(v) => {
           const newIdx = tabOrder.indexOf(v as TabValue)
           setSlideDir(newIdx > prevTabIdx.current ? 'right' : 'left')
@@ -444,9 +444,9 @@ function StatsPage() {
 
       {/* Per-habit links */}
       {habits && habits.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-200/60 overflow-hidden animate-slide-up">
-          <div className="px-5 py-4 border-b border-stone-50 flex items-center justify-between gap-3">
-            <span className="font-bold text-stone-800 text-sm shrink-0">各项目详情</span>
+        <div className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden animate-slide-up">
+          <div className="px-5 py-4 border-b luxury-divider flex items-center justify-between gap-3">
+            <span className="font-bold text-[var(--color-ink-900)] text-sm shrink-0">各项目详情</span>
             {habits.length > 5 && (
               <div className="relative flex-1 max-w-[180px]">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
@@ -468,7 +468,7 @@ function StatsPage() {
               </div>
             )}
           </div>
-          <div className="divide-y divide-stone-50">
+          <div className="divide-y divide-[var(--color-line-soft)]">
             {habits
               .filter(h => h.name.toLowerCase().includes(habitSearch.toLowerCase()))
               .map((h) => {
@@ -480,7 +480,7 @@ function StatsPage() {
                     key={h.id}
                     to="/stats/$habitId"
                     params={{ habitId: h.id }}
-                    className="flex items-center gap-3 px-5 py-3.5 hover:bg-stone-50 transition-colors"
+                    className="flex items-center gap-3 px-5 py-3.5 hover:bg-white/65 transition-colors"
                   >
                     <div
                       className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
@@ -489,8 +489,8 @@ function StatsPage() {
                       {h.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-stone-900 text-sm truncate">{h.name}</div>
-                      <div className="text-xs text-stone-400 font-medium mt-0.5">
+                      <div className="font-bold text-[var(--color-ink-900)] text-sm truncate">{h.name}</div>
+                      <div className="text-xs text-[var(--color-ink-500)] font-medium mt-0.5">
                         全年 {cnt} 次 · 连续 {habitStreak} 天
                       </div>
                     </div>
