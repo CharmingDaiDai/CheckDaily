@@ -14,7 +14,7 @@ function RootLayout() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-stone-50">
+      <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(circle_at_50%_10%,rgb(251_146_60/0.18),transparent_40%),linear-gradient(180deg,#fffdf9_0%,#f6f3ee_60%,#f1ede7_100%)]">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center">
             <span className="text-white text-xl">🔥</span>
@@ -37,9 +37,9 @@ function RootLayout() {
   return (
     <ErrorBoundary>
       <OfflineBanner />
-      <div className="flex min-h-screen bg-stone-50">
+      <div className="flex min-h-screen">
         <Sidebar />
-        <main className="flex-1 pb-[80px] md:pb-0 min-h-screen">
+        <main className="flex-1 pb-[80px] md:pb-0 min-h-screen animate-page-enter">
           <Outlet />
         </main>
         <BottomNav />

@@ -14,8 +14,8 @@ export function BottomNav() {
   const pathname = location.pathname
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-xl border-t border-stone-100 pb-safe md:hidden">
-      <div className="flex items-center justify-around h-[60px] max-w-lg mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/82 backdrop-blur-2xl border-t border-[var(--color-line-soft)] pb-safe md:hidden">
+      <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
         {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
           const active = to === '/' ? pathname === '/' : pathname.startsWith(to)
           return (
@@ -23,13 +23,13 @@ export function BottomNav() {
               key={to}
               to={to}
               className={cn(
-                'flex flex-col items-center justify-center gap-0.5 px-4 h-full min-w-[60px]',
-                'text-xs font-semibold transition-colors duration-150',
-                active ? 'text-brand-500' : 'text-stone-400 hover:text-stone-600'
+                'flex flex-col items-center justify-center gap-0.5 px-4 h-full min-w-[64px] rounded-[var(--radius-control)]',
+                'text-xs font-semibold transition-all duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+                active ? 'text-brand-600' : 'text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)]'
               )}
             >
               <Icon
-                className={cn('w-[22px] h-[22px] transition-all duration-150', active && 'scale-110')}
+                className={cn('w-6 h-6 transition-all duration-[var(--duration-fast)]', active && 'scale-110')}
                 strokeWidth={active ? 2.5 : 1.8}
               />
               <span className="leading-none">{label}</span>

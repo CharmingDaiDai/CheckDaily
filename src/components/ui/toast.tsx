@@ -14,7 +14,7 @@ export function Toaster() {
           duration={t.duration ?? 3000}
           onOpenChange={(open) => { if (!open) dismiss(t.id) }}
           className={cn(
-            'group pointer-events-auto relative flex items-center gap-3 overflow-hidden rounded-xl px-4 py-3 shadow-lg border transition-all',
+            'group pointer-events-auto relative flex items-center gap-3 overflow-hidden rounded-[var(--radius-control)] px-4 py-3 shadow-[var(--shadow-card-hover)] border transition-all duration-[var(--duration-fast)]',
             'data-[state=open]:animate-in data-[state=open]:slide-in-from-top-2 data-[state=open]:fade-in',
             'data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=closed]:fade-out',
             'data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)]',
@@ -36,7 +36,7 @@ export function Toaster() {
         </ToastPrimitive.Root>
       ))}
 
-      <ToastPrimitive.Viewport className="fixed z-[100] flex flex-col gap-2 w-[calc(100vw-2rem)] max-w-[360px] outline-none bottom-[88px] left-1/2 -translate-x-1/2 md:bottom-auto md:top-4 md:right-4 md:left-auto md:translate-x-0" />
+      <ToastPrimitive.Viewport className="fixed z-[100] flex flex-col gap-2 w-[calc(100vw-2rem)] max-w-[360px] outline-none bottom-[96px] left-1/2 -translate-x-1/2 md:bottom-auto md:top-4 md:right-4 md:left-auto md:translate-x-0" />
     </ToastPrimitive.Provider>
   )
 }

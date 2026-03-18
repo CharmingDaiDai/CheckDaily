@@ -49,14 +49,15 @@ const BottomSheetContent = React.forwardRef<
 
   const handleTouchEnd = React.useCallback(() => {
     const delta = currentY.current - startY.current
+    const threshold = Math.min(120, Math.round(window.innerHeight * 0.15))
     if (contentEl.current) {
-      if (delta > 120) {
+      if (delta > threshold) {
         contentEl.current.style.transform = 'translateY(100%)'
-        contentEl.current.style.transition = 'transform 0.3s ease-out'
+        contentEl.current.style.transition = 'transform var(--duration-base) var(--ease-standard)'
         setTimeout(() => closeRef.current?.click(), 150)
       } else {
         contentEl.current.style.transform = ''
-        contentEl.current.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)'
+        contentEl.current.style.transition = 'transform var(--duration-base) var(--ease-emphasis)'
       }
     }
     currentY.current = 0
@@ -71,24 +72,24 @@ const BottomSheetContent = React.forwardRef<
         className={cn(
           /* Mobile: full-width sheet from bottom */
           'fixed bottom-0 left-0 right-0 z-50',
-          'bg-white rounded-t-3xl shadow-[var(--shadow-elevated)]',
-          'pb-safe px-5 pt-5',
-          'max-h-[90svh] overflow-y-auto',
+          'bg-white/95 rounded-t-3xl shadow-[var(--shadow-elevated)] backdrop-blur-sm',
+          'pb-safe px-5 pt-safe',
+          'max-h-[82svh] overflow-y-auto',
           /* Desktop: centered modal */
           'sm:left-[50%] sm:top-[50%] sm:bottom-auto sm:right-auto sm:w-full sm:max-w-md',
           'sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-2xl sm:px-6 sm:pt-6 sm:pb-6',
           /* Animations */
-          'data-[state=open]:animate-in data-[state=closed]:animate-out duration-[350ms]',
+          'data-[state=open]:animate-in data-[state=closed]:animate-out duration-[var(--duration-slow)]',
           'data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom',
           'sm:data-[state=closed]:slide-out-to-bottom-0 sm:data-[state=open]:slide-in-from-bottom-0',
           'sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95',
           'sm:data-[state=closed]:fade-out-0 sm:data-[state=open]:fade-in-0',
           className
         )}
-        style={{ animationTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)' }}
+        style={{ animationTimingFunction: 'var(--ease-emphasis)' }}
         {...props}
       >
-        <div ref={contentEl}>
+        <div ref={contentEl} className="pt-3 sm:pt-0">
           {/* Drag handle on mobile */}
           <div
             className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-stone-300 sm:hidden cursor-grab active:cursor-grabbing py-2 -my-2"
@@ -101,7 +102,7 @@ const BottomSheetContent = React.forwardRef<
         {/* Hidden close trigger for drag dismiss */}
         <DialogPrimitive.Close ref={closeRef} className="sr-only" aria-hidden tabIndex={-1} />
         {/* Visible close button for desktop */}
-        <BottomSheetClose className="absolute right-4 top-4 rounded-xl p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 hidden sm:flex">
+        <BottomSheetClose className="absolute right-4 top-4 rounded-xl p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 hidden sm:flex">
           <X className="h-4 w-4" />
           <span className="sr-only">关闭</span>
         </BottomSheetClose>

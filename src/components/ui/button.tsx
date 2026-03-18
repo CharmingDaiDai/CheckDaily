@@ -4,14 +4,14 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-150 tap-scale focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none',
+  'inline-flex items-center justify-center gap-2 rounded-[var(--radius-control)] font-semibold transition-all duration-[var(--duration-fast)] tap-scale focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f5f1] disabled:pointer-events-none disabled:opacity-55 select-none active:translate-y-[1px]',
   {
     variants: {
       variant: {
-        default: 'bg-brand-500 text-white shadow-sm hover:bg-brand-600 active:bg-brand-700',
-        secondary: 'bg-stone-100 text-stone-800 hover:bg-stone-200 active:bg-stone-300',
-        outline: 'border border-stone-200 bg-white text-stone-800 hover:bg-stone-50 active:bg-stone-100',
-        ghost: 'text-stone-700 hover:bg-stone-100 active:bg-stone-200',
+        default: 'bg-gradient-to-b from-brand-500 to-brand-600 text-white shadow-[0_8px_16px_rgb(249_115_22/0.34)] hover:from-brand-400 hover:to-brand-600 active:from-brand-600 active:to-brand-700',
+        secondary: 'bg-[var(--color-panel-strong)] text-[var(--color-ink-800)] border border-[var(--color-line-soft)] shadow-[0_3px_10px_rgb(26_22_17/0.08)] hover:bg-white',
+        outline: 'border border-[var(--color-line-strong)] bg-white/88 text-[var(--color-ink-800)] hover:bg-white active:bg-stone-100',
+        ghost: 'text-[var(--color-ink-700)] hover:bg-white/70 active:bg-white',
         danger: 'bg-red-500 text-white hover:bg-red-600 active:bg-red-700',
         'danger-ghost': 'text-red-600 hover:bg-red-50 active:bg-red-100',
       },
