@@ -43,9 +43,9 @@ function HabitsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6 animate-page-enter">
+    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between animate-slide-up">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-[var(--color-ink-950)] tracking-tight">项目管理</h1>
           <p className="text-sm text-[var(--color-ink-500)] font-medium mt-0.5">
@@ -96,7 +96,7 @@ function HabitsPage() {
 
       {/* Search — only show when there are items */}
       {!isLoading && (habits?.length ?? 0) > 0 && (
-        <div className="relative animate-slide-up">
+        <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
           <Input
             placeholder="搜索项目…"
@@ -126,13 +126,12 @@ function HabitsPage() {
       ) : habits && habits.length > 0 ? (
         filtered.length > 0 ? (
           <div className="space-y-3">
-            {filtered.map((habit, i) => (
+            {filtered.map((habit) => (
               <div
                 key={habit.id}
                 className={cn(
-                  'flex items-center gap-4 glass-card rounded-[var(--radius-card-lg)] px-4 py-3.5 animate-slide-up'
+                  'flex items-center gap-4 glass-card rounded-[var(--radius-card-lg)] px-4 py-3.5'
                 )}
-                style={{ animationDelay: `${i * 40}ms` }}
               >
                 {/* Color + icon */}
                 <div
@@ -178,7 +177,7 @@ function HabitsPage() {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-center animate-fade-in">
+          <div className="flex flex-col items-center justify-center py-12 text-center">
             <Search className="w-10 h-10 text-stone-200 mb-3" strokeWidth={1.5} />
             <div className="font-bold text-stone-700 mb-1">没有找到「{search}」</div>
             <button
@@ -190,7 +189,7 @@ function HabitsPage() {
           </div>
         )
       ) : (
-        <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
+        <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mb-4">
             <ListCheck className="w-10 h-10 text-stone-300" strokeWidth={1.5} />
           </div>
@@ -205,7 +204,7 @@ function HabitsPage() {
 
       {/* Archived habits */}
       {archivedHabits.length > 0 && (
-        <div className="animate-slide-up">
+        <div>
           <button
             className="flex items-center gap-2 w-full text-sm font-semibold text-stone-400 hover:text-stone-600 transition-colors py-1"
             onClick={() => setShowArchived(v => !v)}

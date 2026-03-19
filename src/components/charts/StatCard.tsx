@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCountUp } from '@/hooks/useCountUp'
@@ -32,6 +33,8 @@ function AnimatedValue({ value }: { value: string | number }) {
 }
 
 export function StatCard({ label, value, sublabel, icon: Icon, iconColor = '#f97316', loading, className, primary }: StatCardProps) {
+  const reduceMotion = useReducedMotion()
+
   if (loading) {
     return (
       <div className={cn('glass-card rounded-[var(--radius-card)] p-4', className)}>
@@ -43,8 +46,12 @@ export function StatCard({ label, value, sublabel, icon: Icon, iconColor = '#f97
   }
 
   return (
-    <div
-      className={cn('rounded-[var(--radius-card)] p-4 animate-fade-in transition-transform duration-[var(--duration-fast)] hover:-translate-y-0.5', className, primary ? '' : 'glass-card')}
+    <motion.div
+      initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+      animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+      transition={reduceMotion ? undefined : { duration: 0.32, ease: [0.22, 0.61, 0.36, 1] }}
+      whileHover={reduceMotion ? undefined : { y: -2 }}
+      className={cn('rounded-[var(--radius-card)] p-4 transition-transform duration-[var(--duration-fast)]', className, primary ? '' : 'glass-card')}
       style={primary ? { background: `linear-gradient(135deg, ${iconColor}12 0%, rgba(255,255,255,0.92) 48%, rgba(255,255,255,0.84) 100%)`, border: '1px solid var(--color-line-soft)', boxShadow: 'var(--shadow-card)' } : undefined}
     >
       <div className="flex items-start justify-between">
@@ -62,6 +69,6 @@ export function StatCard({ label, value, sublabel, icon: Icon, iconColor = '#f97
         <AnimatedValue value={value} />
       </div>
       {sublabel && <div className="mt-1 text-xs text-[var(--color-ink-500)] font-medium">{sublabel}</div>}
-    </div>
+    </motion.div>
   )
 }

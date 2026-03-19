@@ -1,4 +1,7 @@
+import { useLayoutEffect, useMemo, useRef } from 'react'
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
+import { useRouterState } from '@tanstack/react-router'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useAuthInit } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/authStore'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -6,11 +9,53 @@ import { Toaster } from '@/components/ui/toast'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
+import { directionalRouteTransition, directionalRouteTransitionReduced } from '@/lib/motion'
 import type { RouterContext } from '@/main'
+
+const routeRank: Record<string, number> = {
+  '/login': 0,
+  '/auth/callback': 0,
+  '/': 1,
+  '/habits': 2,
+  '/stats': 3,
+  '/stats/$habitId': 4,
+  '/profile': 5,
+}
+
+function normalizePath(pathname: string): string {
+  if (pathname.startsWith('/stats/') && pathname !== '/stats' && pathname !== '/stats/') {
+    return '/stats/$habitId'
+  }
+  if (pathname === '/stats/' || pathname === '/stats') {
+    return '/stats'
+  }
+  return pathname
+}
 
 function RootLayout() {
   useAuthInit()
   const { loading, user } = useAuthStore()
+  const { location } = useRouterState()
+  const reduceMotion = useReducedMotion()
+  const prevPathRef = useRef(location.pathname)
+  const direction = useMemo(() => {
+    const currentPath = normalizePath(location.pathname)
+    const prevPath = normalizePath(prevPathRef.current)
+    const prevRank = routeRank[prevPath] ?? 0
+    const currentRank = routeRank[currentPath] ?? 0
+    if (currentRank > prevRank) return 1
+    if (currentRank < prevRank) return -1
+    return 0
+  }, [location.pathname])
+
+  useLayoutEffect(() => {
+    prevPathRef.current = location.pathname
+  }, [location.pathname])
+
+  const routeVariants = useMemo(
+    () => (reduceMotion ? directionalRouteTransitionReduced : directionalRouteTransition),
+    [reduceMotion]
+  )
 
   if (loading) {
     return (
@@ -28,7 +73,18 @@ function RootLayout() {
   if (!user) {
     return (
       <ErrorBoundary>
-        <Outlet />
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={location.pathname}
+            custom={direction}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={routeVariants}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
         <Toaster />
       </ErrorBoundary>
     )
@@ -39,8 +95,20 @@ function RootLayout() {
       <OfflineBanner />
       <div className="flex min-h-screen">
         <Sidebar />
-        <main className="flex-1 pb-[80px] md:pb-0 min-h-screen animate-page-enter">
-          <Outlet />
+        <main className="flex-1 pb-[80px] md:pb-0 min-h-screen overflow-x-hidden">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={location.pathname}
+              custom={direction}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              variants={routeVariants}
+              className="min-h-screen overflow-x-hidden w-full"
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </main>
         <BottomNav />
       </div>

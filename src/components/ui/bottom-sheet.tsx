@@ -1,5 +1,6 @@
 import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
+import { useReducedMotion } from 'motion/react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -29,6 +30,7 @@ const BottomSheetContent = React.forwardRef<
   React.ComponentRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
+  const reduceMotion = useReducedMotion()
   const closeRef = React.useRef<HTMLButtonElement>(null)
   const contentEl = React.useRef<HTMLDivElement>(null)
   const startY = React.useRef(0)
@@ -79,17 +81,18 @@ const BottomSheetContent = React.forwardRef<
           'sm:left-[50%] sm:top-[50%] sm:bottom-auto sm:right-auto sm:w-full sm:max-w-md',
           'sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-2xl sm:px-6 sm:pt-6 sm:pb-6',
           /* Animations */
-          'data-[state=open]:animate-in data-[state=closed]:animate-out duration-[var(--duration-slow)]',
-          'data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom',
-          'sm:data-[state=closed]:slide-out-to-bottom-0 sm:data-[state=open]:slide-in-from-bottom-0',
-          'sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95',
-          'sm:data-[state=closed]:fade-out-0 sm:data-[state=open]:fade-in-0',
+          reduceMotion
+            ? 'data-[state=open]:animate-in data-[state=closed]:animate-out duration-[var(--duration-fast)] data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0'
+            : 'data-[state=open]:animate-in data-[state=closed]:animate-out duration-[var(--duration-slow)] data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom sm:data-[state=closed]:slide-out-to-bottom-0 sm:data-[state=open]:slide-in-from-bottom-0 sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95 sm:data-[state=closed]:fade-out-0 sm:data-[state=open]:fade-in-0',
           className
         )}
         style={{ animationTimingFunction: 'var(--ease-emphasis)' }}
         {...props}
       >
-        <div ref={contentEl} className="pt-3 sm:pt-0">
+        <div
+          ref={contentEl}
+          className="pt-3 sm:pt-0"
+        >
           {/* Drag handle on mobile */}
           <div
             className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-stone-300 sm:hidden cursor-grab active:cursor-grabbing py-2 -my-2"

@@ -1,124 +1,145 @@
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { useEffect, useMemo, useState } from 'react'
-import { CalendarDays, TrendingUp, LayoutGrid, List, CalendarClock } from 'lucide-react'
-import { useHabits } from '@/hooks/useHabits'
-import { useTodayCheckIns, useCheckIns } from '@/hooks/useCheckIns'
-import { HabitCard } from '@/components/habits/HabitCard'
-import { SimpleBarChart } from '@/components/charts/BarCharts'
-import { Skeleton } from '@/components/ui/skeleton'
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import {
+  CalendarDays,
+  TrendingUp,
+  LayoutGrid,
+  List,
+  CalendarClock,
+} from "lucide-react";
+import { useHabits } from "@/hooks/useHabits";
+import { useTodayCheckIns, useCheckIns } from "@/hooks/useCheckIns";
+import { HabitCard } from "@/components/habits/HabitCard";
+import { SimpleBarChart } from "@/components/charts/BarCharts";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   BottomSheet,
   BottomSheetContent,
   BottomSheetHeader,
   BottomSheetTitle,
-} from '@/components/ui/bottom-sheet'
-import { BackdateSheet } from '@/components/habits/BackdateSheet'
-import { formatDate, formatTime, getLast7Days } from '@/lib/utils'
+} from "@/components/ui/bottom-sheet";
+import { BackdateSheet } from "@/components/habits/BackdateSheet";
+import { formatDate, formatTime, getLast7Days } from "@/lib/utils";
 
 function Dashboard() {
-  const navigate = useNavigate()
-  const [compact, setCompact] = useState(() => localStorage.getItem('dashboard-compact') === 'true')
-  const [backdateOpen, setBackdateOpen] = useState(false)
-  const [dayDetailOpen, setDayDetailOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
+  const navigate = useNavigate();
+  const [compact, setCompact] = useState(
+    () => localStorage.getItem("dashboard-compact") === "true",
+  );
+  const [backdateOpen, setBackdateOpen] = useState(false);
+  const [dayDetailOpen, setDayDetailOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 300)
-    return () => clearTimeout(timer)
-  }, [])
+    const timer = setTimeout(() => setMounted(true), 300);
+    return () => clearTimeout(timer);
+  }, []);
 
-  const { data: habits, isLoading: habitsLoading } = useHabits()
-  const { data: todayCheckIns, isLoading: todayLoading } = useTodayCheckIns()
+  const { data: habits, isLoading: habitsLoading } = useHabits();
+  const { data: todayCheckIns, isLoading: todayLoading } = useTodayCheckIns();
 
-  const last7 = useMemo(() => getLast7Days(), [])
+  const last7 = useMemo(() => getLast7Days(), []);
   const { data: recentCheckIns } = useCheckIns({
     startDate: last7[0],
     endDate: last7[last7.length - 1],
-  })
-  const [selectedDate, setSelectedDate] = useState(() => formatDate(new Date()))
+  });
+  const [selectedDate, setSelectedDate] = useState(() =>
+    formatDate(new Date()),
+  );
 
   // Today's counts per habit
   const todayCountMap = useMemo(() => {
-    const map: Record<string, number> = {}
+    const map: Record<string, number> = {};
     for (const ci of todayCheckIns ?? []) {
-      map[ci.habit_id] = (map[ci.habit_id] ?? 0) + 1
+      map[ci.habit_id] = (map[ci.habit_id] ?? 0) + 1;
     }
-    return map
-  }, [todayCheckIns])
+    return map;
+  }, [todayCheckIns]);
 
   // Latest check-in id per habit (for undo) — todayCheckIns is ordered desc by checked_at
   const latestCheckInMap = useMemo(() => {
-    const map: Record<string, string> = {}
+    const map: Record<string, string> = {};
     for (const ci of todayCheckIns ?? []) {
-      if (!map[ci.habit_id]) map[ci.habit_id] = ci.id
+      if (!map[ci.habit_id]) map[ci.habit_id] = ci.id;
     }
-    return map
-  }, [todayCheckIns])
+    return map;
+  }, [todayCheckIns]);
 
   // Sort: incomplete first, completed at bottom
   const sortedHabits = useMemo(() => {
-    if (!habits) return []
+    if (!habits) return [];
     return [...habits].sort((a, b) => {
-      const aDone = (todayCountMap[a.id] ?? 0) > 0 ? 1 : 0
-      const bDone = (todayCountMap[b.id] ?? 0) > 0 ? 1 : 0
-      return aDone - bDone
-    })
-  }, [habits, todayCountMap])
+      const aDone = (todayCountMap[a.id] ?? 0) > 0 ? 1 : 0;
+      const bDone = (todayCountMap[b.id] ?? 0) > 0 ? 1 : 0;
+      return aDone - bDone;
+    });
+  }, [habits, todayCountMap]);
 
   // Last 7 days bar chart data
   const weekData = useMemo(() => {
-    const countByDate: Record<string, number> = {}
+    const countByDate: Record<string, number> = {};
     for (const ci of recentCheckIns ?? []) {
-      const d = formatDate(ci.checked_at)
-      countByDate[d] = (countByDate[d] ?? 0) + 1
+      const d = formatDate(ci.checked_at);
+      countByDate[d] = (countByDate[d] ?? 0) + 1;
     }
-    const days = ['日', '一', '二', '三', '四', '五', '六']
+    const days = ["日", "一", "二", "三", "四", "五", "六"];
     return last7.map((d) => ({
       label: days[new Date(d).getDay()],
       count: countByDate[d] ?? 0,
       date: d,
       clickTarget: 1,
-    }))
-  }, [recentCheckIns, last7])
+    }));
+  }, [recentCheckIns, last7]);
 
   const habitsMap = useMemo(() => {
-    const map: Record<string, { name: string; color: string; icon: string }> = {}
+    const map: Record<string, { name: string; color: string; icon: string }> =
+      {};
     for (const h of habits ?? []) {
-      map[h.id] = { name: h.name, color: h.color, icon: h.icon }
+      map[h.id] = { name: h.name, color: h.color, icon: h.icon };
     }
-    return map
-  }, [habits])
+    return map;
+  }, [habits]);
 
   const selectedDateCheckIns = useMemo(() => {
-    const list = (recentCheckIns ?? []).filter((ci) => formatDate(ci.checked_at) === selectedDate)
-    return list.sort((a, b) => a.checked_at.localeCompare(b.checked_at))
-  }, [recentCheckIns, selectedDate])
+    const list = (recentCheckIns ?? []).filter(
+      (ci) => formatDate(ci.checked_at) === selectedDate,
+    );
+    return list.sort((a, b) => a.checked_at.localeCompare(b.checked_at));
+  }, [recentCheckIns, selectedDate]);
 
-  const today = new Date()
-  const todayStr = today.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' })
-  const doneCount = Object.values(todayCountMap).filter(c => c > 0).length
-  const totalCount = habits?.length ?? 0
+  const today = new Date();
+  const todayStr = today.toLocaleDateString("zh-CN", {
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+  });
+  const doneCount = Object.values(todayCountMap).filter((c) => c > 0).length;
+  const totalCount = habits?.length ?? 0;
 
-  const isLoading = habitsLoading || todayLoading
+  const isLoading = habitsLoading || todayLoading;
 
   // Index where completed habits start (-1 = none done, 0 = all done)
-  const firstDoneIdx = sortedHabits.findIndex(h => (todayCountMap[h.id] ?? 0) > 0)
-  const hasMixed = firstDoneIdx > 0 && doneCount < totalCount
+  const firstDoneIdx = sortedHabits.findIndex(
+    (h) => (todayCountMap[h.id] ?? 0) > 0,
+  );
+  const hasMixed = firstDoneIdx > 0 && doneCount < totalCount;
 
   const gridClass = compact
-    ? 'grid grid-cols-4 sm:grid-cols-5 gap-2'
-    : 'grid grid-cols-2 sm:grid-cols-3 gap-3'
+    ? "grid grid-cols-4 sm:grid-cols-5 gap-2"
+    : "grid grid-cols-2 sm:grid-cols-3 gap-3";
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6 animate-page-enter">
+    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6">
       {/* Header */}
-      <div className="animate-slide-up">
+      <div>
         <div className="flex items-center gap-2 text-sm text-stone-400 font-medium mb-1">
           <CalendarDays className="w-3.5 h-3.5" />
           {todayStr}
         </div>
         <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-extrabold text-[var(--color-ink-950)] tracking-tight">今日打卡</h1>
+          <h1 className="text-2xl font-extrabold text-[var(--color-ink-950)] tracking-tight">
+            今日打卡
+          </h1>
           {totalCount > 0 && !isLoading && (
             <div className="flex items-center gap-1">
               <button
@@ -130,19 +151,24 @@ function Dashboard() {
                 <span className="text-xs font-medium">补卡</span>
               </button>
               <button
-                onClick={() => setCompact(v => {
-                  const next = !v
-                  localStorage.setItem('dashboard-compact', String(next))
-                  return next
-                })}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[var(--radius-control)] text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/70 transition-colors"
-                aria-label={compact ? '切换到卡片视图' : '切换到紧凑视图'}
-              >
-                {compact
-                  ? <LayoutGrid className="w-4 h-4" strokeWidth={2} />
-                  : <List className="w-4 h-4" strokeWidth={2} />
+                onClick={() =>
+                  setCompact((v) => {
+                    const next = !v;
+                    localStorage.setItem("dashboard-compact", String(next));
+                    return next;
+                  })
                 }
-                <span className="text-xs font-medium">{compact ? '卡片' : '紧凑'}</span>
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[var(--radius-control)] text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/70 transition-colors"
+                aria-label={compact ? "切换到卡片视图" : "切换到紧凑视图"}
+              >
+                {compact ? (
+                  <LayoutGrid className="w-4 h-4" strokeWidth={2} />
+                ) : (
+                  <List className="w-4 h-4" strokeWidth={2} />
+                )}
+                <span className="text-xs font-medium">
+                  {compact ? "卡片" : "紧凑"}
+                </span>
               </button>
             </div>
           )}
@@ -166,8 +192,12 @@ function Dashboard() {
                   aria-label={`今日进度：${doneCount}/${totalCount} 项已完成`}
                 >
                   <div
-                    className={`h-full rounded-full transition-all duration-700 ${doneCount === totalCount ? 'bg-gradient-to-r from-brand-400 to-brand-500 animate-shimmer' : 'bg-gradient-to-r from-brand-400 to-brand-500'}`}
-                    style={{ width: mounted ? `${(doneCount / totalCount) * 100}%` : '0%' }}
+                    className={`h-full rounded-full transition-all duration-700 ${doneCount === totalCount ? "bg-gradient-to-r from-brand-400 to-brand-500 animate-shimmer" : "bg-gradient-to-r from-brand-400 to-brand-500"}`}
+                    style={{
+                      width: mounted
+                        ? `${(doneCount / totalCount) * 100}%`
+                        : "0%",
+                    }}
                   />
                 </div>
               )}
@@ -178,7 +208,7 @@ function Dashboard() {
 
       {/* All Done celebration banner */}
       {!isLoading && doneCount === totalCount && totalCount > 0 && (
-        <div className="relative overflow-hidden glass-card rounded-[var(--radius-card-lg)] px-5 py-4 animate-fade-in">
+        <div className="relative overflow-hidden glass-card rounded-[var(--radius-card-lg)] px-5 py-4">
           {/* Confetti particles */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             {Array.from({ length: 12 }).map((_, i) => (
@@ -186,7 +216,14 @@ function Dashboard() {
                 key={i}
                 className="absolute w-2 h-2 rounded-sm animate-confetti"
                 style={{
-                  backgroundColor: ['#f97316', '#eab308', '#3b82f6', '#22c55e', '#ec4899', '#8b5cf6'][i % 6],
+                  backgroundColor: [
+                    "#f97316",
+                    "#eab308",
+                    "#3b82f6",
+                    "#22c55e",
+                    "#ec4899",
+                    "#8b5cf6",
+                  ][i % 6],
                   left: `${8 + i * 7.5}%`,
                   top: `-8px`,
                   animationDelay: `${i * 80}ms`,
@@ -195,17 +232,23 @@ function Dashboard() {
               />
             ))}
           </div>
-          <div className="font-bold text-[var(--color-ink-900)]">🎉 今日已全部完成！</div>
-          <div className="text-sm text-[var(--color-ink-600)] mt-0.5">继续保持，养成好习惯</div>
+          <div className="font-bold text-[var(--color-ink-900)]">
+            🎉 今日已全部完成！
+          </div>
+          <div className="text-sm text-[var(--color-ink-600)] mt-0.5">
+            继续保持，养成好习惯
+          </div>
         </div>
       )}
 
       {/* Last 7 days mini chart */}
       {totalCount > 0 && (
-        <div className="glass-card rounded-[var(--radius-card-lg)] p-5 animate-slide-up">
+        <div className="glass-card rounded-[var(--radius-card-lg)] p-5">
           <div className="flex items-center gap-2 mb-4 pb-3 border-b luxury-divider">
             <TrendingUp className="w-4 h-4 text-brand-500" strokeWidth={2.5} />
-            <span className="font-bold text-[var(--color-ink-900)] text-sm">近7天打卡</span>
+            <span className="font-bold text-[var(--color-ink-900)] text-sm">
+              近7天打卡
+            </span>
           </div>
           <SimpleBarChart
             data={weekData}
@@ -213,8 +256,8 @@ function Dashboard() {
             highlightToday
             activeDate={selectedDate}
             onBarClick={(date) => {
-              setSelectedDate(date)
-              setDayDetailOpen(true)
+              setSelectedDate(date);
+              setDayDetailOpen(true);
             }}
           />
         </div>
@@ -224,42 +267,49 @@ function Dashboard() {
         <BottomSheetContent>
           <BottomSheetHeader>
             <BottomSheetTitle>{selectedDate} 打卡明细</BottomSheetTitle>
-            <div className="text-xs text-stone-500 font-medium">共 {selectedDateCheckIns.length} 次</div>
+            <div className="text-xs text-stone-500 font-medium">
+              共 {selectedDateCheckIns.length} 次
+            </div>
           </BottomSheetHeader>
 
           {selectedDateCheckIns.length === 0 ? (
-            <div className="py-8 text-center text-sm text-stone-400 font-medium">这一天还没有打卡记录</div>
+            <div className="py-8 text-center text-sm text-stone-400 font-medium">
+              这一天还没有打卡记录
+            </div>
           ) : (
             <div className="space-y-2.5 pb-2">
               {selectedDateCheckIns.map((ci) => {
-                const h = habitsMap[ci.habit_id]
+                const h = habitsMap[ci.habit_id];
                 return (
                   <div key={ci.id} className="flex items-start gap-3 py-2">
                     <div className="w-1 h-full self-stretch bg-stone-100 rounded-full mt-1 shrink-0" />
                     <div
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
-                      style={{ backgroundColor: (h?.color ?? '#ccc') + '20' }}
+                      style={{ backgroundColor: (h?.color ?? "#ccc") + "20" }}
                     >
-                      {h?.icon ?? '📌'}
+                      {h?.icon ?? "📌"}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-stone-800 text-sm">
-                        {h?.name ?? '未知项目'}
-                        {formatDate(ci.checked_at) !== formatDate(ci.created_at) && (
+                        {h?.name ?? "未知项目"}
+                        {formatDate(ci.checked_at) !==
+                          formatDate(ci.created_at) && (
                           <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium align-middle">
                             补
                           </span>
                         )}
                       </div>
                       {ci.note && (
-                        <div className="text-xs text-stone-500 mt-0.5 font-medium">{ci.note}</div>
+                        <div className="text-xs text-stone-500 mt-0.5 font-medium">
+                          {ci.note}
+                        </div>
                       )}
                     </div>
                     <div className="text-xs text-stone-400 font-medium shrink-0">
                       {formatTime(ci.checked_at)}
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           )}
@@ -270,7 +320,10 @@ function Dashboard() {
       {isLoading ? (
         <div className={gridClass}>
           {Array.from({ length: compact ? 8 : 6 }).map((_, i) => (
-            <Skeleton key={i} className={compact ? 'h-24 rounded-2xl' : 'h-28 rounded-2xl'} />
+            <Skeleton
+              key={i}
+              className={compact ? "h-24 rounded-2xl" : "h-28 rounded-2xl"}
+            />
           ))}
         </div>
       ) : sortedHabits.length > 0 ? (
@@ -278,16 +331,18 @@ function Dashboard() {
           {/* Incomplete habits */}
           {firstDoneIdx !== 0 && (
             <div className={gridClass}>
-              {sortedHabits.slice(0, firstDoneIdx === -1 ? undefined : firstDoneIdx).map((habit, i) => (
-                <HabitCard
-                  key={habit.id}
-                  habit={habit}
-                  todayCount={todayCountMap[habit.id] ?? 0}
-                  compact={compact}
-                  latestCheckInId={latestCheckInMap[habit.id]}
-                  style={{ animationDelay: `${i * 40}ms` }}
-                />
-              ))}
+              {sortedHabits
+                .slice(0, firstDoneIdx === -1 ? undefined : firstDoneIdx)
+                .map((habit, i) => (
+                  <HabitCard
+                    key={habit.id}
+                    habit={habit}
+                    todayCount={todayCountMap[habit.id] ?? 0}
+                    compact={compact}
+                    latestCheckInId={latestCheckInMap[habit.id]}
+                    style={{ animationDelay: `${i * 40}ms` }}
+                  />
+                ))}
             </div>
           )}
 
@@ -295,7 +350,9 @@ function Dashboard() {
           {hasMixed && (
             <div className="flex items-center gap-2 py-0.5">
               <div className="h-px flex-1 bg-stone-100" />
-              <span className="text-xs text-stone-400 font-medium px-1">已完成 {doneCount} 项</span>
+              <span className="text-xs text-stone-400 font-medium px-1">
+                已完成 {doneCount} 项
+              </span>
               <div className="h-px flex-1 bg-stone-100" />
             </div>
           )}
@@ -317,15 +374,19 @@ function Dashboard() {
           )}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
+        <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mb-4">
             <span className="text-4xl">📋</span>
           </div>
-          <div className="font-bold text-stone-700 text-lg mb-1">还没有打卡项目</div>
-          <div className="text-stone-400 text-sm mb-5">去添加你的第一个习惯吧</div>
+          <div className="font-bold text-stone-700 text-lg mb-1">
+            还没有打卡项目
+          </div>
+          <div className="text-stone-400 text-sm mb-5">
+            去添加你的第一个习惯吧
+          </div>
           <button
             className="px-5 py-2.5 bg-brand-500 text-white rounded-xl font-semibold text-sm hover:bg-brand-600 transition-colors tap-scale"
-            onClick={() => void navigate({ to: '/habits' })}
+            onClick={() => void navigate({ to: "/habits" })}
           >
             添加项目
           </button>
@@ -334,7 +395,7 @@ function Dashboard() {
 
       {/* Onboarding hint */}
       {!isLoading && sortedHabits.length > 0 && doneCount === 0 && (
-        <div className="flex items-center justify-center gap-1.5 py-1 text-stone-300 animate-fade-in">
+        <div className="flex items-center justify-center gap-1.5 py-1 text-stone-300">
           <span className="text-sm">👆</span>
           <span className="text-xs font-medium">轻触卡片即可完成今日打卡</span>
         </div>
@@ -342,16 +403,20 @@ function Dashboard() {
 
       {/* Backdate sheet */}
       {habits && (
-        <BackdateSheet open={backdateOpen} onOpenChange={setBackdateOpen} habits={habits} />
+        <BackdateSheet
+          open={backdateOpen}
+          onOpenChange={setBackdateOpen}
+          habits={habits}
+        />
       )}
     </div>
-  )
+  );
 }
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute("/")({
   component: Dashboard,
   beforeLoad: ({ context }) => {
-    if (context.auth.loading) return
-    if (!context.auth.user) throw redirect({ to: '/login' })
+    if (context.auth.loading) return;
+    if (!context.auth.user) throw redirect({ to: "/login" });
   },
-})
+});

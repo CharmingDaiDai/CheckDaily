@@ -89,7 +89,7 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_20%_-10%,rgb(251_146_60/0.28),transparent_35%),radial-gradient(circle_at_80%_0%,rgb(253_186_116/0.26),transparent_40%),linear-gradient(180deg,#fffdf9_0%,#f6f3ee_55%,#f1ede7_100%)] flex items-center justify-center p-5">
-      <div className="w-full max-w-sm animate-slide-up">
+      <div className="w-full max-w-sm">
         {/* Logo + title */}
         <div className="flex flex-col items-center mb-10">
           <div className="relative mb-5">

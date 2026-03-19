@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts'
+import { useReducedMotion } from 'motion/react'
 import { today } from '@/lib/utils'
 import { SimpleChartTooltip, StackedChartTooltip } from './ChartTooltip'
 
@@ -35,6 +36,8 @@ export function SimpleBarChart({
   activeDate,
   onBarClick,
 }: SimpleBarChartProps) {
+  const reduceMotion = useReducedMotion()
+
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 4, right: 0, left: -28, bottom: 0 }} barCategoryGap="30%">
@@ -60,7 +63,9 @@ export function SimpleBarChart({
           dataKey="count"
           radius={[6, 6, 3, 3]}
           maxBarSize={40}
-          animationDuration={700}
+          isAnimationActive={!reduceMotion}
+          animationDuration={reduceMotion ? 0 : 620}
+          animationBegin={reduceMotion ? 0 : 40}
           animationEasing="ease-out"
           onClick={(entry) => {
             const date = (entry as { payload?: { date?: string } })?.payload?.date
@@ -120,6 +125,8 @@ interface StackedBarChartProps {
 }
 
 export function StackedBarChart({ data, habits, height = 200, activeDate, onBarClick }: StackedBarChartProps) {
+  const reduceMotion = useReducedMotion()
+
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 4, right: 0, left: -28, bottom: 0 }} barCategoryGap="30%">
@@ -150,7 +157,9 @@ export function StackedBarChart({ data, habits, height = 200, activeDate, onBarC
             fill={h.color}
             radius={[0, 0, 0, 0]}
             maxBarSize={40}
-            animationDuration={680}
+            isAnimationActive={!reduceMotion}
+            animationDuration={reduceMotion ? 0 : 620}
+            animationBegin={reduceMotion ? 0 : 45}
             animationEasing="ease-out"
             onClick={(entry) => {
               const date = (entry as { payload?: { date?: string } })?.payload?.date

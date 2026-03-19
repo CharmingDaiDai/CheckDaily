@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { useReducedMotion } from 'motion/react'
 import {
   LineChart,
   Line,
@@ -24,6 +25,7 @@ interface TrendLineChartProps {
 
 export function TrendLineChart({ data, color = '#f97316', height = 180 }: TrendLineChartProps) {
   const gradId = useId()
+  const reduceMotion = useReducedMotion()
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 8, right: 8, left: -28, bottom: 0 }}>
@@ -56,6 +58,9 @@ export function TrendLineChart({ data, color = '#f97316', height = 180 }: TrendL
           dataKey="count"
           stroke={color}
           strokeWidth={2.5}
+          isAnimationActive={!reduceMotion}
+          animationDuration={reduceMotion ? 0 : 640}
+          animationEasing="ease-out"
           dot={<CustomDot color={color} />}
           activeDot={{ r: 5, fill: color, stroke: 'white', strokeWidth: 2 }}
         />

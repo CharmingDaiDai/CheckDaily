@@ -5,6 +5,16 @@ import { formatDate, today } from '@/lib/utils'
 import { toast } from '@/hooks/useToast'
 import type { CheckIn, CheckInInsert } from '@/types'
 
+function toUtcStartOfLocalDay(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d, 0, 0, 0, 0).toISOString()
+}
+
+function toUtcEndOfLocalDay(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d, 23, 59, 59, 999).toISOString()
+}
+
 export function useCheckIns(opts?: { habitId?: string; startDate?: string; endDate?: string }) {
   const userId = useAuthStore((s) => s.user?.id)
   const { habitId, startDate, endDate } = opts ?? {}
@@ -19,8 +29,8 @@ export function useCheckIns(opts?: { habitId?: string; startDate?: string; endDa
         .eq('user_id', userId)
         .order('checked_at', { ascending: false })
       if (habitId) q = q.eq('habit_id', habitId)
-      if (startDate) q = q.gte('checked_at', startDate + 'T00:00:00.000Z')
-      if (endDate) q = q.lte('checked_at', endDate + 'T23:59:59.999Z')
+      if (startDate) q = q.gte('checked_at', toUtcStartOfLocalDay(startDate))
+      if (endDate) q = q.lte('checked_at', toUtcEndOfLocalDay(endDate))
       q = q.limit(10000)
       const { data, error } = await q
       if (error) throw error
@@ -94,8 +104,8 @@ export function useYearlyCheckInCounts(habitId?: string, year?: number) {
         .from('check_ins')
         .select('checked_at')
         .eq('user_id', userId)
-        .gte('checked_at', `${resolvedYear}-01-01T00:00:00.000Z`)
-        .lte('checked_at', `${resolvedYear}-12-31T23:59:59.999Z`)
+        .gte('checked_at', toUtcStartOfLocalDay(`${resolvedYear}-01-01`))
+        .lte('checked_at', toUtcEndOfLocalDay(`${resolvedYear}-12-31`))
       if (habitId) q = q.eq('habit_id', habitId)
       q = q.limit(10000)
       const { data, error } = await q

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { motion, useReducedMotion } from 'motion/react'
 import { Check, Plus, RotateCcw, MoreHorizontal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { celebrate } from '@/lib/celebrate'
@@ -25,6 +26,7 @@ interface HabitCardProps {
 }
 
 export function HabitCard({ habit, todayCount, style, compact = false, latestCheckInId }: HabitCardProps) {
+  const reduceMotion = useReducedMotion()
   const [open, setOpen] = useState(false)
   const [note, setNote] = useState('')
   const [showNote, setShowNote] = useState(false)
@@ -250,13 +252,14 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
   if (compact) {
     return (
       <>
-        <button
+        <motion.button
+          whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+          whileHover={reduceMotion || isDone ? undefined : { y: -1 }}
           ref={cardRef}
           className={cn(
             'group relative flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1',
             'rounded-2xl border tap-scale transition-all duration-200 w-full select-none',
             'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
-            'animate-slide-up',
             isDone
               ? 'border-transparent shadow-sm'
               : 'bg-white border-stone-200 shadow-[var(--shadow-card)]',
@@ -311,7 +314,7 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
               ×{todayCount}
             </span>
           )}
-        </button>
+        </motion.button>
         <BottomSheet open={open} onOpenChange={setOpen}>
           {sheetContent}
         </BottomSheet>
@@ -322,16 +325,17 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
   // ── Normal mode ───────────────────────────────────────────
   return (
     <>
-      <button
+      <motion.button
+        whileTap={reduceMotion ? undefined : { scale: 0.985 }}
+        whileHover={reduceMotion || isDone ? undefined : { y: -2 }}
         ref={cardRef}
         className={cn(
           'group relative flex flex-col items-start p-4 rounded-2xl tap-scale',
           'border text-left w-full select-none',
           'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
-          'animate-slide-up',
           isDone
             ? 'border-transparent shadow-sm'
-            : 'bg-white border-stone-200 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200',
+            : 'bg-white border-stone-200 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] transition-[box-shadow,transform] duration-200',
           celebrating && 'animate-celebrate',
         )}
         style={{
@@ -393,7 +397,7 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
             </span>
           )}
         </div>
-      </button>
+      </motion.button>
       <BottomSheet open={open} onOpenChange={setOpen}>
         {sheetContent}
       </BottomSheet>

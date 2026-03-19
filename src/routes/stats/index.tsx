@@ -1,20 +1,29 @@
-import { useState, useMemo, useRef, useEffect, lazy, Suspense } from 'react'
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
-import { Flame, Trophy, Target, BarChart2, ChevronRight, ChevronLeft, Search, X } from 'lucide-react'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Input } from '@/components/ui/input'
+import { useState, useMemo, useRef, useEffect, lazy, Suspense } from "react";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import {
+  Flame,
+  Trophy,
+  Target,
+  BarChart2,
+  ChevronRight,
+  ChevronLeft,
+  Search,
+  X,
+} from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import {
   BottomSheet,
   BottomSheetContent,
   BottomSheetHeader,
   BottomSheetTitle,
-} from '@/components/ui/bottom-sheet'
-const HabitHeatmap = lazy(() => import('@/components/charts/HabitHeatmap'))
-import { SimpleBarChart, StackedBarChart } from '@/components/charts/BarCharts'
-import { StatCard } from '@/components/charts/StatCard'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useHabits } from '@/hooks/useHabits'
-import { useCheckIns, useYearlyCheckInCounts } from '@/hooks/useCheckIns'
+} from "@/components/ui/bottom-sheet";
+const HabitHeatmap = lazy(() => import("@/components/charts/HabitHeatmap"));
+import { SimpleBarChart, StackedBarChart } from "@/components/charts/BarCharts";
+import { StatCard } from "@/components/charts/StatCard";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useHabits } from "@/hooks/useHabits";
+import { useCheckIns, useYearlyCheckInCounts } from "@/hooks/useCheckIns";
 import {
   formatDate,
   formatTime,
@@ -25,219 +34,316 @@ import {
   getMonthRange,
   computeStreak,
   computeLongestStreak,
-} from '@/lib/utils'
-import type { CalendarDatum } from '@/types'
+} from "@/lib/utils";
+import type { CalendarDatum } from "@/types";
 
-type TabValue = 'day' | 'week' | 'month' | 'year'
+type TabValue = "day" | "week" | "month" | "year";
 
-const weekLabels = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+const weekLabels = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 
 function parseDateKey(dateStr: string): Date {
-  const [y, m, d] = dateStr.split('-').map(Number)
-  return new Date(y, m - 1, d)
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
 }
 
 function formatDateOption(dateStr: string): string {
-  const d = parseDateKey(dateStr)
-  return `${d.getMonth() + 1}月${d.getDate()}日 ${weekLabels[d.getDay()]}`
+  const d = parseDateKey(dateStr);
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${weekLabels[d.getDay()]}`;
 }
 
 function StatsPage() {
-  const currentYear = new Date().getFullYear()
+  const currentYear = new Date().getFullYear();
   const [activeTab, setActiveTab] = useState<TabValue>(
-    () => (sessionStorage.getItem('stats-tab') as TabValue) ?? 'week'
-  )
-  const tabOrder: TabValue[] = ['day', 'week', 'month', 'year']
-  const prevTabIdx = useRef(tabOrder.indexOf(activeTab))
-  const [slideDir, setSlideDir] = useState<'right' | 'left'>('right')
-  const [habitSearch, setHabitSearch] = useState('')
-  const [selectedYear, setSelectedYear] = useState(currentYear)
-  const [isDayDetailOpen, setIsDayDetailOpen] = useState(false)
-  const { data: habits } = useHabits()
+    () => (sessionStorage.getItem("stats-tab") as TabValue) ?? "week",
+  );
+  const tabOrder: TabValue[] = ["day", "week", "month", "year"];
+  const prevTabIdx = useRef(tabOrder.indexOf(activeTab));
+  const [slideDir, setSlideDir] = useState<"right" | "left">("right");
+  const [habitSearch, setHabitSearch] = useState("");
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [isDayDetailOpen, setIsDayDetailOpen] = useState(false);
+  const { data: habits } = useHabits();
+  const todayStr = useMemo(() => today(), []);
+  const last30 = useMemo(() => getLast30Days(), []);
+  const rollingStart = last30[0] ?? todayStr;
 
-  // Fetch all check-ins for selected year (extended to Dec 1 of prior year for cross-year streak)
-  const queryStart = selectedYear === currentYear ? `${selectedYear - 1}-12-01` : `${selectedYear}-01-01`
-  const { data: allCheckIns, isLoading } = useCheckIns({
+  // Year-scoped data for annual views and yearly counters.
+  const queryStart =
+    selectedYear === currentYear
+      ? `${selectedYear - 1}-12-01`
+      : `${selectedYear}-01-01`;
+  const { data: yearCheckIns, isLoading: yearLoading } = useCheckIns({
     startDate: queryStart,
     endDate: `${selectedYear}-12-31`,
-  })
-  const yearStart = `${selectedYear}-01-01`
-  const yearEnd = `${selectedYear}-12-31`
-  const weekRange = useMemo(() => getWeekRange(), [])
+  });
+  // Rolling window data for today/week/near-term charts, independent from selected year.
+  const { data: rollingCheckIns, isLoading: rollingLoading } = useCheckIns({
+    startDate: rollingStart,
+    endDate: todayStr,
+  });
+
+  const allCheckIns = useMemo(() => {
+    const merged = new Map<string, NonNullable<typeof yearCheckIns>[number]>();
+    for (const ci of yearCheckIns ?? []) merged.set(ci.id, ci);
+    for (const ci of rollingCheckIns ?? []) merged.set(ci.id, ci);
+    return Array.from(merged.values());
+  }, [yearCheckIns, rollingCheckIns]);
+
+  const isLoading = yearLoading || rollingLoading;
+  const effectiveYear = activeTab === "year" ? selectedYear : currentYear;
+  const yearStart = `${effectiveYear}-01-01`;
+  const yearEnd = `${effectiveYear}-12-31`;
+  const weekRange = useMemo(() => getWeekRange(), []);
   const weekDays = useMemo(
     () => getDateRangeDays(weekRange.start, weekRange.end),
-    [weekRange.start, weekRange.end]
-  )
-  const last30 = useMemo(() => getLast30Days(), [])
+    [weekRange.start, weekRange.end],
+  );
   const [selectedDate, setSelectedDate] = useState<string>(() => {
-    const todayStr = today()
-    return weekDays.includes(todayStr) ? todayStr : (weekDays[weekDays.length - 1] ?? todayStr)
-  })
+    return weekDays.includes(todayStr)
+      ? todayStr
+      : (weekDays[weekDays.length - 1] ?? todayStr);
+  });
 
   const checkInsByHabit = useMemo(() => {
-    const map = new Map<string, string[]>()
+    const map = new Map<string, string[]>();
     for (const ci of allCheckIns ?? []) {
-      const d = formatDate(ci.checked_at)
-      const arr = map.get(ci.habit_id)
-      if (arr) arr.push(d)
-      else map.set(ci.habit_id, [d])
+      const d = formatDate(ci.checked_at);
+      const arr = map.get(ci.habit_id);
+      if (arr) arr.push(d);
+      else map.set(ci.habit_id, [d]);
     }
-    return map
-  }, [allCheckIns])
+    return map;
+  }, [allCheckIns]);
 
   // Today's check-ins
-  const todayStr = today()
   const todayCheckIns = useMemo(
-    () => allCheckIns?.filter((ci) => formatDate(ci.checked_at) === todayStr) ?? [],
-    [allCheckIns, todayStr]
-  )
+    () =>
+      allCheckIns?.filter((ci) => formatDate(ci.checked_at) === todayStr) ?? [],
+    [allCheckIns, todayStr],
+  );
 
   // Streak
   const allDates = useMemo(
     () => (allCheckIns ?? []).map((ci) => formatDate(ci.checked_at)),
-    [allCheckIns]
-  )
-  const streak = computeStreak(allDates)
-  const longest = computeLongestStreak(allDates)
-  const thisMonthRange = getMonthRange()
+    [allCheckIns],
+  );
+  const streak = computeStreak(allDates);
+  const longest = computeLongestStreak(allDates);
+  const thisMonthRange = getMonthRange();
   const thisMonthCount = useMemo(
-    () => (allCheckIns ?? []).filter(
-      (ci) => formatDate(ci.checked_at) >= thisMonthRange.start && formatDate(ci.checked_at) <= thisMonthRange.end
-    ).length,
-    [allCheckIns, thisMonthRange]
-  )
+    () =>
+      (allCheckIns ?? []).filter(
+        (ci) =>
+          formatDate(ci.checked_at) >= thisMonthRange.start &&
+          formatDate(ci.checked_at) <= thisMonthRange.end,
+      ).length,
+    [allCheckIns, thisMonthRange],
+  );
 
   // Yearly heatmap data
-  const { data: yearCounts } = useYearlyCheckInCounts(undefined, selectedYear)
+  const { data: yearCounts } = useYearlyCheckInCounts(undefined, selectedYear);
   const heatmapData = useMemo<CalendarDatum[]>(() => {
-    return Object.entries(yearCounts ?? {}).map(([day, value]) => ({ day, value }))
-  }, [yearCounts])
+    return Object.entries(yearCounts ?? {}).map(([day, value]) => ({
+      day,
+      value,
+    }));
+  }, [yearCounts]);
 
   // Week bar data
   const weekData = useMemo(() => {
-    const countByDate: Record<string, number> = {}
-    for (const ci of allCheckIns ?? []) {
-      const d = formatDate(ci.checked_at)
-      countByDate[d] = (countByDate[d] ?? 0) + 1
+    const countByDate: Record<string, number> = {};
+    for (const ci of rollingCheckIns ?? []) {
+      const d = formatDate(ci.checked_at);
+      countByDate[d] = (countByDate[d] ?? 0) + 1;
     }
     return weekDays.map((d) => ({
       label: weekLabels[parseDateKey(d).getDay()],
       count: countByDate[d] ?? 0,
       date: d,
       clickTarget: 1,
-    }))
-  }, [allCheckIns, weekDays])
+    }));
+  }, [rollingCheckIns, weekDays]);
 
   // Month stacked bar data
   const habitsMap = useMemo(() => {
-    const m: Record<string, { name: string; color: string; icon: string }> = {}
-    for (const h of habits ?? []) m[h.id] = { name: h.name, color: h.color, icon: h.icon }
-    return m
-  }, [habits])
+    const m: Record<string, { name: string; color: string; icon: string }> = {};
+    for (const h of habits ?? [])
+      m[h.id] = { name: h.name, color: h.color, icon: h.icon };
+    return m;
+  }, [habits]);
 
   // Month stacked bar data
   const monthData = useMemo(() => {
-    const map: Record<string, Record<string, number>> = {}
-    for (const d of last30) map[d] = {}
-    for (const ci of allCheckIns ?? []) {
-      const d = formatDate(ci.checked_at)
+    const map: Record<string, Record<string, number>> = {};
+    for (const d of last30) map[d] = {};
+    for (const ci of rollingCheckIns ?? []) {
+      const d = formatDate(ci.checked_at);
       if (map[d] !== undefined) {
-        const hName = habitsMap[ci.habit_id]?.name ?? 'other'
-        map[d][hName] = (map[d][hName] ?? 0) + 1
+        const hName = habitsMap[ci.habit_id]?.name ?? "other";
+        map[d][hName] = (map[d][hName] ?? 0) + 1;
       }
     }
     return last30.map((d, i) => ({
       date: d,
-      label: i % 5 === 0 ? String(new Date(d).getDate()) : '',
+      label: i % 5 === 0 ? String(new Date(d).getDate()) : "",
       clickTarget: 1,
       ...(map[d] ?? {}),
-    }))
-  }, [allCheckIns, habitsMap, last30])
+    }));
+  }, [rollingCheckIns, habitsMap, last30]);
 
   // Day timeline
   const todayTimeline = useMemo(() => {
-    return todayCheckIns.sort((a, b) => a.checked_at.localeCompare(b.checked_at))
-  }, [todayCheckIns])
+    return todayCheckIns.sort((a, b) =>
+      a.checked_at.localeCompare(b.checked_at),
+    );
+  }, [todayCheckIns]);
 
   const yearDates = useMemo(() => {
-    const items = new Set<string>()
+    const items = new Set<string>();
     for (const ci of allCheckIns ?? []) {
-      const d = formatDate(ci.checked_at)
-      if (d >= yearStart && d <= yearEnd) items.add(d)
+      const d = formatDate(ci.checked_at);
+      if (d >= yearStart && d <= yearEnd) items.add(d);
     }
-    return Array.from(items).sort((a, b) => b.localeCompare(a))
-  }, [allCheckIns, yearStart, yearEnd])
+    return Array.from(items).sort((a, b) => b.localeCompare(a));
+  }, [allCheckIns, yearStart, yearEnd]);
 
   const dateOptions = useMemo(() => {
-    if (activeTab === 'week') return weekDays
-    if (activeTab === 'month') return [...last30].reverse()
-    if (activeTab === 'year') return yearDates.length > 0 ? yearDates : [today()]
-    return []
-  }, [activeTab, weekDays, last30, yearDates])
+    if (activeTab === "week") return weekDays;
+    if (activeTab === "month") return [...last30].reverse();
+    if (activeTab === "year")
+      return yearDates.length > 0 ? yearDates : [today()];
+    return [];
+  }, [activeTab, weekDays, last30, yearDates]);
 
   useEffect(() => {
-    if (activeTab === 'day') return
+    if (activeTab === "day") return;
     if (!dateOptions.includes(selectedDate)) {
-      setSelectedDate(dateOptions[0] ?? today())
+      setSelectedDate(dateOptions[0] ?? today());
     }
-  }, [activeTab, dateOptions, selectedDate])
+  }, [activeTab, dateOptions, selectedDate]);
 
   const selectedDateCheckIns = useMemo(() => {
-    const list = (allCheckIns ?? []).filter((ci) => formatDate(ci.checked_at) === selectedDate)
-    return list.sort((a, b) => a.checked_at.localeCompare(b.checked_at))
-  }, [allCheckIns, selectedDate])
+    const list = (allCheckIns ?? []).filter(
+      (ci) => formatDate(ci.checked_at) === selectedDate,
+    );
+    return list.sort((a, b) => a.checked_at.localeCompare(b.checked_at));
+  }, [allCheckIns, selectedDate]);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6 animate-page-enter">
+    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6">
       {/* Header */}
-      <div className="animate-slide-up">
-        <h1 className="text-2xl font-extrabold text-[var(--color-ink-950)] tracking-tight">统计分析</h1>
+      <div>
+        <h1 className="text-2xl font-extrabold text-[var(--color-ink-950)] tracking-tight">
+          统计分析
+        </h1>
         <div className="flex items-center gap-2 mt-0.5">
-          <button
-            className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors"
-            onClick={() => setSelectedYear(y => y - 1)}
-            aria-label="上一年"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <span className="text-sm text-[var(--color-ink-500)] font-medium" aria-live="polite">{selectedYear} 年度数据</span>
-          <button
-            className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            onClick={() => setSelectedYear(y => y + 1)}
-            disabled={selectedYear >= currentYear}
-            aria-label="下一年"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          {activeTab === "year" ? (
+            <>
+              <button
+                className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors"
+                onClick={() => setSelectedYear((y) => y - 1)}
+                aria-label="上一年"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span
+                className="text-sm text-[var(--color-ink-500)] font-medium"
+                aria-live="polite"
+              >
+                {selectedYear} 年度数据
+              </span>
+              <button
+                className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                onClick={() => setSelectedYear((y) => y + 1)}
+                disabled={selectedYear >= currentYear}
+                aria-label="下一年"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            <span className="text-sm text-[var(--color-ink-500)] font-medium">
+              实时数据（本周与近30天）
+            </span>
+          )}
         </div>
       </div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="当前连续" value={`${streak} 天`} icon={Flame} iconColor="#f97316" loading={isLoading} primary />
-        <StatCard label="本月打卡" value={thisMonthCount} sublabel="次" icon={Target} iconColor="#3b82f6" loading={isLoading} />
-        <StatCard label="最长连续" value={`${longest} 天`} icon={Trophy} iconColor="#eab308" loading={isLoading} />
-        <StatCard label="全年总计" value={(allCheckIns ?? []).filter(ci => formatDate(ci.checked_at) >= yearStart).length} sublabel="次" icon={BarChart2} iconColor="#22c55e" loading={isLoading} />
+        <StatCard
+          label="当前连续"
+          value={`${streak} 天`}
+          icon={Flame}
+          iconColor="#f97316"
+          loading={isLoading}
+          primary
+        />
+        <StatCard
+          label="本月打卡"
+          value={thisMonthCount}
+          sublabel="次"
+          icon={Target}
+          iconColor="#3b82f6"
+          loading={isLoading}
+        />
+        <StatCard
+          label="最长连续"
+          value={`${longest} 天`}
+          icon={Trophy}
+          iconColor="#eab308"
+          loading={isLoading}
+        />
+        <StatCard
+          label="全年总计"
+          value={
+            (allCheckIns ?? []).filter(
+              (ci) => formatDate(ci.checked_at) >= yearStart,
+            ).length
+          }
+          sublabel="次"
+          icon={BarChart2}
+          iconColor="#22c55e"
+          loading={isLoading}
+        />
       </div>
 
       {/* Tabs */}
-      <div className="glass-card rounded-[var(--radius-card-lg)] p-5 animate-slide-up">
-        <Tabs value={activeTab} onValueChange={(v) => {
-          const newIdx = tabOrder.indexOf(v as TabValue)
-          setSlideDir(newIdx > prevTabIdx.current ? 'right' : 'left')
-          prevTabIdx.current = newIdx
-          setActiveTab(v as TabValue)
-          sessionStorage.setItem('stats-tab', v)
-        }}>
+      <div className="glass-card rounded-[var(--radius-card-lg)] p-5">
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => {
+            const newIdx = tabOrder.indexOf(v as TabValue);
+            setSlideDir(newIdx > prevTabIdx.current ? "right" : "left");
+            prevTabIdx.current = newIdx;
+            setActiveTab(v as TabValue);
+            sessionStorage.setItem("stats-tab", v);
+          }}
+        >
           <TabsList className="w-full mb-5">
-            <TabsTrigger value="day" className="flex-1">今日</TabsTrigger>
-            <TabsTrigger value="week" className="flex-1">本周</TabsTrigger>
-            <TabsTrigger value="month" className="flex-1">近30天</TabsTrigger>
-            <TabsTrigger value="year" className="flex-1">全年</TabsTrigger>
+            <TabsTrigger value="day" className="flex-1">
+              今日
+            </TabsTrigger>
+            <TabsTrigger value="week" className="flex-1">
+              本周
+            </TabsTrigger>
+            <TabsTrigger value="month" className="flex-1">
+              近30天
+            </TabsTrigger>
+            <TabsTrigger value="year" className="flex-1">
+              全年
+            </TabsTrigger>
           </TabsList>
 
           {/* Day view */}
-          <TabsContent value="day" className={slideDir === 'right' ? 'animate-slide-in-right' : 'animate-slide-in-left'}>
+          <TabsContent
+            value="day"
+            className={
+              slideDir === "right"
+                ? "animate-slide-in-right"
+                : "animate-slide-in-left"
+            }
+          >
             <div className="text-sm font-semibold text-stone-500 mb-3">
               今日打卡 {todayTimeline.length} 次
             </div>
@@ -251,42 +357,57 @@ function StatsPage() {
             ) : (
               <div className="space-y-2.5">
                 {todayTimeline.map((ci) => {
-                  const h = habitsMap[ci.habit_id]
+                  const h = habitsMap[ci.habit_id];
                   return (
                     <div key={ci.id} className="flex items-start gap-3 py-2">
                       <div className="w-1 h-full self-stretch bg-stone-100 rounded-full mt-1 shrink-0" />
                       <div
                         className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
-                        style={{ backgroundColor: (h?.color ?? '#ccc') + '20' }}
+                        style={{ backgroundColor: (h?.color ?? "#ccc") + "20" }}
                       >
-                        {h?.icon ?? '📌'}
+                        {h?.icon ?? "📌"}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-bold text-stone-800 text-sm">
-                          {h?.name ?? '未知项目'}
-                          {formatDate(ci.checked_at) !== formatDate(ci.created_at) && (
+                          {h?.name ?? "未知项目"}
+                          {formatDate(ci.checked_at) !==
+                            formatDate(ci.created_at) && (
                             <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium align-middle">
                               补
                             </span>
                           )}
                         </div>
                         {ci.note && (
-                          <div className="text-xs text-stone-500 mt-0.5 font-medium">{ci.note}</div>
+                          <div className="text-xs text-stone-500 mt-0.5 font-medium">
+                            {ci.note}
+                          </div>
                         )}
                       </div>
                       <div className="text-xs text-stone-400 font-medium shrink-0">
-                        {new Date(ci.checked_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(ci.checked_at).toLocaleTimeString("zh-CN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             )}
           </TabsContent>
 
           {/* Week view */}
-          <TabsContent value="week" className={slideDir === 'right' ? 'animate-slide-in-right' : 'animate-slide-in-left'}>
-            <div className="text-sm font-semibold text-stone-500 mb-3">本周打卡趋势</div>
+          <TabsContent
+            value="week"
+            className={
+              slideDir === "right"
+                ? "animate-slide-in-right"
+                : "animate-slide-in-left"
+            }
+          >
+            <div className="text-sm font-semibold text-stone-500 mb-3">
+              本周打卡趋势
+            </div>
             {isLoading ? (
               <Skeleton className="h-40 w-full" />
             ) : (
@@ -296,20 +417,24 @@ function StatsPage() {
                 highlightToday
                 activeDate={selectedDate}
                 onBarClick={(date) => {
-                  setSelectedDate(date)
-                  setIsDayDetailOpen(true)
+                  setSelectedDate(date);
+                  setIsDayDetailOpen(true);
                 }}
               />
             )}
             <div className="mt-4 flex items-center justify-between gap-3">
-              <span className="text-xs text-stone-500 font-medium">按日期查看项目</span>
+              <span className="text-xs text-stone-500 font-medium">
+                按日期查看项目
+              </span>
               <select
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="h-8 rounded-lg border border-stone-200 bg-white px-2.5 text-xs font-medium text-stone-700"
               >
                 {dateOptions.map((d) => (
-                  <option key={d} value={d}>{formatDateOption(d)}</option>
+                  <option key={d} value={d}>
+                    {formatDateOption(d)}
+                  </option>
                 ))}
               </select>
               <button
@@ -322,31 +447,50 @@ function StatsPage() {
           </TabsContent>
 
           {/* Month view */}
-          <TabsContent value="month" className={slideDir === 'right' ? 'animate-slide-in-right' : 'animate-slide-in-left'}>
-            <div className="text-sm font-semibold text-stone-500 mb-3">近30天 · 各项目堆叠</div>
+          <TabsContent
+            value="month"
+            className={
+              slideDir === "right"
+                ? "animate-slide-in-right"
+                : "animate-slide-in-left"
+            }
+          >
+            <div className="text-sm font-semibold text-stone-500 mb-3">
+              近30天 · 各项目堆叠
+            </div>
             {isLoading ? (
               <Skeleton className="h-48 w-full" />
             ) : (
               <StackedBarChart
                 data={monthData}
-                habits={habits?.map((h) => ({ id: h.id, name: h.name, color: h.color })) ?? []}
+                habits={
+                  habits?.map((h) => ({
+                    id: h.id,
+                    name: h.name,
+                    color: h.color,
+                  })) ?? []
+                }
                 height={180}
                 activeDate={selectedDate}
                 onBarClick={(date) => {
-                  setSelectedDate(date)
-                  setIsDayDetailOpen(true)
+                  setSelectedDate(date);
+                  setIsDayDetailOpen(true);
                 }}
               />
             )}
             <div className="mt-4 flex items-center justify-between gap-3">
-              <span className="text-xs text-stone-500 font-medium">按日期查看项目</span>
+              <span className="text-xs text-stone-500 font-medium">
+                按日期查看项目
+              </span>
               <select
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="h-8 rounded-lg border border-stone-200 bg-white px-2.5 text-xs font-medium text-stone-700"
               >
                 {dateOptions.map((d) => (
-                  <option key={d} value={d}>{formatDateOption(d)}</option>
+                  <option key={d} value={d}>
+                    {formatDateOption(d)}
+                  </option>
                 ))}
               </select>
               <button
@@ -359,7 +503,14 @@ function StatsPage() {
           </TabsContent>
 
           {/* Year view */}
-          <TabsContent value="year" className={slideDir === 'right' ? 'animate-slide-in-right' : 'animate-slide-in-left'}>
+          <TabsContent
+            value="year"
+            className={
+              slideDir === "right"
+                ? "animate-slide-in-right"
+                : "animate-slide-in-left"
+            }
+          >
             <div className="text-sm font-semibold text-stone-500 mb-3">
               {selectedYear} 年全年打卡热力图
             </div>
@@ -375,14 +526,18 @@ function StatsPage() {
               </Suspense>
             )}
             <div className="mt-4 flex items-center justify-between gap-3">
-              <span className="text-xs text-stone-500 font-medium">按日期查看项目</span>
+              <span className="text-xs text-stone-500 font-medium">
+                按日期查看项目
+              </span>
               <select
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="h-8 rounded-lg border border-stone-200 bg-white px-2.5 text-xs font-medium text-stone-700"
               >
                 {dateOptions.map((d) => (
-                  <option key={d} value={d}>{formatDateOption(d)}</option>
+                  <option key={d} value={d}>
+                    {formatDateOption(d)}
+                  </option>
                 ))}
               </select>
               <button
@@ -399,43 +554,52 @@ function StatsPage() {
       <BottomSheet open={isDayDetailOpen} onOpenChange={setIsDayDetailOpen}>
         <BottomSheetContent>
           <BottomSheetHeader>
-            <BottomSheetTitle>{formatDateOption(selectedDate)} 打卡明细</BottomSheetTitle>
-            <div className="text-xs text-stone-500 font-medium">共 {selectedDateCheckIns.length} 次</div>
+            <BottomSheetTitle>
+              {formatDateOption(selectedDate)} 打卡明细
+            </BottomSheetTitle>
+            <div className="text-xs text-stone-500 font-medium">
+              共 {selectedDateCheckIns.length} 次
+            </div>
           </BottomSheetHeader>
 
           {selectedDateCheckIns.length === 0 ? (
-            <div className="py-8 text-center text-sm text-stone-400 font-medium">这一天还没有打卡记录</div>
+            <div className="py-8 text-center text-sm text-stone-400 font-medium">
+              这一天还没有打卡记录
+            </div>
           ) : (
             <div className="space-y-2.5 pb-2">
               {selectedDateCheckIns.map((ci) => {
-                const h = habitsMap[ci.habit_id]
+                const h = habitsMap[ci.habit_id];
                 return (
                   <div key={ci.id} className="flex items-start gap-3 py-2">
                     <div className="w-1 h-full self-stretch bg-stone-100 rounded-full mt-1 shrink-0" />
                     <div
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
-                      style={{ backgroundColor: (h?.color ?? '#ccc') + '20' }}
+                      style={{ backgroundColor: (h?.color ?? "#ccc") + "20" }}
                     >
-                      {h?.icon ?? '📌'}
+                      {h?.icon ?? "📌"}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-stone-800 text-sm">
-                        {h?.name ?? '未知项目'}
-                        {formatDate(ci.checked_at) !== formatDate(ci.created_at) && (
+                        {h?.name ?? "未知项目"}
+                        {formatDate(ci.checked_at) !==
+                          formatDate(ci.created_at) && (
                           <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium align-middle">
                             补
                           </span>
                         )}
                       </div>
                       {ci.note && (
-                        <div className="text-xs text-stone-500 mt-0.5 font-medium">{ci.note}</div>
+                        <div className="text-xs text-stone-500 mt-0.5 font-medium">
+                          {ci.note}
+                        </div>
                       )}
                     </div>
                     <div className="text-xs text-stone-400 font-medium shrink-0">
                       {formatTime(ci.checked_at)}
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           )}
@@ -444,9 +608,11 @@ function StatsPage() {
 
       {/* Per-habit links */}
       {habits && habits.length > 0 && (
-        <div className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden animate-slide-up">
+        <div className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden">
           <div className="px-5 py-4 border-b luxury-divider flex items-center justify-between gap-3">
-            <span className="font-bold text-[var(--color-ink-900)] text-sm shrink-0">各项目详情</span>
+            <span className="font-bold text-[var(--color-ink-900)] text-sm shrink-0">
+              各项目详情
+            </span>
             {habits.length > 5 && (
               <div className="relative flex-1 max-w-[180px]">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
@@ -459,7 +625,7 @@ function StatsPage() {
                 {habitSearch && (
                   <button
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
-                    onClick={() => setHabitSearch('')}
+                    onClick={() => setHabitSearch("")}
                     aria-label="清除搜索"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -470,11 +636,13 @@ function StatsPage() {
           </div>
           <div className="divide-y divide-[var(--color-line-soft)]">
             {habits
-              .filter(h => h.name.toLowerCase().includes(habitSearch.toLowerCase()))
+              .filter((h) =>
+                h.name.toLowerCase().includes(habitSearch.toLowerCase()),
+              )
               .map((h) => {
-                const habitDates = checkInsByHabit.get(h.id) ?? []
-                const cnt = habitDates.filter(d => d >= yearStart).length
-                const habitStreak = computeStreak(habitDates)
+                const habitDates = checkInsByHabit.get(h.id) ?? [];
+                const cnt = habitDates.filter((d) => d >= yearStart).length;
+                const habitStreak = computeStreak(habitDates);
                 return (
                   <Link
                     key={h.id}
@@ -484,37 +652,47 @@ function StatsPage() {
                   >
                     <div
                       className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
-                      style={{ backgroundColor: h.color + '18' }}
+                      style={{ backgroundColor: h.color + "18" }}
                     >
                       {h.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-[var(--color-ink-900)] text-sm truncate">{h.name}</div>
+                      <div className="font-bold text-[var(--color-ink-900)] text-sm truncate">
+                        {h.name}
+                      </div>
                       <div className="text-xs text-[var(--color-ink-500)] font-medium mt-0.5">
                         全年 {cnt} 次 · 连续 {habitStreak} 天
                       </div>
                     </div>
                     <ChevronRight className="w-4 h-4 text-stone-300 shrink-0" />
                   </Link>
-                )
+                );
               })}
-            {habitSearch && habits.filter(h => h.name.toLowerCase().includes(habitSearch.toLowerCase())).length === 0 && (
-              <div className="flex flex-col items-center py-8 text-stone-400 gap-2">
-                <Search className="w-8 h-8 text-stone-200" strokeWidth={1.5} />
-                <span className="text-sm font-medium">没有找到「{habitSearch}」</span>
-              </div>
-            )}
+            {habitSearch &&
+              habits.filter((h) =>
+                h.name.toLowerCase().includes(habitSearch.toLowerCase()),
+              ).length === 0 && (
+                <div className="flex flex-col items-center py-8 text-stone-400 gap-2">
+                  <Search
+                    className="w-8 h-8 text-stone-200"
+                    strokeWidth={1.5}
+                  />
+                  <span className="text-sm font-medium">
+                    没有找到「{habitSearch}」
+                  </span>
+                </div>
+              )}
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export const Route = createFileRoute('/stats/')({
+export const Route = createFileRoute("/stats/")({
   component: StatsPage,
   beforeLoad: ({ context }) => {
-    if (context.auth.loading) return
-    if (!context.auth.user) throw redirect({ to: '/login' })
+    if (context.auth.loading) return;
+    if (!context.auth.user) throw redirect({ to: "/login" });
   },
-})
+});
