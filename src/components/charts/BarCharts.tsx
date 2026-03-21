@@ -16,7 +16,6 @@ interface BarData {
   label: string
   count: number
   date?: string
-  clickTarget?: number
 }
 
 interface SimpleBarChartProps {
@@ -26,6 +25,7 @@ interface SimpleBarChartProps {
   highlightToday?: boolean
   activeDate?: string
   onBarClick?: (date: string) => void
+  showYAxis?: boolean
 }
 
 export function SimpleBarChart({
@@ -35,12 +35,13 @@ export function SimpleBarChart({
   highlightToday = true,
   activeDate,
   onBarClick,
+  showYAxis = true,
 }: SimpleBarChartProps) {
   const reduceMotion = useReducedMotion()
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={data} margin={{ top: 4, right: 0, left: -28, bottom: 0 }} barCategoryGap="30%">
+      <BarChart data={data} margin={{ top: 4, right: 8, left: showYAxis ? -28 : 8, bottom: 0 }} barCategoryGap="30%">
         <CartesianGrid strokeDasharray="2 4" stroke="rgba(28,25,23,0.08)" vertical={false} />
         <XAxis
           dataKey="label"
@@ -52,9 +53,10 @@ export function SimpleBarChart({
           allowDecimals={false}
           axisLine={false}
           tickLine={false}
+          hide={!showYAxis}
+          width={showYAxis ? undefined : 0}
           tick={{ fontSize: 11, fill: '#7d6b58', fontFamily: 'Plus Jakarta Sans, sans-serif' }}
         />
-        <YAxis yAxisId="hit" hide domain={[0, 1]} />
         <Tooltip
           cursor={{ fill: '#f5f5f4', radius: 8 }}
           content={<SimpleChartTooltip />}
@@ -62,6 +64,7 @@ export function SimpleBarChart({
         <Bar
           dataKey="count"
           radius={[6, 6, 3, 3]}
+          minPointSize={onBarClick ? 6 : 0}
           maxBarSize={40}
           isAnimationActive={!reduceMotion}
           animationDuration={reduceMotion ? 0 : 620}
@@ -85,24 +88,6 @@ export function SimpleBarChart({
             )
           })}
         </Bar>
-
-        {/* Invisible hit area so zero-count days are still clickable. */}
-        <Bar
-          yAxisId="hit"
-          dataKey="clickTarget"
-          fill="transparent"
-          minPointSize={24}
-          maxBarSize={40}
-          onClick={(entry) => {
-            const date = (entry as { payload?: { date?: string } })?.payload?.date
-            if (date && onBarClick) onBarClick(date)
-          }}
-          style={onBarClick ? { cursor: 'pointer' } : undefined}
-        >
-          {data.map((_entry, index) => (
-            <Cell key={`hit-${index}`} fill="transparent" />
-          ))}
-        </Bar>
       </BarChart>
     </ResponsiveContainer>
   )
@@ -112,7 +97,6 @@ export function SimpleBarChart({
 interface StackedBarData {
   label: string
   date: string
-  clickTarget: number
   [habitName: string]: string | number
 }
 
@@ -124,7 +108,7 @@ interface StackedBarChartProps {
   onBarClick?: (date: string) => void
 }
 
-export function StackedBarChart({ data, habits, height = 200, activeDate, onBarClick }: StackedBarChartProps) {
+export function StackedBarChart({ data, habits, height = 200, onBarClick }: StackedBarChartProps) {
   const reduceMotion = useReducedMotion()
 
   return (
@@ -143,7 +127,6 @@ export function StackedBarChart({ data, habits, height = 200, activeDate, onBarC
           tickLine={false}
           tick={{ fontSize: 11, fill: '#7d6b58', fontFamily: 'Plus Jakarta Sans, sans-serif' }}
         />
-        <YAxis yAxisId="hit" hide domain={[0, 1]} />
         <Tooltip
           cursor={{ fill: '#f5f5f4', radius: 8 }}
           content={<StackedChartTooltip />}
@@ -168,27 +151,6 @@ export function StackedBarChart({ data, habits, height = 200, activeDate, onBarC
             style={onBarClick ? { cursor: 'pointer' } : undefined}
           />
         ))}
-
-        {/* Invisible hit area for day-level click in stacked chart. */}
-        <Bar
-          yAxisId="hit"
-          dataKey="clickTarget"
-          fill="transparent"
-          minPointSize={20}
-          maxBarSize={40}
-          onClick={(entry) => {
-            const date = (entry as { payload?: { date?: string } })?.payload?.date
-            if (date && onBarClick) onBarClick(date)
-          }}
-          style={onBarClick ? { cursor: 'pointer' } : undefined}
-        >
-          {data.map((entry, index) => (
-            <Cell
-              key={`stack-hit-${index}`}
-              fill={activeDate !== undefined && entry.date === activeDate ? 'rgba(249,115,22,0.10)' : 'transparent'}
-            />
-          ))}
-        </Bar>
       </BarChart>
     </ResponsiveContainer>
   )

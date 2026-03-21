@@ -288,6 +288,7 @@ function Dashboard() {
             data={weekData}
             height={130}
             highlightToday
+            showYAxis={false}
             activeDate={selectedDate}
             onBarClick={(date) => {
               setSelectedDate(date);
