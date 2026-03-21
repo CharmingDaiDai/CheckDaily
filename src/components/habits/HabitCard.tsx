@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, useReducedMotion, useMotionValue, useSpring, useTransform, AnimatePresence } from 'motion/react'
-import { Check, Plus, RotateCcw, MoreHorizontal } from 'lucide-react'
+import { Check, RotateCcw, MoreHorizontal, Flame } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { celebrate } from '@/lib/celebrate'
 import { spring } from '@/lib/motion'
@@ -21,12 +21,13 @@ import { toast } from '@/hooks/useToast'
 interface HabitCardProps {
   habit: Habit
   todayCount: number
+  streak?: number
   style?: React.CSSProperties
   compact?: boolean
   latestCheckInId?: string
 }
 
-export function HabitCard({ habit, todayCount, style, compact = false, latestCheckInId }: HabitCardProps) {
+export function HabitCard({ habit, todayCount, streak = 0, style, compact = false, latestCheckInId }: HabitCardProps) {
   const reduceMotion = useReducedMotion()
   const [open, setOpen] = useState(false)
   const [note, setNote] = useState('')
@@ -242,10 +243,10 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
       role="button"
       tabIndex={0}
       className={cn(
-        'absolute top-1.5 right-1.5 z-10 w-10 h-10 rounded-xl bg-white/80 backdrop-blur-sm',
+        'absolute top-2 right-2 z-10 w-8 h-8 rounded-lg',
         'flex items-center justify-center cursor-pointer',
-        'text-stone-400 hover:text-stone-600 hover:bg-white',
-        'transition-opacity duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+        'text-stone-400 hover:text-stone-600 hover:bg-black/5',
+        'transition-all duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
         isDone ? 'opacity-60' : 'opacity-0 group-hover:opacity-100',
       )}
       onClick={(e) => {
@@ -276,29 +277,13 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
     />
   ) : null
 
-  // Check badge with spring animation
-  const checkBadge = (size: 'sm' | 'md') => (
-    <AnimatePresence>
-      {isDone && (
-        <motion.div
-          className={cn(
-            'rounded-full flex items-center justify-center',
-            size === 'sm' ? 'absolute -top-1 -right-1 w-4 h-4' : 'w-6 h-6',
-          )}
-          style={{ backgroundColor: habit.color }}
-          initial={{ scale: 0, rotate: -45 }}
-          animate={{ scale: 1, rotate: 0 }}
-          exit={{ scale: 0, rotate: 45 }}
-          transition={spring.emphasized}
-        >
-          <Check
-            className={cn('text-white', size === 'sm' ? 'w-2.5 h-2.5' : 'w-3.5 h-3.5')}
-            strokeWidth={size === 'sm' ? 3.5 : 3}
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
-  )
+  // Streak badge (inline, shows when streak >= 2)
+  const streakBadge = streak >= 2 ? (
+    <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-amber-600">
+      <Flame className="w-3 h-3" strokeWidth={2.5} />
+      {streak}天
+    </span>
+  ) : null
 
   // Shared 3D style for card
   const tiltStyle = reduceMotion ? undefined : {
@@ -315,20 +300,17 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
           whileTap={reduceMotion ? undefined : { scale: 0.96, transition: spring.snappy }}
           whileHover={reduceMotion || isDone ? undefined : { y: -2 }}
           style={{
-            ...(isDone
-              ? { borderColor: habit.color + '50', backgroundColor: habit.color + '06' }
-              : {}),
             ...style,
             ...tiltStyle,
           }}
           ref={cardRef}
           className={cn(
-            'group relative flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1',
-            'rounded-2xl border tap-scale transition-all duration-200 w-full select-none',
+            'group relative flex flex-col items-center gap-1 pt-3 pb-2 px-1.5',
+            'rounded-2xl tap-scale w-full select-none overflow-hidden',
             'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
             isDone
-              ? 'border-transparent shadow-sm'
-              : 'bg-white border-stone-200 shadow-[var(--shadow-card)]',
+              ? 'bg-white/60 shadow-sm'
+              : 'bg-white shadow-[var(--shadow-card)]',
             celebrating && 'animate-celebrate',
           )}
           aria-label={`打卡：${habit.name}`}
@@ -340,44 +322,80 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
         >
           {moreButton}
           {rippleElement}
-          {/* Color accent bar */}
+          {/* Left color accent */}
           <motion.div
-            className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
+            className="absolute top-0 left-0 w-1 h-full rounded-l-2xl"
             animate={{ backgroundColor: isDone ? habit.color : '#e7e5e4' }}
             transition={{ duration: 0.3 }}
           />
-          {/* Icon + done badge */}
+          {/* Icon with layered background */}
           <div className="relative">
             <motion.div
-              className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl"
+              className={cn(
+                'w-10 h-10 rounded-xl flex items-center justify-center text-xl',
+                'shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)]',
+              )}
               style={{
-                backgroundColor: habit.color + '18',
+                background: `linear-gradient(135deg, ${habit.color}14, ${habit.color}22)`,
                 ...(reduceMotion ? {} : { x: iconX, y: iconY }),
               }}
             >
               {habit.icon || '📌'}
             </motion.div>
-            {checkBadge('sm')}
+            {/* Check overlay on icon */}
+            <AnimatePresence>
+              {isDone && (
+                <motion.div
+                  className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-white"
+                  style={{ backgroundColor: habit.color }}
+                  initial={{ scale: 0, rotate: -45 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  exit={{ scale: 0, rotate: 45 }}
+                  transition={spring.emphasized}
+                >
+                  <Check className="w-2.5 h-2.5 text-white" strokeWidth={3.5} />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
           {/* Name */}
-          <div className="text-xs font-semibold text-stone-800 text-center line-clamp-2 w-full px-0.5 leading-snug">
+          <div className={cn(
+            'text-[11px] font-semibold text-center line-clamp-1 w-full px-0.5 leading-snug',
+            isDone ? 'text-stone-500' : 'text-stone-800',
+          )}>
             {habit.name}
           </div>
-          {/* Count badge (only when > 1) */}
-          <AnimatePresence>
-            {todayCount > 1 && (
-              <motion.span
-                className="text-xs font-bold px-1.5 rounded-full leading-5"
-                style={{ backgroundColor: habit.color + '18', color: habit.color }}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={spring.snappy}
-              >
-                ×{todayCount}
-              </motion.span>
-            )}
-          </AnimatePresence>
+          {/* Streak or count */}
+          <div className="h-4 flex items-center">
+            <AnimatePresence mode="wait">
+              {todayCount > 1 ? (
+                <motion.span
+                  key="count"
+                  className="text-[10px] font-bold px-1.5 rounded-full leading-4"
+                  style={{ backgroundColor: habit.color + '18', color: habit.color }}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={spring.snappy}
+                >
+                  ×{todayCount}
+                </motion.span>
+              ) : streak >= 2 ? (
+                <motion.span
+                  key="streak"
+                  className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-600"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <Flame className="w-2.5 h-2.5" strokeWidth={2.5} />
+                  {streak}
+                </motion.span>
+              ) : (
+                <span key="empty" className="text-[10px] text-transparent">.</span>
+              )}
+            </AnimatePresence>
+          </div>
         </motion.button>
         <BottomSheet open={open} onOpenChange={setOpen}>
           {sheetContent}
@@ -386,27 +404,24 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
     )
   }
 
-  // ── Normal mode ───────────────────────────────────────────
+  // ── Normal mode (2-column grid card) ─────────────────────
   return (
     <>
       <motion.button
-        whileTap={reduceMotion ? undefined : { scale: 0.975, transition: spring.snappy }}
-        whileHover={reduceMotion || isDone ? undefined : { y: -3, transition: spring.smooth }}
+        whileTap={reduceMotion ? undefined : { scale: 0.97, transition: spring.snappy }}
+        whileHover={reduceMotion || isDone ? undefined : { y: -2, transition: spring.smooth }}
         style={{
-          ...(isDone
-            ? { borderColor: habit.color + '50', backgroundColor: habit.color + '06' }
-            : {}),
           ...style,
           ...tiltStyle,
         }}
         ref={cardRef}
         className={cn(
-          'group relative flex flex-col items-start p-4 rounded-2xl tap-scale',
-          'border text-left w-full select-none',
+          'group relative flex items-center gap-2.5 px-3 py-2.5 rounded-2xl tap-scale',
+          'text-left w-full select-none overflow-hidden',
           'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
           isDone
-            ? 'border-transparent shadow-sm'
-            : 'bg-white border-stone-200 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] transition-[box-shadow,transform] duration-200',
+            ? 'bg-white/60 shadow-sm'
+            : 'bg-white shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] transition-[box-shadow,transform] duration-200',
           celebrating && 'animate-celebrate',
         )}
         aria-label={`打卡：${habit.name}`}
@@ -418,61 +433,86 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
       >
         {moreButton}
         {rippleElement}
-        {/* Color accent bar */}
+        {/* Left color accent bar */}
         <motion.div
-          className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
-          animate={{ backgroundColor: isDone ? habit.color : '#e7e5e4' }}
+          className="absolute top-0 left-0 w-1 h-full rounded-l-2xl"
+          animate={{
+            backgroundColor: isDone ? habit.color : '#e7e5e4',
+            opacity: isDone ? 1 : 0.6,
+          }}
           transition={{ duration: 0.3 }}
         />
 
-        {/* Icon + Done badge */}
-        <div className="flex w-full items-start justify-between mt-1">
+        {/* Icon */}
+        <div className="relative shrink-0">
           <motion.div
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+            className={cn(
+              'w-9 h-9 rounded-xl flex items-center justify-center text-lg',
+              'shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)]',
+            )}
             style={{
-              backgroundColor: habit.color + '18',
+              background: `linear-gradient(135deg, ${habit.color}14, ${habit.color}22)`,
               ...(reduceMotion ? {} : { x: iconX, y: iconY }),
             }}
           >
             {habit.icon || '📌'}
           </motion.div>
-          {checkBadge('md')}
-        </div>
-
-        {/* Name */}
-        <div className="mt-3 font-bold text-stone-900 text-sm leading-snug line-clamp-2">
-          {habit.name}
-        </div>
-
-        {/* Count */}
-        <div className="mt-1.5 flex items-center gap-1.5">
-          <AnimatePresence mode="wait">
-            {isDone ? (
-              <motion.span
-                key="done"
-                className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: habit.color + '18', color: habit.color }}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={spring.snappy}
+          {/* Check overlay */}
+          <AnimatePresence>
+            {isDone && (
+              <motion.div
+                className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-white"
+                style={{ backgroundColor: habit.color }}
+                initial={{ scale: 0, rotate: -45 }}
+                animate={{ scale: 1, rotate: 0 }}
+                exit={{ scale: 0, rotate: 45 }}
+                transition={spring.emphasized}
               >
-                今日 ×{todayCount}
-              </motion.span>
-            ) : (
-              <motion.span
-                key="undone"
-                className="text-xs text-stone-400 font-medium flex items-center gap-1"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={spring.snappy}
-              >
-                <Plus className="w-3 h-3" strokeWidth={2.5} />
-                点击打卡
-              </motion.span>
+                <Check className="w-2.5 h-2.5 text-white" strokeWidth={3.5} />
+              </motion.div>
             )}
           </AnimatePresence>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className={cn(
+            'font-bold text-[13px] leading-snug line-clamp-1',
+            isDone ? 'text-stone-500' : 'text-stone-900',
+          )}>
+            {habit.name}
+          </div>
+          <div className="mt-0.5 flex items-center gap-1.5">
+            <AnimatePresence mode="wait">
+              {isDone ? (
+                <motion.span
+                  key="done"
+                  className="inline-flex items-center gap-0.5 text-[11px] font-semibold"
+                  style={{ color: habit.color }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={spring.snappy}
+                >
+                  <Check className="w-3 h-3" strokeWidth={2.5} />
+                  {todayCount > 1 ? `×${todayCount}` : '已完成'}
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="undone"
+                  className="text-[11px] text-stone-400 font-medium"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={spring.snappy}
+                >
+                  待打卡
+                </motion.span>
+              )}
+            </AnimatePresence>
+            {streakBadge && <span className="text-stone-200">·</span>}
+            {streakBadge}
+          </div>
         </div>
       </motion.button>
       <BottomSheet open={open} onOpenChange={setOpen}>

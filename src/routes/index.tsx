@@ -20,7 +20,7 @@ import {
   BottomSheetTitle,
 } from "@/components/ui/bottom-sheet";
 import { BackdateSheet } from "@/components/habits/BackdateSheet";
-import { formatDate, formatTime, getLast7Days } from "@/lib/utils";
+import { formatDate, formatTime, getLast7Days, computeStreak } from "@/lib/utils";
 import { pageChoreography, sectionReveal } from "@/lib/motion";
 
 function Dashboard() {
@@ -45,6 +45,18 @@ function Dashboard() {
     startDate: last7[0],
     endDate: last7[last7.length - 1],
   });
+
+  // Fetch last 60 days of check-ins for streak calculation
+  const streakRange = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 60);
+    return formatDate(d);
+  }, []);
+  const { data: streakCheckIns } = useCheckIns({
+    startDate: streakRange,
+    endDate: formatDate(new Date()),
+  });
+
   const [selectedDate, setSelectedDate] = useState(() =>
     formatDate(new Date()),
   );
@@ -66,6 +78,21 @@ function Dashboard() {
     }
     return map;
   }, [todayCheckIns]);
+
+  // Streak per habit
+  const streakMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    if (!streakCheckIns || !habits) return map;
+    const byHabit: Record<string, string[]> = {};
+    for (const ci of streakCheckIns) {
+      if (!byHabit[ci.habit_id]) byHabit[ci.habit_id] = [];
+      byHabit[ci.habit_id].push(formatDate(ci.checked_at));
+    }
+    for (const h of habits) {
+      map[h.id] = computeStreak(byHabit[h.id] ?? []);
+    }
+    return map;
+  }, [streakCheckIns, habits]);
 
   // Sort: incomplete first, completed at bottom
   const sortedHabits = useMemo(() => {
@@ -127,8 +154,8 @@ function Dashboard() {
   const hasMixed = firstDoneIdx > 0 && doneCount < totalCount;
 
   const gridClass = compact
-    ? "grid grid-cols-4 sm:grid-cols-5 gap-2"
-    : "grid grid-cols-2 sm:grid-cols-3 gap-3";
+    ? "grid grid-cols-4 sm:grid-cols-5 gap-1.5"
+    : "grid grid-cols-2 sm:grid-cols-3 gap-2";
 
   return (
     <motion.div
@@ -329,7 +356,7 @@ function Dashboard() {
           {Array.from({ length: compact ? 8 : 6 }).map((_, i) => (
             <Skeleton
               key={i}
-              className={compact ? "h-24 rounded-2xl" : "h-28 rounded-2xl"}
+              className={compact ? "h-24 rounded-2xl" : "h-14 rounded-2xl"}
             />
           ))}
         </motion.div>
@@ -345,6 +372,7 @@ function Dashboard() {
                     key={habit.id}
                     habit={habit}
                     todayCount={todayCountMap[habit.id] ?? 0}
+                    streak={streakMap[habit.id] ?? 0}
                     compact={compact}
                     latestCheckInId={latestCheckInMap[habit.id]}
                     style={{ animationDelay: `${i * 40}ms` }}
@@ -372,6 +400,7 @@ function Dashboard() {
                   key={habit.id}
                   habit={habit}
                   todayCount={todayCountMap[habit.id] ?? 0}
+                  streak={streakMap[habit.id] ?? 0}
                   compact={compact}
                   latestCheckInId={latestCheckInMap[habit.id]}
                   style={{ animationDelay: `${i * 40}ms` }}
