@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { X } from 'lucide-react'
 import { useToastStore } from '@/hooks/useToast'
 import { cn } from '@/lib/utils'
-import { durations, easing } from '@/lib/motion'
+import { spring, durations, easing } from '@/lib/motion'
 
 export function Toaster() {
   const { toasts, dismiss } = useToastStore()
@@ -16,12 +16,23 @@ export function Toaster() {
           <motion.div
             key={t.id}
             layout
-            initial={reduceMotion ? false : { opacity: 0, y: 14, scale: 0.98, filter: 'blur(3px)' }}
-            animate={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: 20, scale: 0.98, filter: 'blur(3px)' }}
+            initial={reduceMotion ? false : { opacity: 0, y: 14, scale: 0.96, filter: 'blur(4px)' }}
+            animate={reduceMotion
+              ? undefined
+              : {
+                  opacity: 1, y: 0, scale: 1, filter: 'blur(0px)',
+                  // Error: subtle shake on entrance
+                  ...(t.variant === 'error' ? { x: [0, -4, 4, -2, 2, 0] } : {}),
+                }
+            }
+            exit={reduceMotion
+              ? { opacity: 0 }
+              : { opacity: 0, x: 40, scale: 0.95, filter: 'blur(4px)' }
+            }
             transition={reduceMotion
               ? { duration: durations.micro, ease: easing.exit }
-              : { duration: durations.base, delay: Math.min(index * 0.04, 0.12), ease: easing.smooth }}
+              : { ...spring.smooth, delay: Math.min(index * 0.04, 0.12) }
+            }
           >
             <ToastPrimitive.Root
               duration={t.duration ?? 3000}
@@ -36,6 +47,11 @@ export function Toaster() {
                     ? 'bg-green-50 border-green-200 text-green-800'
                     : 'bg-white border-stone-200 text-stone-800',
               )}
+              // Success: green glow pulse on border
+              style={t.variant === 'success' ? {
+                animation: 'glow-pulse 1.2s ease-in-out 1',
+                '--glow-color': 'rgba(34,197,94,0.3)',
+              } as React.CSSProperties : undefined}
             >
               <ToastPrimitive.Description className="text-sm font-medium flex-1">
                 {t.message}

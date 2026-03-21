@@ -13,6 +13,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           'text-sm font-medium text-[var(--color-ink-900)] placeholder:text-[var(--color-ink-500)]',
           'transition-all duration-[var(--duration-fast)]',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f5f1] focus-visible:border-brand-400 focus-visible:bg-white',
+          'focus-visible:shadow-[0_0_0_3px_rgba(249,115,22,0.1)]',
           'disabled:cursor-not-allowed disabled:opacity-50',
           className
         )}
@@ -35,6 +36,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           'text-sm font-medium text-[var(--color-ink-900)] placeholder:text-[var(--color-ink-500)]',
           'resize-none transition-all duration-[var(--duration-fast)]',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f5f1] focus-visible:border-brand-400 focus-visible:bg-white',
+          'focus-visible:shadow-[0_0_0_3px_rgba(249,115,22,0.1)]',
           'disabled:cursor-not-allowed disabled:opacity-50',
           className
         )}

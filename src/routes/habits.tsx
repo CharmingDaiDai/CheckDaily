@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { createFileRoute, redirect } from '@tanstack/react-router'
+import { motion, AnimatePresence } from 'motion/react'
 import { Plus, Pencil, Archive, MoreHorizontal, ListCheck, Search, X, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +11,7 @@ import { HabitForm } from '@/components/habits/HabitForm'
 import { useHabits, useArchiveHabit, useRestoreHabit } from '@/hooks/useHabits'
 import type { Habit } from '@/types'
 import { cn } from '@/lib/utils'
+import { pageChoreography, sectionReveal, listItemSlide, spring } from '@/lib/motion'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,9 +45,14 @@ function HabitsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6">
+    <motion.div
+      className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6"
+      variants={pageChoreography}
+      initial="initial"
+      animate="animate"
+    >
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <motion.div variants={sectionReveal} className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-[var(--color-ink-950)] tracking-tight">项目管理</h1>
           <p className="text-sm text-[var(--color-ink-500)] font-medium mt-0.5">
@@ -67,7 +74,7 @@ function HabitsPage() {
             <HabitForm onClose={() => setCreateOpen(false)} />
           </DialogContent>
         </Dialog>
-      </div>
+      </motion.div>
 
       {/* Edit dialog */}
       <Dialog open={!!editHabit} onOpenChange={(o) => { if (!o) setEditHabit(null) }}>
@@ -118,17 +125,21 @@ function HabitsPage() {
 
       {/* List */}
       {isLoading ? (
-        <div className="space-y-3">
+        <motion.div variants={sectionReveal} className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-20 rounded-2xl" />
           ))}
-        </div>
+        </motion.div>
       ) : habits && habits.length > 0 ? (
         filtered.length > 0 ? (
-          <div className="space-y-3">
+          <motion.div
+            variants={sectionReveal}
+            className="space-y-3"
+          >
             {filtered.map((habit) => (
-              <div
+              <motion.div
                 key={habit.id}
+                variants={listItemSlide}
                 className={cn(
                   'flex items-center gap-4 glass-card rounded-[var(--radius-card-lg)] px-4 py-3.5'
                 )}
@@ -173,9 +184,9 @@ function HabitsPage() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Search className="w-10 h-10 text-stone-200 mb-3" strokeWidth={1.5} />
@@ -214,7 +225,14 @@ function HabitsPage() {
           </button>
 
           {showArchived && (
-            <div className="space-y-3 mt-3">
+            <AnimatePresence>
+              <motion.div
+                className="space-y-3 mt-3"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={spring.gentle}
+              >
               {archivedHabits.map((habit) => (
                 <div
                   key={habit.id}
@@ -242,11 +260,12 @@ function HabitsPage() {
                   </Button>
                 </div>
               ))}
-            </div>
+            </motion.div>
+            </AnimatePresence>
           )}
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }
 

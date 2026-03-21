@@ -9,7 +9,11 @@ import { Toaster } from '@/components/ui/toast'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
-import { directionalRouteTransition, directionalRouteTransitionReduced } from '@/lib/motion'
+import {
+  directionalRouteTransition,
+  directionalRouteTransitionReduced,
+  spring,
+} from '@/lib/motion'
 import type { RouterContext } from '@/main'
 
 const routeRank: Record<string, number> = {
@@ -60,12 +64,27 @@ function RootLayout() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(circle_at_50%_10%,rgb(251_146_60/0.18),transparent_40%),linear-gradient(180deg,#fffdf9_0%,#f6f3ee_60%,#f1ede7_100%)]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center">
-            <span className="text-white text-xl">🔥</span>
-          </div>
-          <div className="w-5 h-5 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin" />
-        </div>
+        <motion.div
+          className="flex flex-col items-center gap-4"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={spring.gentle}
+        >
+          <motion.div
+            className="w-12 h-12 rounded-2xl bg-gradient-to-b from-brand-400 to-brand-600 flex items-center justify-center shadow-[0_10px_24px_rgb(249_115_22/0.35)]"
+            initial={{ scale: 0.6, rotate: -12 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={spring.emphasized}
+          >
+            <span className="text-white text-2xl">🔥</span>
+          </motion.div>
+          <motion.div
+            className="w-5 h-5 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.3 }}
+          />
+        </motion.div>
       </div>
     )
   }
@@ -73,7 +92,11 @@ function RootLayout() {
   if (!user) {
     return (
       <ErrorBoundary>
-        <AnimatePresence mode="wait" initial={false}>
+        <AnimatePresence
+          mode="wait"
+          initial={false}
+          onExitComplete={() => window.scrollTo(0, 0)}
+        >
           <motion.div
             key={location.pathname}
             custom={direction}
@@ -96,7 +119,11 @@ function RootLayout() {
       <div className="flex min-h-screen">
         <Sidebar />
         <main className="flex-1 pb-[80px] md:pb-0 min-h-screen overflow-x-hidden">
-          <AnimatePresence mode="wait" initial={false}>
+          <AnimatePresence
+            mode="wait"
+            initial={false}
+            onExitComplete={() => window.scrollTo(0, 0)}
+          >
             <motion.div
               key={location.pathname}
               custom={direction}

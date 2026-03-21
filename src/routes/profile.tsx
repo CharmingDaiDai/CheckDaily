@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useNavigate } from '@tanstack/react-router'
+import { motion } from 'motion/react'
 import { LogOut, User, Mail, Info, Shield, ChevronRight, Eye, EyeOff, Lock, Download, Database } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,6 +14,7 @@ import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/useToast'
 import { Spinner } from '@/components/ui/spinner'
 import { useFormDialog } from '@/hooks/useFormDialog'
+import { pageChoreography, sectionReveal } from '@/lib/motion'
 
 function ProfilePage() {
   const user = useAuthStore((s) => s.user)
@@ -120,13 +122,18 @@ function ProfilePage() {
 
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6">
+    <motion.div
+      className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6"
+      variants={pageChoreography}
+      initial="initial"
+      animate="animate"
+    >
       <div>
         <h1 className="text-2xl font-extrabold text-[var(--color-ink-950)] tracking-tight">我的</h1>
       </div>
 
       {/* User card */}
-      <div className="glass-card rounded-[var(--radius-card-lg)] p-5">
+      <motion.div variants={sectionReveal} className="glass-card rounded-[var(--radius-card-lg)] p-5">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-brand-100 flex items-center justify-center">
             <User className="w-7 h-7 text-brand-500" strokeWidth={1.8} />
@@ -139,10 +146,10 @@ function ProfilePage() {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Account security */}
-      <div className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden">
+      <motion.div variants={sectionReveal} className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden">
         <div className="flex items-center gap-3 px-5 py-4 border-b luxury-divider">
           <Shield className="w-4 h-4 text-stone-400" />
           <span className="font-semibold text-stone-700 text-sm">账户安全</span>
@@ -167,10 +174,10 @@ function ProfilePage() {
           </div>
           <ChevronRight className="w-4 h-4 text-stone-300" />
         </button>
-      </div>
+      </motion.div>
 
       {/* Data management */}
-      <div className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden">
+      <motion.div variants={sectionReveal} className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden">
         <div className="flex items-center gap-3 px-5 py-4 border-b luxury-divider">
           <Database className="w-4 h-4 text-stone-400" />
           <span className="font-semibold text-stone-700 text-sm">数据管理</span>
@@ -193,10 +200,10 @@ function ProfilePage() {
             <ChevronRight className="w-4 h-4 text-stone-300" />
           )}
         </button>
-      </div>
+      </motion.div>
 
       {/* App info */}
-      <div className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden">
+      <motion.div variants={sectionReveal} className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden">
         <div className="flex items-center gap-3 px-5 py-4 border-b luxury-divider">
           <Info className="w-4 h-4 text-stone-400" />
           <span className="font-semibold text-stone-700 text-sm">关于</span>
@@ -215,7 +222,7 @@ function ProfilePage() {
             <span className="font-semibold text-stone-700">https://github.com/CharmingDaiDai</span>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Sign out */}
       <Button
@@ -366,7 +373,7 @@ function ProfilePage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   )
 }
 

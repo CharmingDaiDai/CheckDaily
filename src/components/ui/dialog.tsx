@@ -1,8 +1,9 @@
 import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
-import { useReducedMotion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { spring } from '@/lib/motion'
 
 const Dialog = DialogPrimitive.Root
 const DialogTrigger = DialogPrimitive.Trigger
@@ -16,9 +17,10 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      'fixed inset-0 z-50 bg-black/40 backdrop-blur-sm',
+      'fixed inset-0 z-50 bg-black/40',
       'data-[state=open]:animate-in data-[state=closed]:animate-out',
-      'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+      'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 duration-200',
+      'backdrop-blur-[8px]',
       className
     )}
     {...props}
@@ -38,21 +40,35 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         aria-describedby={undefined}
-        className={cn(
-          'fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%]',
-          'bg-white/95 rounded-2xl shadow-[var(--shadow-elevated)] p-6 border border-[var(--color-line-soft)] backdrop-blur-sm',
-          reduceMotion
-            ? 'data-[state=open]:animate-in data-[state=closed]:animate-out duration-[var(--duration-fast)] data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0'
-            : 'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] duration-[var(--duration-base)]',
-          className
-        )}
+        asChild
         {...props}
       >
-        {children}
-        <DialogClose className="absolute right-4 top-4 rounded-xl p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
-          <X className="h-4 w-4" />
-          <span className="sr-only">关闭</span>
-        </DialogClose>
+        <motion.div
+          className={cn(
+            'fixed left-[50%] top-[50%] z-50 w-full max-w-md translate-x-[-50%] translate-y-[-50%]',
+            'bg-white/95 rounded-2xl shadow-[var(--shadow-elevated)] p-6 border border-[var(--color-line-soft)] backdrop-blur-sm',
+            className
+          )}
+          initial={reduceMotion
+            ? { opacity: 0 }
+            : { opacity: 0, scale: 0.92, y: 8, filter: 'blur(3px)' }
+          }
+          animate={reduceMotion
+            ? { opacity: 1 }
+            : { opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }
+          }
+          exit={reduceMotion
+            ? { opacity: 0 }
+            : { opacity: 0, scale: 0.96, y: -4, filter: 'blur(2px)' }
+          }
+          transition={reduceMotion ? { duration: 0.15 } : spring.emphasized}
+        >
+          {children}
+          <DialogClose className="absolute right-4 top-4 rounded-xl p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+            <X className="h-4 w-4" />
+            <span className="sr-only">关闭</span>
+          </DialogClose>
+        </motion.div>
       </DialogPrimitive.Content>
     </DialogPortal>
   )

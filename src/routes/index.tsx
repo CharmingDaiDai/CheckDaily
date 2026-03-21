@@ -1,5 +1,6 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { motion } from "motion/react";
 import {
   CalendarDays,
   TrendingUp,
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/bottom-sheet";
 import { BackdateSheet } from "@/components/habits/BackdateSheet";
 import { formatDate, formatTime, getLast7Days } from "@/lib/utils";
+import { pageChoreography, sectionReveal } from "@/lib/motion";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -129,9 +131,14 @@ function Dashboard() {
     : "grid grid-cols-2 sm:grid-cols-3 gap-3";
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6">
+    <motion.div
+      className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6"
+      variants={pageChoreography}
+      initial="initial"
+      animate="animate"
+    >
       {/* Header */}
-      <div>
+      <motion.div variants={sectionReveal}>
         <div className="flex items-center gap-2 text-sm text-stone-400 font-medium mb-1">
           <CalendarDays className="w-3.5 h-3.5" />
           {todayStr}
@@ -204,11 +211,11 @@ function Dashboard() {
             </>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* All Done celebration banner */}
       {!isLoading && doneCount === totalCount && totalCount > 0 && (
-        <div className="relative overflow-hidden glass-card rounded-[var(--radius-card-lg)] px-5 py-4">
+        <motion.div variants={sectionReveal} className="relative overflow-hidden glass-card rounded-[var(--radius-card-lg)] px-5 py-4">
           {/* Confetti particles */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             {Array.from({ length: 12 }).map((_, i) => (
@@ -238,12 +245,12 @@ function Dashboard() {
           <div className="text-sm text-[var(--color-ink-600)] mt-0.5">
             继续保持，养成好习惯
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Last 7 days mini chart */}
       {totalCount > 0 && (
-        <div className="glass-card rounded-[var(--radius-card-lg)] p-5">
+        <motion.div variants={sectionReveal} className="glass-card rounded-[var(--radius-card-lg)] p-5">
           <div className="flex items-center gap-2 mb-4 pb-3 border-b luxury-divider">
             <TrendingUp className="w-4 h-4 text-brand-500" strokeWidth={2.5} />
             <span className="font-bold text-[var(--color-ink-900)] text-sm">
@@ -260,7 +267,7 @@ function Dashboard() {
               setDayDetailOpen(true);
             }}
           />
-        </div>
+        </motion.div>
       )}
 
       <BottomSheet open={dayDetailOpen} onOpenChange={setDayDetailOpen}>
@@ -318,16 +325,16 @@ function Dashboard() {
 
       {/* Habit grid */}
       {isLoading ? (
-        <div className={gridClass}>
+        <motion.div variants={sectionReveal} className={gridClass}>
           {Array.from({ length: compact ? 8 : 6 }).map((_, i) => (
             <Skeleton
               key={i}
               className={compact ? "h-24 rounded-2xl" : "h-28 rounded-2xl"}
             />
           ))}
-        </div>
+        </motion.div>
       ) : sortedHabits.length > 0 ? (
-        <div className="space-y-3">
+        <motion.div variants={sectionReveal} className="space-y-3">
           {/* Incomplete habits */}
           {firstDoneIdx !== 0 && (
             <div className={gridClass}>
@@ -372,11 +379,11 @@ function Dashboard() {
               ))}
             </div>
           )}
-        </div>
+        </motion.div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
+        <motion.div variants={sectionReveal} className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mb-4">
-            <span className="text-4xl">📋</span>
+            <span className="text-4xl animate-float">📋</span>
           </div>
           <div className="font-bold text-stone-700 text-lg mb-1">
             还没有打卡项目
@@ -390,7 +397,7 @@ function Dashboard() {
           >
             添加项目
           </button>
-        </div>
+        </motion.div>
       )}
 
       {/* Onboarding hint */}
@@ -409,7 +416,7 @@ function Dashboard() {
           habits={habits}
         />
       )}
-    </div>
+    </motion.div>
   );
 }
 

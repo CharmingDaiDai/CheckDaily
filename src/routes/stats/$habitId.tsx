@@ -1,5 +1,6 @@
 import { useMemo, useState, lazy, Suspense } from 'react'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { motion } from 'motion/react'
 import { ArrowLeft, Flame, Trophy, Target, Hash, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 const HabitHeatmap = lazy(() => import('@/components/charts/HabitHeatmap'))
 import { TrendLineChart } from '@/components/charts/LineCharts'
@@ -16,6 +17,7 @@ import {
   computeStreak,
   computeLongestStreak,
 } from '@/lib/utils'
+import { pageChoreography } from '@/lib/motion'
 import type { CalendarDatum } from '@/types'
 
 function HabitStatsPage() {
@@ -91,7 +93,12 @@ function HabitStatsPage() {
   const color = habit?.color ?? '#f97316'
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6">
+    <motion.div
+      className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6"
+      variants={pageChoreography}
+      initial="initial"
+      animate="animate"
+    >
       {/* Header */}
       <div>
         <Link to="/stats" className="inline-flex items-center gap-1.5 text-sm text-stone-400 font-semibold hover:text-stone-600 mb-4">
@@ -251,7 +258,7 @@ function HabitStatsPage() {
           if (deleteTarget) await deleteCheckIn.mutateAsync(deleteTarget)
         }}
       />
-    </div>
+    </motion.div>
   )
 }
 

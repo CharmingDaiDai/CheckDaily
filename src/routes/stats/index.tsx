@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect, lazy, Suspense } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { motion } from "motion/react";
 import {
   Flame,
   Trophy,
@@ -36,6 +37,7 @@ import {
   computeLongestStreak,
 } from "@/lib/utils";
 import type { CalendarDatum } from "@/types";
+import { pageChoreography, sectionReveal } from "@/lib/motion";
 
 type TabValue = "day" | "week" | "month" | "year";
 
@@ -230,9 +232,14 @@ function StatsPage() {
   }, [allCheckIns, selectedDate]);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6">
+    <motion.div
+      className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6"
+      variants={pageChoreography}
+      initial="initial"
+      animate="animate"
+    >
       {/* Header */}
-      <div>
+      <motion.div variants={sectionReveal}>
         <h1 className="text-2xl font-extrabold text-[var(--color-ink-950)] tracking-tight">
           统计分析
         </h1>
@@ -267,10 +274,10 @@ function StatsPage() {
             </span>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 gap-3">
+      <motion.div variants={sectionReveal} className="grid grid-cols-2 gap-3">
         <StatCard
           label="当前连续"
           value={`${streak} 天`}
@@ -306,10 +313,10 @@ function StatsPage() {
           iconColor="#22c55e"
           loading={isLoading}
         />
-      </div>
+      </motion.div>
 
       {/* Tabs */}
-      <div className="glass-card rounded-[var(--radius-card-lg)] p-5">
+      <motion.div variants={sectionReveal} className="glass-card rounded-[var(--radius-card-lg)] p-5">
         <Tabs
           value={activeTab}
           onValueChange={(v) => {
@@ -549,7 +556,7 @@ function StatsPage() {
             </div>
           </TabsContent>
         </Tabs>
-      </div>
+      </motion.div>
 
       <BottomSheet open={isDayDetailOpen} onOpenChange={setIsDayDetailOpen}>
         <BottomSheetContent>
@@ -608,7 +615,7 @@ function StatsPage() {
 
       {/* Per-habit links */}
       {habits && habits.length > 0 && (
-        <div className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden">
+        <motion.div variants={sectionReveal} className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden">
           <div className="px-5 py-4 border-b luxury-divider flex items-center justify-between gap-3">
             <span className="font-bold text-[var(--color-ink-900)] text-sm shrink-0">
               各项目详情
@@ -683,9 +690,9 @@ function StatsPage() {
                 </div>
               )}
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

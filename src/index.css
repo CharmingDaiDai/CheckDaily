@@ -38,10 +38,11 @@
   --shadow-card-hover: 0 12px 32px rgb(26 22 17 / 0.12), 0 4px 14px rgb(26 22 17 / 0.08);
   --shadow-elevated: 0 22px 48px rgb(26 22 17 / 0.18), 0 8px 20px rgb(26 22 17 / 0.12);
 
-  --duration-micro: 90ms;
-  --duration-fast: 160ms;
-  --duration-base: 260ms;
-  --duration-slow: 380ms;
+  --duration-micro: 100ms;
+  --duration-fast: 200ms;
+  --duration-base: 320ms;
+  --duration-slow: 500ms;
+  --duration-glacial: 720ms;
 
   --ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ease-emphasis: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -81,16 +82,19 @@ body {
 .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0.5rem); }
 .pt-safe { padding-top: env(safe-area-inset-top); }
 
+/* ── Check bounce with rotation ── */
 @keyframes check-bounce {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.18); }
-  70% { transform: scale(0.92); }
-  100% { transform: scale(1); }
+  0%   { transform: scale(1) rotate(0deg); }
+  30%  { transform: scale(1.22) rotate(-8deg); }
+  60%  { transform: scale(0.9) rotate(4deg); }
+  80%  { transform: scale(1.06) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); }
 }
 .animate-check-bounce {
   animation: check-bounce var(--duration-slow) var(--ease-emphasis);
 }
 
+/* ── Slide up ── */
 @keyframes slide-up {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
@@ -99,6 +103,7 @@ body {
   animation: slide-up var(--duration-base) var(--ease-standard) both;
 }
 
+/* ── Fade in ── */
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -107,13 +112,15 @@ body {
   animation: fade-in var(--duration-fast) var(--ease-standard) both;
 }
 
+/* ── Tap scale ── */
 .tap-scale { transition: transform var(--duration-micro) var(--ease-standard); }
-.tap-scale:active { transform: scale(0.96); }
+.tap-scale:active { transform: scale(0.96) translateY(1px); }
 
+/* ── Celebrate with glow ring ── */
 @keyframes celebrate {
   0%   { transform: scale(1); box-shadow: 0 0 0 0 var(--celebrate-color, #f97316); }
-  25%  { transform: scale(1.05); box-shadow: 0 0 0 6px transparent; }
-  50%  { transform: scale(0.97); }
+  20%  { transform: scale(1.06); box-shadow: 0 0 0 4px color-mix(in srgb, var(--celebrate-color, #f97316) 40%, transparent); }
+  50%  { transform: scale(0.96); box-shadow: 0 0 0 8px transparent; }
   75%  { transform: scale(1.02); }
   100% { transform: scale(1); }
 }
@@ -134,16 +141,16 @@ body {
   outline: none;
 }
 
-/* Ripple effect for check-in */
+/* ── Ripple with blur softening ── */
 @keyframes ripple-out {
-  from { transform: translate(-50%, -50%) scale(0); opacity: 0.5; }
-  to { transform: translate(-50%, -50%) scale(3.5); opacity: 0; }
+  from { transform: translate(-50%, -50%) scale(0); opacity: 0.5; filter: blur(0px); }
+  to { transform: translate(-50%, -50%) scale(4); opacity: 0; filter: blur(4px); }
 }
 .animate-ripple {
   animation: ripple-out 0.82s var(--ease-standard) forwards;
 }
 
-/* Shimmer for progress bar at 100% */
+/* ── Shimmer for progress bar at 100% ── */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -154,18 +161,23 @@ body {
   animation: shimmer 1.8s var(--ease-standard) infinite;
 }
 
-/* Directional skeleton shimmer */
+/* ── Skeleton shimmer (diagonal sweep + breathe) ── */
 @keyframes skeleton-shimmer {
   from { background-position: -200% 0; }
   to { background-position: 200% 0; }
 }
+@keyframes skeleton-breathe {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 0.5; }
+}
 .animate-skeleton {
-  background: linear-gradient(90deg, #e7e5e4 25%, #f5f5f4 50%, #e7e5e4 75%);
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.3s var(--ease-standard) infinite;
+  background: linear-gradient(-45deg, #e7e5e4 25%, #f0eeeb 37%, #f7f5f2 50%, #f0eeeb 63%, #e7e5e4 75%);
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.6s var(--ease-standard) infinite, skeleton-breathe 2s ease-in-out infinite;
+  will-change: background-position;
 }
 
-/* Page enter transition */
+/* ── Page enter ── */
 @keyframes page-enter {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -174,7 +186,7 @@ body {
   animation: page-enter var(--duration-base) var(--ease-standard) both;
 }
 
-/* BottomSheet spring animation */
+/* ── BottomSheet spring ── */
 @keyframes sheet-spring-up {
   0% { transform: translateY(100%); }
   65% { transform: translateY(-3%); }
@@ -182,7 +194,7 @@ body {
   100% { transform: translateY(0); }
 }
 
-/* Tab slide directions */
+/* ── Tab slide directions ── */
 @keyframes slide-in-right {
   from { opacity: 0; transform: translateX(16px); }
   to { opacity: 1; transform: translateX(0); }
@@ -198,7 +210,7 @@ body {
   animation: slide-in-left var(--duration-base) var(--ease-standard) both;
 }
 
-/* Confetti particles */
+/* ── Confetti fall ── */
 @keyframes confetti-fall {
   0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
   100% { transform: translateY(120px) rotate(360deg); opacity: 0; }
@@ -207,11 +219,65 @@ body {
   animation: confetti-fall 1s var(--ease-standard) forwards;
 }
 
+/* ── Glow pulse (for active elements) ── */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--glow-color, rgba(249,115,22,0.3)); }
+  50% { box-shadow: 0 0 20px 4px var(--glow-color, rgba(249,115,22,0.15)); }
+}
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* ── Float (empty state icons) ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* ── Gradient shift (progress bar 100% / shine border) ── */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Shine border (animated gradient border for primary cards) ── */
+.shine-border {
+  position: relative;
+  overflow: hidden;
+}
+.shine-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, transparent 40%, rgba(249,115,22,0.3) 50%, transparent 60%);
+  background-size: 300% 300%;
+  animation: gradient-shift 4s ease infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ── Glass card with hover enhancement ── */
 .glass-card {
   background: linear-gradient(135deg, var(--color-panel-strong), var(--color-panel));
   border: 1px solid var(--color-line-soft);
   box-shadow: var(--shadow-card);
   backdrop-filter: blur(10px);
+  transition: box-shadow var(--duration-base) var(--ease-standard),
+              border-color var(--duration-base) var(--ease-standard),
+              backdrop-filter var(--duration-base) var(--ease-standard);
+}
+.glass-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  border-color: rgba(28, 25, 23, 0.14);
+  backdrop-filter: blur(14px);
 }
 
 .luxury-divider {
@@ -223,7 +289,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Respect reduced-motion preference */
+/* ── Respect reduced-motion preference ── */
 @media (prefers-reduced-motion: reduce) {
   .animate-check-bounce,
   .animate-slide-up,
@@ -235,7 +301,12 @@ body {
   .animate-page-enter,
   .animate-slide-in-right,
   .animate-slide-in-left,
-  .animate-confetti {
+  .animate-confetti,
+  .animate-glow-pulse,
+  .animate-float {
+    animation: none !important;
+  }
+  .shine-border::before {
     animation: none !important;
   }
   .tap-scale:active { transform: none; }

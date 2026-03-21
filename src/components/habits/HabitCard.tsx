@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { motion, useReducedMotion } from 'motion/react'
+import { motion, useReducedMotion, useMotionValue, useSpring, useTransform, AnimatePresence } from 'motion/react'
 import { Check, Plus, RotateCcw, MoreHorizontal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { celebrate } from '@/lib/celebrate'
+import { spring } from '@/lib/motion'
 import { Spinner } from '@/components/ui/spinner'
 import type { Habit } from '@/types'
 import {
@@ -38,6 +39,30 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
   const checkIn = useCheckIn()
   const deleteCheckIn = useDeleteCheckIn()
   const isDone = todayCount > 0
+
+  // 3D tilt motion values
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [4, -4]), { stiffness: 300, damping: 30 })
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-4, 4]), { stiffness: 300, damping: 30 })
+
+  // Magnetic icon follow
+  const iconX = useSpring(useTransform(mouseX, [-0.5, 0.5], [-3, 3]), { stiffness: 200, damping: 20 })
+  const iconY = useSpring(useTransform(mouseY, [-0.5, 0.5], [-3, 3]), { stiffness: 200, damping: 20 })
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    if (reduceMotion) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = (e.clientX - rect.left) / rect.width - 0.5
+    const y = (e.clientY - rect.top) / rect.height - 0.5
+    mouseX.set(x)
+    mouseY.set(y)
+  }, [reduceMotion, mouseX, mouseY])
+
+  const handleMouseLeave = useCallback(() => {
+    mouseX.set(0)
+    mouseY.set(0)
+  }, [mouseX, mouseY])
 
   // Reset sheet state when closed
   useEffect(() => {
@@ -211,7 +236,7 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
     </BottomSheetContent>
   )
 
-  // More-options trigger (opens BottomSheet) — uses div+role to avoid nested <button>
+  // More-options trigger (opens BottomSheet)
   const moreButton = (
     <div
       role="button"
@@ -240,21 +265,62 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
     </div>
   )
 
-  // Ripple element shown during celebration
+  // Ripple element shown during celebration — motion-driven
   const rippleElement = celebrating ? (
-    <span
-      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full animate-ripple pointer-events-none"
+    <motion.span
+      className="absolute left-1/2 top-1/2 w-16 h-16 rounded-full pointer-events-none"
       style={{ backgroundColor: habit.color + '60' }}
+      initial={{ scale: 0, opacity: 0.5, x: '-50%', y: '-50%' }}
+      animate={{ scale: 4, opacity: 0 }}
+      transition={{ duration: 0.82, ease: [0.22, 0.61, 0.36, 1] }}
     />
   ) : null
+
+  // Check badge with spring animation
+  const checkBadge = (size: 'sm' | 'md') => (
+    <AnimatePresence>
+      {isDone && (
+        <motion.div
+          className={cn(
+            'rounded-full flex items-center justify-center',
+            size === 'sm' ? 'absolute -top-1 -right-1 w-4 h-4' : 'w-6 h-6',
+          )}
+          style={{ backgroundColor: habit.color }}
+          initial={{ scale: 0, rotate: -45 }}
+          animate={{ scale: 1, rotate: 0 }}
+          exit={{ scale: 0, rotate: 45 }}
+          transition={spring.emphasized}
+        >
+          <Check
+            className={cn('text-white', size === 'sm' ? 'w-2.5 h-2.5' : 'w-3.5 h-3.5')}
+            strokeWidth={size === 'sm' ? 3.5 : 3}
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+
+  // Shared 3D style for card
+  const tiltStyle = reduceMotion ? undefined : {
+    rotateX,
+    rotateY,
+    transformPerspective: 800,
+  }
 
   // ── Compact mode ──────────────────────────────────────────
   if (compact) {
     return (
       <>
         <motion.button
-          whileTap={reduceMotion ? undefined : { scale: 0.98 }}
-          whileHover={reduceMotion || isDone ? undefined : { y: -1 }}
+          whileTap={reduceMotion ? undefined : { scale: 0.96, transition: spring.snappy }}
+          whileHover={reduceMotion || isDone ? undefined : { y: -2 }}
+          style={{
+            ...(isDone
+              ? { borderColor: habit.color + '50', backgroundColor: habit.color + '06' }
+              : {}),
+            ...style,
+            ...tiltStyle,
+          }}
           ref={cardRef}
           className={cn(
             'group relative flex flex-col items-center gap-1.5 pt-3 pb-2.5 px-1',
@@ -265,55 +331,53 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
               : 'bg-white border-stone-200 shadow-[var(--shadow-card)]',
             celebrating && 'animate-celebrate',
           )}
-          style={{
-            ...(isDone
-              ? { borderColor: habit.color + '50', backgroundColor: habit.color + '06' }
-              : {}),
-            ...style,
-          }}
           aria-label={`打卡：${habit.name}`}
           onClick={handleCardClick}
           onPointerDown={onPointerDown}
           onPointerUp={onPointerUpOrLeave}
-          onPointerLeave={onPointerUpOrLeave}
+          onPointerLeave={(e) => { onPointerUpOrLeave(); handleMouseLeave(); void e; }}
+          onMouseMove={handleMouseMove}
         >
           {moreButton}
           {rippleElement}
           {/* Color accent bar */}
-          <div
-            className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl transition-colors duration-300"
-            style={{ backgroundColor: isDone ? habit.color : '#e7e5e4' }}
+          <motion.div
+            className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
+            animate={{ backgroundColor: isDone ? habit.color : '#e7e5e4' }}
+            transition={{ duration: 0.3 }}
           />
           {/* Icon + done badge */}
           <div className="relative">
-            <div
+            <motion.div
               className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl"
-              style={{ backgroundColor: habit.color + '18' }}
+              style={{
+                backgroundColor: habit.color + '18',
+                ...(reduceMotion ? {} : { x: iconX, y: iconY }),
+              }}
             >
               {habit.icon || '📌'}
-            </div>
-            {isDone && (
-              <div
-                className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center animate-check-bounce"
-                style={{ backgroundColor: habit.color }}
-              >
-                <Check className="w-2.5 h-2.5 text-white" strokeWidth={3.5} />
-              </div>
-            )}
+            </motion.div>
+            {checkBadge('sm')}
           </div>
           {/* Name */}
           <div className="text-xs font-semibold text-stone-800 text-center line-clamp-2 w-full px-0.5 leading-snug">
             {habit.name}
           </div>
           {/* Count badge (only when > 1) */}
-          {todayCount > 1 && (
-            <span
-              className="text-xs font-bold px-1.5 rounded-full leading-5"
-              style={{ backgroundColor: habit.color + '18', color: habit.color }}
-            >
-              ×{todayCount}
-            </span>
-          )}
+          <AnimatePresence>
+            {todayCount > 1 && (
+              <motion.span
+                className="text-xs font-bold px-1.5 rounded-full leading-5"
+                style={{ backgroundColor: habit.color + '18', color: habit.color }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={spring.snappy}
+              >
+                ×{todayCount}
+              </motion.span>
+            )}
+          </AnimatePresence>
         </motion.button>
         <BottomSheet open={open} onOpenChange={setOpen}>
           {sheetContent}
@@ -326,8 +390,15 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
   return (
     <>
       <motion.button
-        whileTap={reduceMotion ? undefined : { scale: 0.985 }}
-        whileHover={reduceMotion || isDone ? undefined : { y: -2 }}
+        whileTap={reduceMotion ? undefined : { scale: 0.975, transition: spring.snappy }}
+        whileHover={reduceMotion || isDone ? undefined : { y: -3, transition: spring.smooth }}
+        style={{
+          ...(isDone
+            ? { borderColor: habit.color + '50', backgroundColor: habit.color + '06' }
+            : {}),
+          ...style,
+          ...tiltStyle,
+        }}
         ref={cardRef}
         className={cn(
           'group relative flex flex-col items-start p-4 rounded-2xl tap-scale',
@@ -338,42 +409,34 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
             : 'bg-white border-stone-200 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] transition-[box-shadow,transform] duration-200',
           celebrating && 'animate-celebrate',
         )}
-        style={{
-          ...(isDone
-            ? { borderColor: habit.color + '50', backgroundColor: habit.color + '06' }
-            : {}),
-          ...style,
-        }}
         aria-label={`打卡：${habit.name}`}
         onClick={handleCardClick}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUpOrLeave}
-        onPointerLeave={onPointerUpOrLeave}
+        onPointerLeave={(e) => { onPointerUpOrLeave(); handleMouseLeave(); void e; }}
+        onMouseMove={handleMouseMove}
       >
         {moreButton}
         {rippleElement}
         {/* Color accent bar */}
-        <div
-          className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl transition-all duration-300"
-          style={{ backgroundColor: isDone ? habit.color : '#e7e5e4' }}
+        <motion.div
+          className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
+          animate={{ backgroundColor: isDone ? habit.color : '#e7e5e4' }}
+          transition={{ duration: 0.3 }}
         />
 
         {/* Icon + Done badge */}
         <div className="flex w-full items-start justify-between mt-1">
-          <div
+          <motion.div
             className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-            style={{ backgroundColor: habit.color + '18' }}
+            style={{
+              backgroundColor: habit.color + '18',
+              ...(reduceMotion ? {} : { x: iconX, y: iconY }),
+            }}
           >
             {habit.icon || '📌'}
-          </div>
-          {isDone && (
-            <div
-              className="w-6 h-6 rounded-full flex items-center justify-center animate-check-bounce"
-              style={{ backgroundColor: habit.color }}
-            >
-              <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
-            </div>
-          )}
+          </motion.div>
+          {checkBadge('md')}
         </div>
 
         {/* Name */}
@@ -383,19 +446,33 @@ export function HabitCard({ habit, todayCount, style, compact = false, latestChe
 
         {/* Count */}
         <div className="mt-1.5 flex items-center gap-1.5">
-          {isDone ? (
-            <span
-              className="text-xs font-semibold px-2 py-0.5 rounded-full"
-              style={{ backgroundColor: habit.color + '18', color: habit.color }}
-            >
-              今日 ×{todayCount}
-            </span>
-          ) : (
-            <span className="text-xs text-stone-400 font-medium flex items-center gap-1">
-              <Plus className="w-3 h-3" strokeWidth={2.5} />
-              点击打卡
-            </span>
-          )}
+          <AnimatePresence mode="wait">
+            {isDone ? (
+              <motion.span
+                key="done"
+                className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: habit.color + '18', color: habit.color }}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={spring.snappy}
+              >
+                今日 ×{todayCount}
+              </motion.span>
+            ) : (
+              <motion.span
+                key="undone"
+                className="text-xs text-stone-400 font-medium flex items-center gap-1"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={spring.snappy}
+              >
+                <Plus className="w-3 h-3" strokeWidth={2.5} />
+                点击打卡
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
       </motion.button>
       <BottomSheet open={open} onOpenChange={setOpen}>
