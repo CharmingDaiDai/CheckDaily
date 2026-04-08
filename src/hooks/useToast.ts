@@ -1,10 +1,16 @@
 import { create } from 'zustand'
 
+export interface ToastAction {
+  label: string
+  onClick: () => void | Promise<void>
+}
+
 export interface ToastItem {
   id: string
   message: string
-  variant?: 'default' | 'error' | 'success'
+  variant?: 'default' | 'error' | 'success' | 'warning'
   duration?: number
+  action?: ToastAction
 }
 
 interface ToastState {
@@ -14,6 +20,8 @@ interface ToastState {
 }
 
 let counter = 0
+
+type ToastOptions = Omit<ToastItem, 'id' | 'message'>
 
 export const useToastStore = create<ToastState>((set) => ({
   toasts: [],
@@ -26,14 +34,18 @@ export const useToastStore = create<ToastState>((set) => ({
   },
 }))
 
-export function toast(message: string) {
-  useToastStore.getState().add({ message, variant: 'default' })
+export function toast(message: string, options?: ToastOptions) {
+  useToastStore.getState().add({ message, variant: 'default', ...options })
 }
 
-toast.success = (message: string) => {
-  useToastStore.getState().add({ message, variant: 'success' })
+toast.success = (message: string, options?: ToastOptions) => {
+  useToastStore.getState().add({ message, variant: 'success', ...options })
 }
 
-toast.error = (message: string) => {
-  useToastStore.getState().add({ message, variant: 'error' })
+toast.error = (message: string, options?: ToastOptions) => {
+  useToastStore.getState().add({ message, variant: 'error', ...options })
+}
+
+toast.warning = (message: string, options?: ToastOptions) => {
+  useToastStore.getState().add({ message, variant: 'warning', ...options })
 }

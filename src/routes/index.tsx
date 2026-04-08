@@ -37,11 +37,28 @@ function Dashboard() {
     return () => clearTimeout(timer);
   }, []);
 
-  const { data: habits, isLoading: habitsLoading } = useHabits();
-  const { data: todayCheckIns, isLoading: todayLoading } = useTodayCheckIns();
+  const {
+    data: habits,
+    isLoading: habitsLoading,
+    isFetching: habitsFetching,
+    error: habitsError,
+    refetch: refetchHabits,
+  } = useHabits();
+  const {
+    data: todayCheckIns,
+    isLoading: todayLoading,
+    isFetching: todayFetching,
+    error: todayError,
+    refetch: refetchToday,
+  } = useTodayCheckIns();
 
   const last7 = useMemo(() => getLast7Days(), []);
-  const { data: recentCheckIns } = useCheckIns({
+  const {
+    data: recentCheckIns,
+    isFetching: recentFetching,
+    error: recentError,
+    refetch: refetchRecent,
+  } = useCheckIns({
     startDate: last7[0],
     endDate: last7[last7.length - 1],
   });
@@ -52,7 +69,12 @@ function Dashboard() {
     d.setDate(d.getDate() - 60);
     return formatDate(d);
   }, []);
-  const { data: streakCheckIns } = useCheckIns({
+  const {
+    data: streakCheckIns,
+    isFetching: streakFetching,
+    error: streakError,
+    refetch: refetchStreak,
+  } = useCheckIns({
     startDate: streakRange,
     endDate: formatDate(new Date()),
   });
@@ -146,6 +168,8 @@ function Dashboard() {
   const totalCount = habits?.length ?? 0;
 
   const isLoading = habitsLoading || todayLoading;
+  const isRefreshing = !isLoading && (habitsFetching || todayFetching || recentFetching || streakFetching);
+  const hasLoadError = Boolean(habitsError || todayError || recentError || streakError);
 
   // Index where completed habits start (-1 = none done, 0 = all done)
   const firstDoneIdx = sortedHabits.findIndex(
@@ -239,6 +263,36 @@ function Dashboard() {
           )}
         </div>
       </motion.div>
+
+      {isRefreshing && (
+        <motion.div
+          variants={sectionReveal}
+          className="rounded-xl border border-brand-100 bg-brand-50/70 px-3.5 py-2 text-xs font-medium text-brand-700"
+        >
+          正在同步今日与趋势数据…
+        </motion.div>
+      )}
+
+      {hasLoadError && (
+        <motion.div
+          variants={sectionReveal}
+          className="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3"
+        >
+          <div className="text-sm font-semibold text-rose-700">首页数据加载失败</div>
+          <div className="mt-0.5 text-xs text-rose-600">部分卡片可能展示不完整，请重新同步。</div>
+          <button
+            className="mt-2 h-9 rounded-lg border border-rose-200 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-50 transition-colors"
+            onClick={() => {
+              void refetchHabits();
+              void refetchToday();
+              void refetchRecent();
+              void refetchStreak();
+            }}
+          >
+            重新同步
+          </button>
+        </motion.div>
+      )}
 
       {/* All Done celebration banner */}
       {!isLoading && doneCount === totalCount && totalCount > 0 && (
@@ -352,14 +406,33 @@ function Dashboard() {
       </BottomSheet>
 
       {/* Habit grid */}
-      {isLoading ? (
-        <motion.div variants={sectionReveal} className={gridClass}>
-          {Array.from({ length: compact ? 8 : 6 }).map((_, i) => (
-            <Skeleton
-              key={i}
-              className={compact ? "h-24 rounded-2xl" : "h-14 rounded-2xl"}
-            />
-          ))}
+      {hasLoadError && !isLoading && sortedHabits.length === 0 ? (
+        <motion.div variants={sectionReveal} className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="font-bold text-rose-700 text-lg mb-1">今日数据暂时不可用</div>
+          <div className="text-rose-500/80 text-sm mb-5">请检查网络后重试同步</div>
+          <button
+            className="px-5 py-2.5 bg-rose-600 text-white rounded-xl font-semibold text-sm hover:bg-rose-700 transition-colors tap-scale"
+            onClick={() => {
+              void refetchHabits();
+              void refetchToday();
+              void refetchRecent();
+              void refetchStreak();
+            }}
+          >
+            重新同步
+          </button>
+        </motion.div>
+      ) : isLoading ? (
+        <motion.div variants={sectionReveal} className="space-y-3">
+          <div className="text-xs text-stone-400 font-medium">加载今日打卡内容…</div>
+          <div className={gridClass}>
+            {Array.from({ length: compact ? 8 : 6 }).map((_, i) => (
+              <Skeleton
+                key={i}
+                className={compact ? "h-24 rounded-2xl" : "h-14 rounded-2xl"}
+              />
+            ))}
+          </div>
         </motion.div>
       ) : sortedHabits.length > 0 ? (
         <motion.div variants={sectionReveal} className="space-y-3">

@@ -47,6 +47,8 @@ export function Toaster() {
                   ? 'bg-red-50 border-red-200 text-red-800'
                   : t.variant === 'success'
                     ? 'bg-green-50 border-green-200 text-green-800'
+                    : t.variant === 'warning'
+                      ? 'bg-amber-50 border-amber-200 text-amber-900'
                     : 'bg-white border-stone-200 text-stone-800',
               )}
               // Success: green glow pulse on border
@@ -58,6 +60,24 @@ export function Toaster() {
               <ToastPrimitive.Description className="text-sm font-medium flex-1">
                 {t.message}
               </ToastPrimitive.Description>
+              {t.action && (
+                <button
+                  type="button"
+                  className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-semibold text-brand-700 bg-brand-100/70 hover:bg-brand-100 transition-colors"
+                  onClick={() => {
+                    try {
+                      const maybePromise = t.action?.onClick()
+                      if (maybePromise instanceof Promise) {
+                        void maybePromise.catch(() => undefined)
+                      }
+                    } finally {
+                      dismiss(t.id)
+                    }
+                  }}
+                >
+                  {t.action.label}
+                </button>
+              )}
               <ToastPrimitive.Close className="shrink-0 rounded-lg p-1 opacity-50 hover:opacity-100 transition-opacity">
                 <X className="w-3.5 h-3.5" />
               </ToastPrimitive.Close>

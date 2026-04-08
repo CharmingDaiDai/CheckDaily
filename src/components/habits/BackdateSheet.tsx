@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { CalendarClock, Check } from 'lucide-react'
 import { cn, formatDate } from '@/lib/utils'
 import { Spinner } from '@/components/ui/spinner'
@@ -38,11 +38,18 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
   const [note, setNote] = useState('')
   const [showNote, setShowNote] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const quotaToastAtRef = useRef(0)
 
   const checkIn = useCheckIn()
 
   // Fetch check-ins for the 3-day range
-  const { data: recentCheckIns } = useCheckIns({
+  const {
+    data: recentCheckIns,
+    isLoading: recentLoading,
+    isFetching: recentFetching,
+    error: recentError,
+    refetch: refetchRecent,
+  } = useCheckIns({
     startDate: backdateDays[2], // earliest
     endDate: backdateDays[0],   // most recent
   })
@@ -81,6 +88,7 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
 
   const remaining = MAX_PER_DAY - backdateCount
   const canSelectMore = remaining - selectedHabits.size > 0
+  const remainingSlots = Math.max(remaining - selectedHabits.size, 0)
 
   // Available habits: not archived, not already checked-in for selected date
   const availableHabits = useMemo(() => {
@@ -94,6 +102,12 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
         next.delete(habitId)
       } else if (canSelectMore || prev.has(habitId)) {
         next.add(habitId)
+      } else {
+        const now = Date.now()
+        if (now - quotaToastAtRef.current > 1200) {
+          quotaToastAtRef.current = now
+          toast.warning(`该日最多补卡 ${MAX_PER_DAY} 项，请先取消一项`, { duration: 2200 })
+        }
       }
       return next
     })
@@ -112,7 +126,7 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
           })
         )
       )
-      toast.success(`已补卡 ${selectedHabits.size} 项`)
+      toast.success(`${selectedDate} 已补卡 ${selectedHabits.size} 项`, { duration: 3600 })
       onOpenChange(false)
     } catch {
       toast.error('补卡失败，请重试')
@@ -144,6 +158,27 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
         </BottomSheetHeader>
 
         <div className="space-y-5">
+          {recentError && (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50/70 px-3.5 py-3">
+              <div className="text-sm font-semibold text-rose-700">补卡记录同步失败</div>
+              <div className="mt-0.5 text-xs text-rose-600">请重试后再选择补卡项目。</div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2"
+                onClick={() => void refetchRecent()}
+              >
+                重试
+              </Button>
+            </div>
+          )}
+
+          {recentFetching && !recentLoading && !recentError && (
+            <div className="rounded-xl border border-brand-100 bg-brand-50/70 px-3 py-2 text-xs font-medium text-brand-700">
+              正在同步最近 3 天补卡记录…
+            </div>
+          )}
+
           {/* Date selector */}
           <div className="space-y-2">
             <Label className="text-xs text-stone-500 font-semibold">选择日期</Label>
@@ -205,12 +240,23 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
                 {remaining <= 0 ? (
                   <span className="text-amber-500">该日补卡已满</span>
                 ) : (
-                  `还可补 ${remaining - selectedHabits.size} 项`
+                  `还可补 ${remainingSlots} 项`
                 )}
               </span>
             </div>
 
-            {availableHabits.length === 0 ? (
+            {recentError ? (
+              <div className="flex flex-col items-center py-5 text-rose-500 gap-1.5">
+                <span className="text-sm font-semibold">无法读取当日可补卡项目</span>
+                <button
+                  type="button"
+                  className="text-xs font-medium text-rose-600 underline underline-offset-2"
+                  onClick={() => void refetchRecent()}
+                >
+                  点击重试
+                </button>
+              </div>
+            ) : availableHabits.length === 0 ? (
               <div className="flex flex-col items-center py-6 text-stone-400 gap-1.5">
                 <span className="text-2xl">🎉</span>
                 <span className="text-xs font-medium">该日所有项目都已打卡</span>
@@ -291,7 +337,7 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
             <Button
               className="flex-1"
               onClick={handleSubmit}
-              disabled={selectedHabits.size === 0 || submitting}
+              disabled={selectedHabits.size === 0 || submitting || !!recentError}
             >
               {submitting ? (
                 <span className="flex items-center gap-2">

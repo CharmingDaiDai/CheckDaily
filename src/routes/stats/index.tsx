@@ -64,7 +64,12 @@ function StatsPage() {
   const [habitSearch, setHabitSearch] = useState("");
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [isDayDetailOpen, setIsDayDetailOpen] = useState(false);
-  const { data: habits } = useHabits();
+  const {
+    data: habits,
+    isFetching: habitsFetching,
+    error: habitsError,
+    refetch: refetchHabits,
+  } = useHabits();
   const todayStr = useMemo(() => today(), []);
   const last30 = useMemo(() => getLast30Days(), []);
   const rollingStart = last30[0] ?? todayStr;
@@ -74,12 +79,24 @@ function StatsPage() {
     selectedYear === currentYear
       ? `${selectedYear - 1}-12-01`
       : `${selectedYear}-01-01`;
-  const { data: yearCheckIns, isLoading: yearLoading } = useCheckIns({
+  const {
+    data: yearCheckIns,
+    isLoading: yearLoading,
+    isFetching: yearFetching,
+    error: yearError,
+    refetch: refetchYear,
+  } = useCheckIns({
     startDate: queryStart,
     endDate: `${selectedYear}-12-31`,
   });
   // Rolling window data for today/week/near-term charts, independent from selected year.
-  const { data: rollingCheckIns, isLoading: rollingLoading } = useCheckIns({
+  const {
+    data: rollingCheckIns,
+    isLoading: rollingLoading,
+    isFetching: rollingFetching,
+    error: rollingError,
+    refetch: refetchRolling,
+  } = useCheckIns({
     startDate: rollingStart,
     endDate: todayStr,
   });
@@ -143,7 +160,12 @@ function StatsPage() {
   );
 
   // Yearly heatmap data
-  const { data: yearCounts } = useYearlyCheckInCounts(undefined, selectedYear);
+  const {
+    data: yearCounts,
+    isFetching: yearCountsFetching,
+    error: yearCountsError,
+    refetch: refetchYearCounts,
+  } = useYearlyCheckInCounts(undefined, selectedYear);
   const heatmapData = useMemo<CalendarDatum[]>(() => {
     return Object.entries(yearCounts ?? {}).map(([day, value]) => ({
       day,
@@ -231,6 +253,9 @@ function StatsPage() {
     return list.sort((a, b) => a.checked_at.localeCompare(b.checked_at));
   }, [allCheckIns, selectedDate]);
 
+  const isRefreshing = !isLoading && (habitsFetching || yearFetching || rollingFetching || yearCountsFetching);
+  const hasStatsError = Boolean(habitsError || yearError || rollingError || yearCountsError);
+
   return (
     <motion.div
       className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6"
@@ -275,6 +300,36 @@ function StatsPage() {
           )}
         </div>
       </motion.div>
+
+      {isRefreshing && (
+        <motion.div
+          variants={sectionReveal}
+          className="rounded-xl border border-brand-100 bg-brand-50/70 px-3.5 py-2 text-xs font-medium text-brand-700"
+        >
+          正在同步统计数据…
+        </motion.div>
+      )}
+
+      {hasStatsError && (
+        <motion.div
+          variants={sectionReveal}
+          className="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3"
+        >
+          <div className="text-sm font-semibold text-rose-700">统计数据加载失败</div>
+          <div className="mt-0.5 text-xs text-rose-600">图表或列表可能不完整，请重试同步。</div>
+          <button
+            className="mt-2 h-9 rounded-lg border border-rose-200 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-50 transition-colors"
+            onClick={() => {
+              void refetchHabits();
+              void refetchYear();
+              void refetchRolling();
+              void refetchYearCounts();
+            }}
+          >
+            重新同步
+          </button>
+        </motion.div>
+      )}
 
       {/* Stat Cards */}
       <motion.div variants={sectionReveal} className="grid grid-cols-2 gap-3">
@@ -631,7 +686,7 @@ function StatsPage() {
                 />
                 {habitSearch && (
                   <button
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white transition-colors"
                     onClick={() => setHabitSearch("")}
                     aria-label="清除搜索"
                   >

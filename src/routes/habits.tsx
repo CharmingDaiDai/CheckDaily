@@ -9,6 +9,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { HabitForm } from '@/components/habits/HabitForm'
 import { useHabits, useArchiveHabit, useRestoreHabit } from '@/hooks/useHabits'
+import { toast } from '@/hooks/useToast'
 import type { Habit } from '@/types'
 import { cn } from '@/lib/utils'
 import { pageChoreography, sectionReveal, listItemSlide, spring } from '@/lib/motion'
@@ -20,8 +21,19 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 function HabitsPage() {
-  const { data: habits, isLoading } = useHabits(false)
-  const { data: allHabits } = useHabits(true)
+  const {
+    data: habits,
+    isLoading,
+    isFetching: habitsFetching,
+    error: habitsError,
+    refetch: refetchHabits,
+  } = useHabits(false)
+  const {
+    data: allHabits,
+    isFetching: allHabitsFetching,
+    error: allHabitsError,
+    refetch: refetchAllHabits,
+  } = useHabits(true)
   const [createOpen, setCreateOpen] = useState(false)
   const [editHabit, setEditHabit] = useState<Habit | null>(null)
   const [search, setSearch] = useState('')
@@ -29,6 +41,8 @@ function HabitsPage() {
   const [archiveTarget, setArchiveTarget] = useState<{ id: string; name: string } | null>(null)
   const archive = useArchiveHabit()
   const restore = useRestoreHabit()
+  const hasLoadError = Boolean(habitsError || allHabitsError)
+  const isRefreshing = !isLoading && (habitsFetching || allHabitsFetching)
 
   const filtered = useMemo(
     () => habits?.filter(h => h.name.toLowerCase().includes(search.toLowerCase())) ?? [],
@@ -76,6 +90,36 @@ function HabitsPage() {
         </Dialog>
       </motion.div>
 
+      {isRefreshing && (
+        <motion.div
+          variants={sectionReveal}
+          className="rounded-xl border border-brand-100 bg-brand-50/70 px-3.5 py-2 text-xs font-medium text-brand-700"
+        >
+          正在同步项目列表…
+        </motion.div>
+      )}
+
+      {hasLoadError && (
+        <motion.div
+          variants={sectionReveal}
+          className="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3"
+        >
+          <div className="text-sm font-semibold text-rose-700">项目数据加载失败</div>
+          <div className="mt-0.5 text-xs text-rose-600">网络波动时可能出现此问题，请重试。</div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="mt-2"
+            onClick={() => {
+              void refetchHabits()
+              void refetchAllHabits()
+            }}
+          >
+            重新加载
+          </Button>
+        </motion.div>
+      )}
+
       {/* Edit dialog */}
       <Dialog open={!!editHabit} onOpenChange={(o) => { if (!o) setEditHabit(null) }}>
         <DialogContent>
@@ -97,12 +141,28 @@ function HabitsPage() {
         confirmText="归档"
         variant="danger"
         onConfirm={async () => {
-          if (archiveTarget) await archive.mutateAsync(archiveTarget.id)
+          if (!archiveTarget) return
+          const target = archiveTarget
+          await archive.mutateAsync(target.id)
+          toast.success(`已归档「${target.name}」`, {
+            duration: 5200,
+            action: {
+              label: '撤销',
+              onClick: async () => {
+                try {
+                  await restore.mutateAsync(target.id)
+                  toast.success(`已恢复「${target.name}」`)
+                } catch {
+                  // Error feedback is already handled in mutation hook.
+                }
+              },
+            },
+          })
         }}
       />
 
       {/* Search — only show when there are items */}
-      {!isLoading && (habits?.length ?? 0) > 0 && (
+      {!isLoading && !hasLoadError && (habits?.length ?? 0) > 0 && (
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
           <Input
@@ -124,7 +184,21 @@ function HabitsPage() {
       )}
 
       {/* List */}
-      {isLoading ? (
+      {hasLoadError && !isLoading && (habits?.length ?? 0) === 0 ? (
+        <motion.div variants={sectionReveal} className="flex flex-col items-center justify-center py-14 text-center">
+          <div className="font-bold text-rose-700 text-base">项目暂时无法加载</div>
+          <div className="text-rose-500/80 text-sm mt-1 mb-4">请检查网络后重试</div>
+          <Button
+            variant="outline"
+            onClick={() => {
+              void refetchHabits()
+              void refetchAllHabits()
+            }}
+          >
+            再试一次
+          </Button>
+        </motion.div>
+      ) : isLoading ? (
         <motion.div variants={sectionReveal} className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-20 rounded-2xl" />
@@ -252,7 +326,14 @@ function HabitsPage() {
                     variant="outline"
                     size="sm"
                     className="shrink-0 gap-1.5"
-                    onClick={() => void restore.mutateAsync(habit.id)}
+                    onClick={async () => {
+                      try {
+                        await restore.mutateAsync(habit.id)
+                        toast.success(`已恢复「${habit.name}」`)
+                      } catch {
+                        // Error feedback is already handled in mutation hook.
+                      }
+                    }}
                     disabled={restore.isPending}
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
