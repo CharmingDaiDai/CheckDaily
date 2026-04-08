@@ -4,7 +4,6 @@ import { Check, RotateCcw, MoreHorizontal, Flame } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { celebrate } from '@/lib/celebrate'
 import { spring } from '@/lib/motion'
-import { Spinner } from '@/components/ui/spinner'
 import type { Habit } from '@/types'
 import {
   BottomSheet,
@@ -34,6 +33,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
   const [showNote, setShowNote] = useState(false)
   const [celebrating, setCelebrating] = useState(false)
   const [isLongPressing, setIsLongPressing] = useState(false)
+  const [isQuickSubmitting, setIsQuickSubmitting] = useState(false)
   const cardRef = useRef<HTMLButtonElement>(null)
   const prevDoneRef = useRef(todayCount > 0)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -98,8 +98,9 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
 
   // One-tap check-in (directly on card click)
   const handleQuickCheckIn = useCallback(async () => {
-    if (checkIn.isPending) return
+    if (checkIn.isPending || isQuickSubmitting) return
     const wasFirstCheckIn = !isDone
+    setIsQuickSubmitting(true)
     try {
       await checkIn.mutateAsync({ habit_id: habit.id })
       navigator.vibrate?.(wasFirstCheckIn ? [10, 30, 20] : 15)
@@ -117,8 +118,10 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
       }
     } catch {
       toast.error('打卡失败，请重试')
+    } finally {
+      setIsQuickSubmitting(false)
     }
-  }, [checkIn, habit.id, habit.color, isDone])
+  }, [checkIn, habit.id, habit.color, isDone, isQuickSubmitting])
 
   // Check-in with note (from bottom sheet)
   async function handleCheckIn() {
@@ -220,20 +223,13 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
           <Button
             className="flex-1"
             style={{ backgroundColor: habit.color }}
-            onClick={handleCheckIn}
-            disabled={checkIn.isPending}
+            onClick={() => void handleCheckIn()}
+            isLoading={checkIn.isPending}
+            loadingText="打卡中…"
+            requestGuard
           >
-            {checkIn.isPending ? (
-              <span className="flex items-center gap-2">
-                <Spinner />
-                打卡中…
-              </span>
-            ) : (
-              <>
-                <Check className="w-4 h-4" strokeWidth={2.5} />
-                确认打卡
-              </>
-            )}
+            <Check className="w-4 h-4" strokeWidth={2.5} />
+            确认打卡
           </Button>
         </div>
 
@@ -294,6 +290,12 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
     </div>
   ) : null
 
+  const quickPendingIndicator = isQuickSubmitting ? (
+    <div className="pointer-events-none absolute left-2 right-2 bottom-1.5 z-10 h-1.5 overflow-hidden rounded-full bg-brand-100/85">
+      <span className="absolute inset-y-0 left-0 w-full origin-left rounded-full bg-brand-500/80 animate-request-progress" />
+    </div>
+  ) : null
+
   // Ripple element shown during celebration — motion-driven
   const rippleElement = celebrating ? (
     <motion.span
@@ -336,6 +338,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
             'group relative flex flex-col items-center gap-1 pt-3 pb-2 px-1.5',
             'rounded-2xl tap-scale w-full select-none overflow-hidden',
             'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
+              isQuickSubmitting && 'pointer-events-none',
             isDone
               ? 'bg-white/60 shadow-sm'
               : 'bg-white shadow-[var(--shadow-card)]',
@@ -350,6 +353,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
         >
           {moreButton}
           {longPressIndicator}
+          {quickPendingIndicator}
           {rippleElement}
           {/* Left color accent */}
           <motion.div
@@ -448,6 +452,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
           'group relative flex items-center gap-2.5 px-3 py-2.5 rounded-2xl tap-scale',
           'text-left w-full select-none overflow-hidden',
           'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
+          isQuickSubmitting && 'pointer-events-none',
           isDone
             ? 'bg-white/60 shadow-sm'
             : 'bg-white shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] transition-[box-shadow,transform] duration-200',
@@ -462,6 +467,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
       >
         {moreButton}
         {longPressIndicator}
+        {quickPendingIndicator}
         {rippleElement}
         {/* Left color accent bar */}
         <motion.div

@@ -282,13 +282,15 @@ function ProfilePage() {
                   {emailDialog.error}
                 </div>
               )}
-              <Button type="submit" className="w-full" disabled={emailDialog.loading || !newEmail.trim()}>
-                {emailDialog.loading ? (
-                  <span className="flex items-center gap-2">
-                    <Spinner />
-                    发送验证邮件…
-                  </span>
-                ) : '发送验证邮件'}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={!newEmail.trim()}
+                isLoading={emailDialog.loading}
+                loadingText="发送验证邮件…"
+                requestGuard
+              >
+                发送验证邮件
               </Button>
             </form>
           )}
@@ -361,13 +363,15 @@ function ProfilePage() {
                   {pwDialog.error}
                 </div>
               )}
-              <Button type="submit" className="w-full" disabled={pwDialog.loading || !newPw || !confirmPw}>
-                {pwDialog.loading ? (
-                  <span className="flex items-center gap-2">
-                    <Spinner />
-                    修改中…
-                  </span>
-                ) : '确认修改'}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={!newPw || !confirmPw}
+                isLoading={pwDialog.loading}
+                loadingText="修改中…"
+                requestGuard
+              >
+                确认修改
               </Button>
             </form>
           )}

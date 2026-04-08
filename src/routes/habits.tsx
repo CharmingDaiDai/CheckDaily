@@ -334,7 +334,9 @@ function HabitsPage() {
                         // Error feedback is already handled in mutation hook.
                       }
                     }}
-                    disabled={restore.isPending}
+                    isLoading={restore.isPending}
+                    loadingText="恢复中…"
+                    requestGuard
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     恢复

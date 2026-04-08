@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { CalendarClock, Check } from 'lucide-react'
 import { cn, formatDate } from '@/lib/utils'
-import { Spinner } from '@/components/ui/spinner'
 import type { Habit } from '@/types'
 import {
   BottomSheet,
@@ -338,15 +337,11 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
               className="flex-1"
               onClick={handleSubmit}
               disabled={selectedHabits.size === 0 || submitting || !!recentError}
+              isLoading={submitting}
+              loadingText="补卡中…"
+              requestGuard
             >
-              {submitting ? (
-                <span className="flex items-center gap-2">
-                  <Spinner />
-                  补卡中…
-                </span>
-              ) : (
-                `确认补卡${selectedHabits.size > 0 ? ` (${selectedHabits.size})` : ''}`
-              )}
+              {`确认补卡${selectedHabits.size > 0 ? ` (${selectedHabits.size})` : ''}`}
             </Button>
           </div>
 

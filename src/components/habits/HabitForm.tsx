@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn, HABIT_COLORS, HABIT_ICONS } from '@/lib/utils'
-import { Spinner } from '@/components/ui/spinner'
 import type { Habit } from '@/types'
 import { useCreateHabit, useUpdateHabit } from '@/hooks/useHabits'
 
@@ -163,16 +162,16 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
         <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
           取消
         </Button>
-        <Button type="submit" className="flex-1" disabled={!name.trim() || isPending}
-          style={{ backgroundColor: color }}>
-          {isPending ? (
-            <span className="flex items-center gap-2">
-              <Spinner />
-              保存中…
-            </span>
-          ) : (
-            existing ? '保存修改' : '创建项目'
-          )}
+        <Button
+          type="submit"
+          className="flex-1"
+          disabled={!name.trim()}
+          style={{ backgroundColor: color }}
+          isLoading={isPending}
+          loadingText="保存中…"
+          requestGuard
+        >
+          {existing ? '保存修改' : '创建项目'}
         </Button>
       </div>
     </form>

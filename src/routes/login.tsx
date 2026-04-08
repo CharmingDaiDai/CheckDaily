@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { sendMagicLink, signInWithPassword, signUpWithPassword } from '@/hooks/useAuth'
-import { Spinner } from '@/components/ui/spinner'
 import { useAuthStore } from '@/store/authStore'
 import { spring } from '@/lib/motion'
 
@@ -193,18 +192,17 @@ function LoginPage() {
                     </div>
                   )}
 
-                  <Button type="submit" size="xl" className="w-full" disabled={mlLoading || !mlEmail.trim()}>
-                    {mlLoading ? (
-                      <span className="flex items-center gap-2">
-                        <Spinner size="default" />
-                        发送中…
-                      </span>
-                    ) : (
-                      <>
-                        发送登录链接
-                        <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
-                      </>
-                    )}
+                  <Button
+                    type="submit"
+                    size="xl"
+                    className="w-full"
+                    disabled={!mlEmail.trim()}
+                    isLoading={mlLoading}
+                    loadingText="发送中…"
+                    requestGuard
+                  >
+                    发送登录链接
+                    <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
                   </Button>
                 </form>
               )}
@@ -322,19 +320,13 @@ function LoginPage() {
                     type="submit"
                     size="xl"
                     className="w-full"
-                    disabled={pwLoading || !pwEmail.trim() || !password}
+                    disabled={!pwEmail.trim() || !password}
+                    isLoading={pwLoading}
+                    loadingText={mode === 'login' ? '登录中…' : '注册中…'}
+                    requestGuard
                   >
-                    {pwLoading ? (
-                      <span className="flex items-center gap-2">
-                        <Spinner size="default" />
-                        {mode === 'login' ? '登录中…' : '注册中…'}
-                      </span>
-                    ) : (
-                      <>
-                        {mode === 'login' ? '登录' : '注册'}
-                        <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
-                      </>
-                    )}
+                    {mode === 'login' ? '登录' : '注册'}
+                    <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
                   </Button>
 
                   <div className="text-center">

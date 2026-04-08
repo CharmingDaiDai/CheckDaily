@@ -7,7 +7,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Spinner } from '@/components/ui/spinner'
 
 interface ConfirmDialogProps {
   open: boolean
@@ -74,15 +73,12 @@ export function ConfirmDialog({
           <Button
             variant={variant === 'danger' ? 'danger' : 'default'}
             className="flex-1"
-            onClick={handleConfirm}
-            disabled={isLoading}
+            onClick={() => void handleConfirm()}
+            isLoading={isLoading}
+            loadingText="处理中…"
+            requestGuard
           >
-            {isLoading ? (
-              <span className="flex items-center gap-2">
-                <Spinner />
-                处理中…
-              </span>
-            ) : confirmText}
+            {confirmText}
           </Button>
         </div>
       </DialogContent>
