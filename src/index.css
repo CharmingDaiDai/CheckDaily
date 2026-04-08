@@ -51,6 +51,8 @@
 
 :root {
   color-scheme: light;
+  --bottom-nav-height: 4.5rem;
+  --focus-ring-offset: #f7f5f1;
 }
 
 * {
@@ -81,6 +83,23 @@ body {
 
 .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0.5rem); }
 .pt-safe { padding-top: env(safe-area-inset-top); }
+.pb-bottom-nav {
+  padding-bottom: calc(var(--bottom-nav-height) + max(env(safe-area-inset-bottom), 0.5rem));
+}
+.sheet-scroll-body {
+  max-height: calc(82svh - max(env(safe-area-inset-bottom), 0.5rem) - 0.75rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+}
+
+@media (min-width: 640px) {
+  .sheet-scroll-body {
+    max-height: none;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+}
 
 /* ── Check bounce with rotation ── */
 @keyframes check-bounce {

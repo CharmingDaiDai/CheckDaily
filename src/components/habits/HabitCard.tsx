@@ -33,6 +33,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
   const [note, setNote] = useState('')
   const [showNote, setShowNote] = useState(false)
   const [celebrating, setCelebrating] = useState(false)
+  const [isLongPressing, setIsLongPressing] = useState(false)
   const cardRef = useRef<HTMLButtonElement>(null)
   const prevDoneRef = useRef(todayCount > 0)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -72,6 +73,15 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
       setShowNote(false)
     }
   }, [open])
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current)
+        longPressTimer.current = null
+      }
+    }
+  }, [])
 
   // Trigger celebration when first check-in of the day happens
   useEffect(() => {
@@ -140,10 +150,13 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
   }
 
   // Long-press handlers
-  const onPointerDown = useCallback(() => {
+  const onPointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return
     didLongPress.current = false
+    setIsLongPressing(true)
     longPressTimer.current = setTimeout(() => {
       didLongPress.current = true
+      setIsLongPressing(false)
       setOpen(true)
     }, 500)
   }, [])
@@ -153,6 +166,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
       clearTimeout(longPressTimer.current)
       longPressTimer.current = null
     }
+    setIsLongPressing(false)
   }, [])
 
   const handleCardClick = useCallback(() => {
@@ -243,14 +257,17 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
       role="button"
       tabIndex={0}
       className={cn(
-        'absolute top-2 right-2 z-10 w-8 h-8 rounded-lg',
+        'absolute top-1.5 right-1.5 z-10 w-11 h-11 rounded-xl',
         'flex items-center justify-center cursor-pointer',
-        'text-stone-400 hover:text-stone-600 hover:bg-black/5',
+        'text-stone-400 hover:text-stone-600 hover:bg-black/5 bg-white/70 backdrop-blur-[2px]',
         'transition-all duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
-        isDone ? 'opacity-60' : 'opacity-0 group-hover:opacity-100',
+        isDone ? 'opacity-70' : 'opacity-80 sm:opacity-0 sm:group-hover:opacity-100',
       )}
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
       onClick={(e) => {
         e.stopPropagation()
+        setIsLongPressing(false)
         setOpen(true)
       }}
       onKeyDown={(e) => {
@@ -265,6 +282,17 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
       <MoreHorizontal className="w-4 h-4" />
     </div>
   )
+
+  const longPressIndicator = isLongPressing ? (
+    <div className="pointer-events-none absolute left-2 right-2 top-1.5 z-10 h-1.5 overflow-hidden rounded-full bg-brand-100/90">
+      <motion.span
+        className="block h-full origin-left rounded-full bg-brand-500"
+        initial={{ scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={{ duration: 0.5, ease: 'linear' }}
+      />
+    </div>
+  ) : null
 
   // Ripple element shown during celebration — motion-driven
   const rippleElement = celebrating ? (
@@ -321,6 +349,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
           onMouseMove={handleMouseMove}
         >
           {moreButton}
+          {longPressIndicator}
           {rippleElement}
           {/* Left color accent */}
           <motion.div
@@ -432,6 +461,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
         onMouseMove={handleMouseMove}
       >
         {moreButton}
+        {longPressIndicator}
         {rippleElement}
         {/* Left color accent bar */}
         <motion.div

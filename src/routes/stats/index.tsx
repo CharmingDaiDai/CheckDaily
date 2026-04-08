@@ -327,7 +327,7 @@ function StatsPage() {
             sessionStorage.setItem("stats-tab", v);
           }}
         >
-          <TabsList className="w-full mb-5">
+          <TabsList className="w-full mb-5" aria-label="统计维度">
             <TabsTrigger value="day" className="flex-1">
               今日
             </TabsTrigger>

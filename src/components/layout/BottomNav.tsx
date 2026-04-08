@@ -16,9 +16,9 @@ export function BottomNav() {
   const pathname = location.pathname
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/82 backdrop-blur-3xl border-t border-[var(--color-line-soft)] pb-safe md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-line-soft)] bg-white/84 backdrop-blur-3xl pb-safe md:hidden touch-manipulation">
       <LayoutGroup>
-        <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
+        <div className="mx-auto flex h-[var(--bottom-nav-height)] max-w-lg items-center justify-between px-2">
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
             const active = to === '/' ? pathname === '/' : pathname.startsWith(to)
             return (
@@ -26,15 +26,15 @@ export function BottomNav() {
                 key={to}
                 to={to}
                 className={cn(
-                  'relative flex flex-col items-center justify-center gap-0.5 px-4 h-full min-w-[64px] rounded-[var(--radius-control)]',
-                  'text-xs font-semibold transition-colors duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+                  'relative flex h-full min-h-[44px] flex-1 flex-col items-center justify-center gap-1 rounded-[var(--radius-control)] px-1.5 touch-manipulation',
+                  'text-[11px] font-semibold transition-colors duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
                   active ? 'text-brand-600' : 'text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)]'
                 )}
               >
                 {active && (
                   <motion.div
                     layoutId="nav-indicator"
-                    className="absolute inset-1 rounded-xl bg-brand-50/80"
+                    className="absolute inset-1.5 rounded-xl bg-brand-50/82"
                     transition={spring.smooth}
                   />
                 )}
@@ -44,8 +44,8 @@ export function BottomNav() {
                   className="relative z-10"
                 >
                   <Icon
-                    className={cn('w-6 h-6', active && 'text-brand-600')}
-                    strokeWidth={active ? 2.5 : 1.8}
+                    className={cn('w-5 h-5', active && 'text-brand-600')}
+                    strokeWidth={active ? 2.4 : 2}
                   />
                 </motion.div>
                 <span className="relative z-10 leading-none">{label}</span>

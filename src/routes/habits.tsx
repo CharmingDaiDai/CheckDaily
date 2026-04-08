@@ -109,11 +109,11 @@ function HabitsPage() {
             placeholder="搜索项目…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 pr-9"
+            className="pl-10 pr-14"
           />
           {search && (
             <button
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white transition-colors"
+              className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 rounded-xl flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white transition-colors"
               onClick={() => setSearch('')}
               aria-label="清除搜索"
             >
@@ -166,7 +166,7 @@ function HabitsPage() {
                 {/* Actions */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon-sm" className="shrink-0">
+                    <Button variant="ghost" size="icon-sm" className="shrink-0" aria-label={`${habit.name} 更多操作`}>
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>

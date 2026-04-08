@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useId } from 'react'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -32,6 +33,7 @@ export function ConfirmDialog({
   onConfirm,
 }: ConfirmDialogProps) {
   const [pending, setPending] = useState(false)
+  const descriptionId = useId()
   const isLoading = loading || pending
 
   const handleConfirm = async () => {
@@ -46,17 +48,24 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xs">
+      <DialogContent
+        className="max-w-xs"
+        role="alertdialog"
+        aria-describedby={description ? descriptionId : undefined}
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         {description && (
-          <p className="text-sm text-stone-500 -mt-1">{description}</p>
+          <DialogDescription id={descriptionId} className="text-sm text-stone-500 -mt-1">
+            {description}
+          </DialogDescription>
         )}
         <div className="flex gap-3 mt-2">
           <Button
             variant="outline"
             className="flex-1"
+            autoFocus={variant === 'danger'}
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
           >

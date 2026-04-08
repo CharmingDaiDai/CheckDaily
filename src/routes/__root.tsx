@@ -118,7 +118,7 @@ function RootLayout() {
       <OfflineBanner />
       <div className="flex min-h-screen">
         <Sidebar />
-        <main className="flex-1 pb-[80px] md:pb-0 min-h-screen overflow-x-hidden">
+        <main className="flex-1 pb-bottom-nav md:pb-0 min-h-screen overflow-x-hidden">
           <AnimatePresence
             mode="wait"
             initial={false}

@@ -154,7 +154,7 @@ function Dashboard() {
   const hasMixed = firstDoneIdx > 0 && doneCount < totalCount;
 
   const gridClass = compact
-    ? "grid grid-cols-4 sm:grid-cols-5 gap-1.5"
+    ? "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2"
     : "grid grid-cols-2 sm:grid-cols-3 gap-2";
 
   return (
@@ -178,7 +178,7 @@ function Dashboard() {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setBackdateOpen(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[var(--radius-control)] text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/70 transition-colors"
+                className="flex min-h-11 items-center gap-1.5 px-3 py-2 rounded-[var(--radius-control)] text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/70 transition-colors"
                 aria-label="补卡"
               >
                 <CalendarClock className="w-4 h-4" strokeWidth={2} />
@@ -192,7 +192,7 @@ function Dashboard() {
                     return next;
                   })
                 }
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[var(--radius-control)] text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/70 transition-colors"
+                className="flex min-h-11 items-center gap-1.5 px-3 py-2 rounded-[var(--radius-control)] text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/70 transition-colors"
                 aria-label={compact ? "切换到卡片视图" : "切换到紧凑视图"}
               >
                 {compact ? (

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
-import { motion, useMotionValue, useTransform, useReducedMotion } from 'motion/react'
+import { motion, useMotionValue, useTransform, useReducedMotion, useDragControls } from 'motion/react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { spring } from '@/lib/motion'
@@ -34,6 +34,7 @@ const BottomSheetContent = React.forwardRef<
   const reduceMotion = useReducedMotion()
   const closeRef = React.useRef<HTMLButtonElement>(null)
   const dragY = useMotionValue(0)
+  const dragControls = useDragControls()
   const overlayOpacity = useTransform(dragY, [0, 300], [1, 0.2])
   const handleWidth = useTransform(dragY, [0, 80], [40, 48])
   const [isDragging, setIsDragging] = React.useState(false)
@@ -53,7 +54,7 @@ const BottomSheetContent = React.forwardRef<
             'fixed bottom-0 left-0 right-0 z-50',
             'bg-white/95 rounded-t-3xl shadow-[var(--shadow-elevated)] backdrop-blur-sm',
             'pb-safe px-5 pt-safe',
-            'max-h-[82svh] overflow-y-auto',
+            'max-h-[82svh] overflow-hidden',
             /* Desktop: centered modal */
             'sm:left-[50%] sm:top-[50%] sm:bottom-auto sm:right-auto sm:w-full sm:max-w-md',
             'sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-2xl sm:px-6 sm:pt-6 sm:pb-6',
@@ -73,8 +74,11 @@ const BottomSheetContent = React.forwardRef<
           }
           transition={reduceMotion ? { duration: 0.15 } : spring.emphasized}
           drag={reduceMotion ? false : 'y'}
-          dragConstraints={{ top: 0 }}
+          dragListener={false}
+          dragControls={dragControls}
+          dragConstraints={{ top: 0, bottom: 320 }}
           dragElastic={0.2}
+          dragMomentum={false}
           style={{ y: dragY }}
           onDragStart={() => setIsDragging(true)}
           onDragEnd={(_e, info) => {
@@ -87,9 +91,15 @@ const BottomSheetContent = React.forwardRef<
             }
           }}
         >
-          <div className="pt-3 sm:pt-0">
+          <div className="pt-3 sm:pt-0 sheet-scroll-body">
             {/* Drag handle on mobile */}
-            <div className="flex justify-center mb-4 sm:hidden cursor-grab active:cursor-grabbing py-2 -my-2">
+            <div
+              className="flex justify-center mb-4 sm:hidden cursor-grab active:cursor-grabbing py-2 -my-2 touch-none"
+              onPointerDown={(event) => {
+                if (reduceMotion) return
+                dragControls.start(event)
+              }}
+            >
               <motion.div
                 className="h-1.5 rounded-full bg-stone-300"
                 style={{ width: handleWidth }}

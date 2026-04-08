@@ -4,7 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-[var(--radius-control)] font-semibold transition-all duration-[var(--duration-fast)] tap-scale focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f5f1] focus-visible:shadow-[0_0_0_3px_rgba(249,115,22,0.12)] disabled:pointer-events-none disabled:opacity-55 select-none active:translate-y-[1px]',
+  'inline-flex items-center justify-center gap-2 rounded-[var(--radius-control)] font-semibold transition-all duration-[var(--duration-fast)] tap-scale focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--focus-ring-offset)] focus-visible:shadow-[0_0_0_3px_rgba(249,115,22,0.12)] disabled:pointer-events-none disabled:opacity-60 disabled:saturate-75 select-none active:translate-y-[1px]',
   {
     variants: {
       variant: {
@@ -16,12 +16,12 @@ const buttonVariants = cva(
         'danger-ghost': 'text-red-600 hover:bg-red-50 active:bg-red-100',
       },
       size: {
-        sm: 'h-8 px-3 text-sm',
+        sm: 'h-9 px-3.5 text-sm',
         default: 'h-10 px-5 text-sm',
         lg: 'h-12 px-6 text-base',
         xl: 'h-14 px-8 text-base',
         icon: 'h-10 w-10',
-        'icon-sm': 'h-8 w-8',
+        'icon-sm': 'h-11 w-11',
         'icon-lg': 'h-12 w-12',
       },
     },

@@ -37,6 +37,8 @@ export function Toaster() {
             <ToastPrimitive.Root
               duration={t.duration ?? 3000}
               onOpenChange={(open) => { if (!open) dismiss(t.id) }}
+              role={t.variant === 'error' ? 'alert' : 'status'}
+              aria-live={t.variant === 'error' ? 'assertive' : 'polite'}
               className={cn(
                 'group pointer-events-auto relative flex items-center gap-3 overflow-hidden rounded-[var(--radius-control)] px-4 py-3 shadow-[var(--shadow-card-hover)] border transition-all duration-[var(--duration-fast)]',
                 'data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)]',
