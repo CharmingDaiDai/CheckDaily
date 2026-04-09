@@ -16,7 +16,7 @@ export function Sidebar() {
   const pathname = location.pathname
 
   return (
-    <aside className="hidden md:flex flex-col w-52 lg:w-60 shrink-0 bg-white/82 backdrop-blur-xl border-r border-[var(--color-line-soft)] min-h-screen">
+    <aside className="hidden md:flex md:h-dvh md:min-h-0 flex-col w-52 lg:w-60 shrink-0 bg-white/82 backdrop-blur-xl border-r border-[var(--color-line-soft)]">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-6">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-b from-brand-500 to-brand-600 flex items-center justify-center shadow-[0_10px_18px_rgb(249_115_22/0.32)] animate-glow-pulse" style={{ '--glow-color': 'rgba(249,115,22,0.25)' } as React.CSSProperties}>

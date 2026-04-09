@@ -115,7 +115,7 @@ function HabitStatsPage() {
               {habit.icon}
             </div>
             <div>
-              <h1 className="text-2xl font-extrabold text-stone-900">{habit.name}</h1>
+              <h1 className="headline-premium text-[2rem] sm:text-[2.28rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">{habit.name}</h1>
               <div className="flex items-center gap-2 mt-0.5">
                 <button
                   className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors"
@@ -150,7 +150,7 @@ function HabitStatsPage() {
       </div>
 
       {/* Heatmap */}
-      <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-200/60">
+      <div className="surface-frame rounded-2xl p-5">
         <div className="text-sm font-semibold text-stone-500 mb-4 pb-3 border-b border-stone-50">{selectedYear} 年日历热力图</div>
         {isLoading ? (
           <Skeleton className="h-40 w-full" />
@@ -167,7 +167,7 @@ function HabitStatsPage() {
       </div>
 
       {/* 30-day trend */}
-      <div className="bg-white rounded-2xl p-5 shadow-[var(--shadow-card)] border border-stone-200/60">
+      <div className="surface-frame rounded-2xl p-5">
         <div className="text-sm font-semibold text-stone-500 mb-4 pb-3 border-b border-stone-50">近30天趋势</div>
         {isLoading ? (
           <Skeleton className="h-48 w-full" />
@@ -177,7 +177,7 @@ function HabitStatsPage() {
       </div>
 
       {/* History list */}
-      <div className="bg-white rounded-2xl shadow-[var(--shadow-card)] border border-stone-200/60 overflow-hidden">
+      <div className="surface-frame rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-stone-50">
           <span className="font-bold text-stone-800 text-sm">打卡历史</span>
           <span className="text-xs text-stone-400 font-medium ml-2">

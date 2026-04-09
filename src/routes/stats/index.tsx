@@ -265,7 +265,7 @@ function StatsPage() {
     >
       {/* Header */}
       <motion.div variants={sectionReveal}>
-        <h1 className="text-2xl font-extrabold text-[var(--color-ink-950)] tracking-tight">
+        <h1 className="headline-premium text-[2.02rem] sm:text-[2.3rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">
           统计分析
         </h1>
         <div className="flex items-center gap-2 mt-0.5">

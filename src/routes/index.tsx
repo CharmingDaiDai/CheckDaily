@@ -195,7 +195,7 @@ function Dashboard() {
           {todayStr}
         </div>
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold text-[var(--color-ink-950)] tracking-tight">
+          <h1 className="headline-premium text-[2.05rem] sm:text-[2.35rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">
             今日打卡
           </h1>
           {totalCount > 0 && !isLoading && (

@@ -42,6 +42,7 @@ function RootLayout() {
   const { location } = useRouterState()
   const reduceMotion = useReducedMotion()
   const prevPathRef = useRef(location.pathname)
+  const mainRef = useRef<HTMLElement | null>(null)
   const direction = useMemo(() => {
     const currentPath = normalizePath(location.pathname)
     const prevPath = normalizePath(prevPathRef.current)
@@ -60,6 +61,11 @@ function RootLayout() {
     () => (reduceMotion ? directionalRouteTransitionReduced : directionalRouteTransition),
     [reduceMotion]
   )
+
+  const resetScrollPosition = () => {
+    window.scrollTo(0, 0)
+    mainRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }
 
   if (loading) {
     return (
@@ -95,7 +101,7 @@ function RootLayout() {
         <AnimatePresence
           mode="wait"
           initial={false}
-          onExitComplete={() => window.scrollTo(0, 0)}
+          onExitComplete={resetScrollPosition}
         >
           <motion.div
             key={location.pathname}
@@ -116,13 +122,16 @@ function RootLayout() {
   return (
     <ErrorBoundary>
       <OfflineBanner />
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen md:h-dvh md:min-h-0">
         <Sidebar />
-        <main className="flex-1 pb-bottom-nav md:pb-0 min-h-screen overflow-x-hidden">
+        <main
+          ref={mainRef}
+          className="flex-1 pb-bottom-nav md:pb-0 min-h-screen overflow-x-hidden md:h-dvh md:min-h-0 md:overflow-y-auto"
+        >
           <AnimatePresence
             mode="wait"
             initial={false}
-            onExitComplete={() => window.scrollTo(0, 0)}
+            onExitComplete={resetScrollPosition}
           >
             <motion.div
               key={location.pathname}
@@ -131,7 +140,7 @@ function RootLayout() {
               animate="animate"
               exit="exit"
               variants={routeVariants}
-              className="min-h-screen overflow-x-hidden w-full"
+              className="min-h-screen overflow-x-hidden w-full md:min-h-full"
             >
               <Outlet />
             </motion.div>

@@ -2,7 +2,8 @@
 @plugin "tailwindcss-animate";
 
 @theme {
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-sans: 'M PLUS Rounded 1c', 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei UI', system-ui, -apple-system, sans-serif;
+  --font-display: 'ZCOOL QingKe HuangYou', 'M PLUS Rounded 1c', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei UI', cursive;
 
   --color-brand-50: #fff7ed;
   --color-brand-100: #ffedd5;
@@ -62,18 +63,50 @@
 
 body {
   font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: 0.01em;
   background:
-    radial-gradient(circle at 12% -10%, rgb(251 146 60 / 0.2), transparent 38%),
-    radial-gradient(circle at 88% 0%, rgb(253 186 116 / 0.24), transparent 42%),
-    linear-gradient(180deg, #fffcf8 0%, #f7f5f1 52%, #f3f1ec 100%);
+    radial-gradient(circle at 8% -16%, rgb(251 146 60 / 0.25), transparent 34%),
+    radial-gradient(circle at 88% -12%, rgb(234 179 8 / 0.16), transparent 30%),
+    radial-gradient(circle at 72% 24%, rgb(253 186 116 / 0.2), transparent 44%),
+    linear-gradient(160deg, #fffdfa 0%, #f8f4ee 48%, #f1ece4 100%);
   color: var(--color-ink-900);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100svh;
+  position: relative;
+  background-attachment: fixed;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(125deg, rgb(120 95 72 / 0.035) 0 1px, transparent 1px 8px),
+    radial-gradient(circle at 18% 16%, rgb(255 255 255 / 0.48), transparent 42%);
+  opacity: 0.58;
+  mix-blend-mode: multiply;
+  z-index: -2;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 22% 18%, rgb(255 255 255 / 0.44), transparent 26%),
+    radial-gradient(circle at 86% 10%, rgb(255 255 255 / 0.3), transparent 24%);
+  opacity: 0.7;
+  z-index: -1;
 }
 
 #root {
   min-height: 100svh;
+  position: relative;
+  isolation: isolate;
 }
 
 ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -302,20 +335,94 @@ body {
   pointer-events: none;
 }
 
+.headline-premium {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  color: var(--color-ink-950);
+  text-wrap: balance;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.58);
+}
+
+.surface-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-card-lg);
+  border: 1px solid rgb(130 108 87 / 0.2);
+  background: linear-gradient(155deg, rgb(255 255 255 / 0.92) 0%, rgb(255 250 243 / 0.82) 54%, rgb(255 245 235 / 0.72) 100%);
+  box-shadow: 0 16px 30px rgb(26 22 17 / 0.1), inset 0 1px 0 rgb(255 255 255 / 0.75);
+  backdrop-filter: blur(14px) saturate(122%);
+  transition:
+    box-shadow var(--duration-base) var(--ease-standard),
+    border-color var(--duration-base) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+.surface-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(130deg, rgb(255 255 255 / 0.62) 0%, transparent 42%, rgb(251 146 60 / 0.08) 100%);
+}
+
+.surface-frame::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: calc(var(--radius-card-lg) - 1px);
+  pointer-events: none;
+  border: 1px solid rgb(255 255 255 / 0.36);
+}
+
+.surface-frame > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .surface-frame:hover {
+    border-color: rgb(130 108 87 / 0.28);
+    box-shadow: 0 20px 40px rgb(26 22 17 / 0.14), inset 0 1px 0 rgb(255 255 255 / 0.82);
+  }
+}
+
 /* ── Glass card with hover enhancement ── */
 .glass-card {
-  background: linear-gradient(135deg, var(--color-panel-strong), var(--color-panel));
-  border: 1px solid var(--color-line-soft);
-  box-shadow: var(--shadow-card);
-  backdrop-filter: blur(10px);
-  transition: box-shadow var(--duration-base) var(--ease-standard),
-              border-color var(--duration-base) var(--ease-standard),
-              backdrop-filter var(--duration-base) var(--ease-standard);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, rgb(255 255 255 / 0.9) 0%, rgb(255 250 244 / 0.8) 54%, rgb(255 246 238 / 0.7) 100%);
+  border: 1px solid rgb(130 108 87 / 0.18);
+  box-shadow: 0 10px 24px rgb(26 22 17 / 0.1), inset 0 1px 0 rgb(255 255 255 / 0.68);
+  backdrop-filter: blur(12px) saturate(118%);
+  transition:
+    box-shadow var(--duration-base) var(--ease-standard),
+    border-color var(--duration-base) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
 }
-.glass-card:hover {
-  box-shadow: var(--shadow-card-hover);
-  border-color: rgba(28, 25, 23, 0.14);
-  backdrop-filter: blur(14px);
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(140deg, rgb(255 255 255 / 0.48) 0%, transparent 38%, rgb(251 146 60 / 0.06) 100%);
+}
+
+.glass-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .glass-card:hover {
+    box-shadow: 0 14px 30px rgb(26 22 17 / 0.14), inset 0 1px 0 rgb(255 255 255 / 0.74);
+    border-color: rgb(130 108 87 / 0.26);
+    transform: translateY(-1px);
+  }
 }
 
 .luxury-divider {
@@ -348,6 +455,10 @@ body {
   }
   .shine-border::before {
     animation: none !important;
+  }
+  .surface-frame,
+  .glass-card {
+    transition-duration: 0.01ms !important;
   }
   .tap-scale:active { transform: none; }
   *, *::before, *::after {

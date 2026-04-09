@@ -129,7 +129,7 @@ function ProfilePage() {
       animate="animate"
     >
       <div>
-        <h1 className="text-2xl font-extrabold text-[var(--color-ink-950)] tracking-tight">我的</h1>
+        <h1 className="headline-premium text-[2rem] sm:text-[2.28rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">我的</h1>
       </div>
 
       {/* User card */}

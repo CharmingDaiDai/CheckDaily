@@ -110,7 +110,7 @@ function LoginPage() {
             </div>
           </motion.div>
           <motion.h1
-            className="text-3xl font-extrabold text-stone-900 tracking-tight"
+            className="headline-premium text-[2.32rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...spring.gentle, delay: 0.15 }}
@@ -129,7 +129,7 @@ function LoginPage() {
 
         {/* Card */}
         <motion.div
-          className="glass-card rounded-3xl shadow-[var(--shadow-elevated)] p-7"
+          className="surface-frame glass-card rounded-3xl p-7"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...spring.gentle, delay: 0.35 }}

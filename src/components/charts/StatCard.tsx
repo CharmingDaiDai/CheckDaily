@@ -38,7 +38,7 @@ export function StatCard({ label, value, sublabel, icon: Icon, iconColor = '#f97
 
   if (loading) {
     return (
-      <div className={cn('glass-card rounded-[var(--radius-card)] p-4', className)}>
+      <div className={cn('surface-frame rounded-[var(--radius-card)] p-4', className)}>
         <Skeleton className="h-3 w-16 mb-3" />
         <Skeleton className="h-7 w-12 mb-1" />
         <Skeleton className="h-3 w-20" />
@@ -53,17 +53,17 @@ export function StatCard({ label, value, sublabel, icon: Icon, iconColor = '#f97
       transition={reduceMotion ? undefined : spring.gentle}
       whileHover={reduceMotion ? undefined : { y: -3, boxShadow: 'var(--shadow-card-hover)', transition: spring.smooth }}
       className={cn(
-        'rounded-[var(--radius-card)] p-4',
+        'surface-frame rounded-[var(--radius-card)] p-4',
         className,
-        primary ? 'shine-border' : 'glass-card',
+        primary && 'shine-border',
       )}
-      style={primary ? { background: `linear-gradient(135deg, ${iconColor}12 0%, rgba(255,255,255,0.92) 48%, rgba(255,255,255,0.84) 100%)`, border: '1px solid var(--color-line-soft)', boxShadow: 'var(--shadow-card)' } : undefined}
+      style={primary ? { background: `linear-gradient(152deg, ${iconColor}1f 0%, rgba(255,255,255,0.96) 46%, rgba(255,248,238,0.88) 100%)`, borderColor: 'rgb(130 108 87 / 0.26)' } : undefined}
     >
       <div className="flex items-start justify-between">
-        <div className="text-xs font-semibold text-[var(--color-ink-500)] uppercase tracking-wide">{label}</div>
+        <div className="text-[11px] font-semibold text-[var(--color-ink-500)] uppercase tracking-[0.08em]">{label}</div>
         {Icon && (
           <motion.div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            className="w-8 h-8 rounded-xl flex items-center justify-center border border-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.66)]"
             style={{ backgroundColor: iconColor + '18' }}
             initial={reduceMotion ? false : { scale: 0.9 }}
             animate={reduceMotion ? undefined : { scale: 1 }}
@@ -74,7 +74,7 @@ export function StatCard({ label, value, sublabel, icon: Icon, iconColor = '#f97
         )}
       </div>
       <motion.div
-        className={cn('mt-2 font-extrabold text-[var(--color-ink-900)] leading-none tabular-nums', primary ? 'text-3xl' : 'text-2xl')}
+        className={cn('mt-2 font-black text-[var(--color-ink-900)] leading-none tracking-tight tabular-nums', primary ? 'text-3xl' : 'text-2xl')}
         variants={statNumberReveal}
         initial={reduceMotion ? false : 'initial'}
         animate={reduceMotion ? undefined : 'animate'}

@@ -17,7 +17,7 @@ const BottomSheetOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      'fixed inset-0 z-50 bg-black/40 backdrop-blur-sm',
+      'fixed inset-0 z-50 bg-[rgb(22_18_13/0.42)] backdrop-blur-[10px]',
       'data-[state=open]:animate-in data-[state=closed]:animate-out',
       'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 duration-200',
       className
@@ -51,13 +51,12 @@ const BottomSheetContent = React.forwardRef<
         <motion.div
           className={cn(
             /* Mobile: full-width sheet from bottom */
-            'fixed bottom-0 left-0 right-0 z-50',
-            'bg-white/95 rounded-t-3xl shadow-[var(--shadow-elevated)] backdrop-blur-sm',
+            'surface-frame fixed bottom-0 left-0 right-0 z-50 rounded-t-[1.65rem]',
             'pb-safe px-5 pt-safe',
             'max-h-[82svh] overflow-hidden',
             /* Desktop: centered modal */
-            'sm:left-[50%] sm:top-[50%] sm:bottom-auto sm:right-auto sm:w-full sm:max-w-md',
-            'sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-2xl sm:px-6 sm:pt-6 sm:pb-6',
+            'sm:left-[50%] sm:top-[50%] sm:bottom-auto sm:right-auto sm:w-[calc(100%-1.5rem)] sm:max-w-md',
+            'sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-[1.5rem] sm:px-6 sm:pt-6 sm:pb-6',
             className
           )}
           initial={reduceMotion
@@ -101,7 +100,7 @@ const BottomSheetContent = React.forwardRef<
               }}
             >
               <motion.div
-                className="h-1.5 rounded-full bg-stone-300"
+                className="h-1.5 rounded-full bg-[linear-gradient(90deg,rgba(120,100,80,0.3),rgba(120,100,80,0.46),rgba(120,100,80,0.3))]"
                 style={{ width: handleWidth }}
                 transition={spring.snappy}
               />
@@ -111,7 +110,7 @@ const BottomSheetContent = React.forwardRef<
           {/* Hidden close trigger for drag dismiss */}
           <DialogPrimitive.Close ref={closeRef} className="sr-only" aria-hidden tabIndex={-1} />
           {/* Visible close button for desktop */}
-          <BottomSheetClose className="absolute right-4 top-4 rounded-xl p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 hidden sm:flex">
+          <BottomSheetClose className="absolute right-4 top-4 rounded-xl p-1.5 text-[var(--color-ink-500)] hover:text-[var(--color-ink-800)] hover:bg-white/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 hidden sm:flex">
             <X className="h-4 w-4" />
             <span className="sr-only">关闭</span>
           </BottomSheetClose>
@@ -123,7 +122,7 @@ const BottomSheetContent = React.forwardRef<
 BottomSheetContent.displayName = 'BottomSheetContent'
 
 const BottomSheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn('flex flex-col gap-1 mb-5', className)} {...props} />
+  <div className={cn('flex flex-col gap-1 mb-5 pb-3 border-b luxury-divider', className)} {...props} />
 )
 
 const BottomSheetTitle = React.forwardRef<
@@ -132,7 +131,7 @@ const BottomSheetTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn('text-lg font-bold text-stone-900', className)}
+    className={cn('headline-premium text-xl font-normal text-[var(--color-ink-950)]', className)}
     {...props}
   />
 ))

@@ -68,7 +68,7 @@ function HabitsPage() {
       {/* Header */}
       <motion.div variants={sectionReveal} className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-[var(--color-ink-950)] tracking-tight">项目管理</h1>
+          <h1 className="headline-premium text-[2.02rem] sm:text-[2.3rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">项目管理</h1>
           <p className="text-sm text-[var(--color-ink-500)] font-medium mt-0.5">
             {habits?.length ?? 0} 个活跃项目
           </p>
