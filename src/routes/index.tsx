@@ -8,9 +8,11 @@ import {
   List,
   CalendarClock,
 } from "lucide-react";
+import { Check } from "lucide-react";
 import { useHabits } from '@/hooks/useHabits';
 import { useCombos } from '@/hooks/useCombos';
-import { useTodayCheckIns, useCheckIns, useCheckInCombo } from '@/hooks/useCheckIns';
+import { useTodayCheckIns, useCheckIns, useCheckInCombo, useDeleteCheckIn } from '@/hooks/useCheckIns';
+import { toast } from '@/hooks/useToast';
 import { HabitCard } from "@/components/habits/HabitCard";
 import { CheckInDayDetailDialog } from "@/components/habits/CheckInDayDetailDialog";
 import { SimpleBarChart } from "@/components/charts/BarCharts";
@@ -36,6 +38,7 @@ function Dashboard() {
   const { data: habits, isLoading: habitsLoading, isFetching: habitsFetching, error: habitsError, refetch: refetchHabits } = useHabits();
   const { data: combos, isLoading: combosLoading } = useCombos();
   const checkInCombo = useCheckInCombo();
+  const deleteCheckIn = useDeleteCheckIn();
   const {
     data: todayCheckIns,
     isLoading: todayLoading,
@@ -116,6 +119,28 @@ function Dashboard() {
       return { ...combo, isDone };
     }).sort((a, b) => (a.isDone === b.isDone ? 0 : a.isDone ? 1 : -1));
   }, [combos, habits, todayCountMap]);
+
+  const handleComboCheckIn = async (combo: any) => {
+    if (checkInCombo.isPending) return;
+    try {
+      const result = await checkInCombo.mutateAsync({ habitIds: combo.habit_ids });
+      if (result && result.length > 0) {
+        toast.success(`已打卡组合「${combo.name}」`, {
+          action: {
+            label: '撤销',
+            onClick: async () => {
+              try {
+                await deleteCheckIn.mutateAsync(result.map(r => r.id));
+                toast.success('已撤销组合打卡');
+              } catch {
+                // error handled in useDeleteCheckIn
+              }
+            }
+          }
+        });
+      }
+    } catch {}
+  };
 
   // Sort: incomplete first, completed at bottom
   const sortedHabits = useMemo(() => {
@@ -370,21 +395,56 @@ function Dashboard() {
               <button
                 key={combo.id}
                 disabled={checkInCombo.isPending || combo.habit_ids.length === 0}
-                onClick={() => checkInCombo.mutate({ habitIds: combo.habit_ids })}
-                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-[var(--radius-card-lg)] border-2 transition-all tap-scale ${
+                onClick={() => handleComboCheckIn(combo)}
+                className={`group relative flex items-center gap-2.5 px-3 py-2.5 rounded-2xl tap-scale text-left select-none overflow-hidden transition-[box-shadow,transform] duration-200 ${
                   combo.isDone 
-                    ? 'bg-stone-50/80 border-stone-200/60 shadow-sm opacity-90' 
-                    : 'bg-white border-transparent shadow-sm hover:shadow-md'
+                    ? 'bg-white/60 shadow-sm opacity-90' 
+                    : 'bg-white shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]'
                 }`}
-                style={!combo.isDone ? { borderColor: combo.color + '40' } : { borderColor: combo.color + '15' }}
               >
+                {/* Left color accent bar */}
                 <div 
-                  className={`w-11 h-11 rounded-[0.85rem] flex items-center justify-center text-2xl shrink-0 transition-transform ${combo.isDone ? 'opacity-80 grayscale-[30%]' : ''}`} 
-                  style={{ backgroundColor: combo.color + (combo.isDone ? '05' : '18') }}
-                >
-                  {combo.icon || '🚀'}
+                  className={`absolute top-0 left-0 w-1 h-full rounded-l-2xl transition-colors duration-300 ${combo.isDone ? 'opacity-100' : 'opacity-60'}`}
+                  style={{ backgroundColor: combo.isDone ? combo.color : '#e7e5e4' }} 
+                />
+                
+                <div className="relative shrink-0">
+                  <div 
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)] transition-all ${combo.isDone ? 'grayscale-[30%]' : ''}`} 
+                    style={{ background: `linear-gradient(135deg, ${combo.color}14, ${combo.color}22)` }}
+                  >
+                    {combo.icon || '🚀'}
+                  </div>
+                  {combo.isDone && (
+                    <div 
+                      className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-white"
+                      style={{ backgroundColor: combo.color }}
+                    >
+                      <Check className="w-2.5 h-2.5 text-white" strokeWidth={3.5} />
+                    </div>
+                  )}
                 </div>
-                <div className="font-bold text-[13px] text-stone-800 text-center truncate w-full">{combo.name}</div>
+                
+                <div className="flex-1 min-w-0 pr-1">
+                  <div className={`font-bold text-[13px] leading-snug line-clamp-1 ${combo.isDone ? 'text-stone-500' : 'text-stone-900'}`}>
+                    {combo.name}
+                  </div>
+                  <div className={`mt-0.5 flex flex-wrap items-center gap-1.5`}>
+                    {combo.isDone ? (
+                      <span
+                        className="inline-flex items-center gap-0.5 text-[11px] font-semibold"
+                        style={{ color: combo.color }}
+                      >
+                        <Check className="w-3 h-3" strokeWidth={2.5} />
+                        全项已完成
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-stone-400 font-medium">
+                        包含 {combo.habit_ids.length} 项
+                      </span>
+                    )}
+                  </div>
+                </div>
               </button>
             ))}
           </div>

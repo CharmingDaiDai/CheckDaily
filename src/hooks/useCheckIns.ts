@@ -78,15 +78,22 @@ export function useDeleteCheckIn() {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('check_ins').delete().eq('id', id)
+    mutationFn: async (id: string | string[]) => {
+      let q = supabase.from('check_ins').delete()
+      if (Array.isArray(id)) {
+        if (id.length === 0) return
+        q = q.in('id', id)
+      } else {
+        q = q.eq('id', id)
+      }
+      const { error } = await q
       if (error) throw error
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['checkIns'] })
     },
     onError: () => {
-      toast.error('删除失败，请稍后重试')
+      toast.error('撤销失败，请稍后重试')
     },
   })
 }
@@ -126,7 +133,7 @@ export function useCheckInCombo() {
   const userId = useAuthStore((s) => s.user?.id)
 
   return useMutation({
-    mutationFn: async (params: { habitIds: string[], checkedAt?: string }) => {
+    mutationFn: async (params: { habitIds: string[], checkedAt?: string }): Promise<CheckIn[]> => {
       if (!userId) throw new Error('Not logged in')
       if (!params.habitIds.length) return []
 
@@ -142,7 +149,7 @@ export function useCheckInCombo() {
         .select()
 
       if (error) throw new Error(error.message)
-      return data
+      return data as CheckIn[]
     },
     onSuccess: () => {
       // Invalidate all variations of checkIns
