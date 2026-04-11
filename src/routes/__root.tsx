@@ -126,7 +126,7 @@ function RootLayout() {
         <Sidebar />
         <main
           ref={mainRef}
-          className="flex-1 pb-bottom-nav md:pb-0 min-h-screen overflow-x-hidden md:h-dvh md:min-h-0 md:overflow-y-auto"
+          className="app-main-scroll flex-1 pb-bottom-nav md:pb-0 min-h-screen overflow-x-hidden md:h-dvh md:min-h-0 md:overflow-y-auto"
         >
           <AnimatePresence
             mode="wait"

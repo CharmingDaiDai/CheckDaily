@@ -94,7 +94,7 @@ function HabitStatsPage() {
 
   return (
     <motion.div
-      className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6"
+      className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-32 md:pb-10 space-y-6"
       variants={pageChoreography}
       initial="initial"
       animate="animate"

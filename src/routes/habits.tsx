@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { Plus, Pencil, Archive, MoreHorizontal, ListCheck, Search, X, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { ModalOverlay } from '@/components/ui/modal-overlay'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { HabitForm } from '@/components/habits/HabitForm'
@@ -74,20 +74,14 @@ function HabitsPage() {
           </p>
         </div>
 
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button size="default">
-              <Plus className="w-4 h-4" strokeWidth={2.5} />
-              新建项目
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>新建打卡项目</DialogTitle>
-            </DialogHeader>
-            <HabitForm onClose={() => setCreateOpen(false)} />
-          </DialogContent>
-        </Dialog>
+        <Button size="default" onClick={() => setCreateOpen(true)}>
+          <Plus className="w-4 h-4" strokeWidth={2.5} />
+          新建项目
+        </Button>
+
+        <ModalOverlay open={createOpen} onOpenChange={setCreateOpen} title="新建打卡项目">
+          <HabitForm onClose={() => setCreateOpen(false)} />
+        </ModalOverlay>
       </motion.div>
 
       {isRefreshing && (
@@ -121,16 +115,11 @@ function HabitsPage() {
       )}
 
       {/* Edit dialog */}
-      <Dialog open={!!editHabit} onOpenChange={(o) => { if (!o) setEditHabit(null) }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>编辑项目</DialogTitle>
-          </DialogHeader>
-          {editHabit && (
-            <HabitForm existing={editHabit} onClose={() => setEditHabit(null)} />
-          )}
-        </DialogContent>
-      </Dialog>
+      <ModalOverlay open={!!editHabit} onOpenChange={(o) => { if (!o) setEditHabit(null) }} title="编辑项目">
+        {editHabit && (
+          <HabitForm existing={editHabit} onClose={() => setEditHabit(null)} />
+        )}
+      </ModalOverlay>
 
       {/* Archive confirm dialog */}
       <ConfirmDialog

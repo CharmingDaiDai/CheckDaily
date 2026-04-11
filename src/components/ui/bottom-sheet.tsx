@@ -27,10 +27,15 @@ const BottomSheetOverlay = React.forwardRef<
 ))
 BottomSheetOverlay.displayName = 'BottomSheetOverlay'
 
+interface BottomSheetContentProps extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
+  /** "default" = max 82svh; "tall" = max 92svh, ideal for detail panels with scrollable lists */
+  size?: 'default' | 'tall'
+}
+
 const BottomSheetContent = React.forwardRef<
   React.ComponentRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => {
+  BottomSheetContentProps
+>(({ className, children, size = 'default', ...props }, ref) => {
   const reduceMotion = useReducedMotion()
   const closeRef = React.useRef<HTMLButtonElement>(null)
   const dragY = useMotionValue(0)
@@ -53,7 +58,8 @@ const BottomSheetContent = React.forwardRef<
             /* Mobile: full-width sheet from bottom */
             'surface-frame fixed bottom-0 left-0 right-0 z-50 rounded-t-[1.65rem]',
             'pb-safe px-5 pt-safe',
-            'max-h-[82svh] overflow-hidden',
+            size === 'tall' ? 'max-h-[92svh]' : 'max-h-[82svh]',
+            'overflow-hidden',
             /* Desktop: centered modal */
             'sm:left-[50%] sm:top-[50%] sm:bottom-auto sm:right-auto sm:w-[calc(100%-1.5rem)] sm:max-w-md',
             'sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-[1.5rem] sm:px-6 sm:pt-6 sm:pb-6',

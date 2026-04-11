@@ -13,12 +13,7 @@ import {
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import {
-  BottomSheet,
-  BottomSheetContent,
-  BottomSheetHeader,
-  BottomSheetTitle,
-} from "@/components/ui/bottom-sheet";
+import { CheckInDayDetailDialog } from "@/components/habits/CheckInDayDetailDialog";
 const HabitHeatmap = lazy(() => import("@/components/charts/HabitHeatmap"));
 import { SimpleBarChart, StackedBarChart } from "@/components/charts/BarCharts";
 import { StatCard } from "@/components/charts/StatCard";
@@ -27,7 +22,6 @@ import { useHabits } from "@/hooks/useHabits";
 import { useCheckIns, useYearlyCheckInCounts } from "@/hooks/useCheckIns";
 import {
   formatDate,
-  formatTime,
   today,
   getWeekRange,
   getDateRangeDays,
@@ -613,60 +607,13 @@ function StatsPage() {
         </Tabs>
       </motion.div>
 
-      <BottomSheet open={isDayDetailOpen} onOpenChange={setIsDayDetailOpen}>
-        <BottomSheetContent>
-          <BottomSheetHeader>
-            <BottomSheetTitle>
-              {formatDateOption(selectedDate)} 打卡明细
-            </BottomSheetTitle>
-            <div className="text-xs text-stone-500 font-medium">
-              共 {selectedDateCheckIns.length} 次
-            </div>
-          </BottomSheetHeader>
-
-          {selectedDateCheckIns.length === 0 ? (
-            <div className="py-8 text-center text-sm text-stone-400 font-medium">
-              这一天还没有打卡记录
-            </div>
-          ) : (
-            <div className="space-y-2.5 pb-2">
-              {selectedDateCheckIns.map((ci) => {
-                const h = habitsMap[ci.habit_id];
-                return (
-                  <div key={ci.id} className="flex items-start gap-3 py-2">
-                    <div className="w-1 h-full self-stretch bg-stone-100 rounded-full mt-1 shrink-0" />
-                    <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
-                      style={{ backgroundColor: (h?.color ?? "#ccc") + "20" }}
-                    >
-                      {h?.icon ?? "📌"}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bold text-stone-800 text-sm">
-                        {h?.name ?? "未知项目"}
-                        {formatDate(ci.checked_at) !==
-                          formatDate(ci.created_at) && (
-                          <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium align-middle">
-                            补
-                          </span>
-                        )}
-                      </div>
-                      {ci.note && (
-                        <div className="text-xs text-stone-500 mt-0.5 font-medium">
-                          {ci.note}
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-xs text-stone-400 font-medium shrink-0">
-                      {formatTime(ci.checked_at)}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </BottomSheetContent>
-      </BottomSheet>
+      <CheckInDayDetailDialog
+        open={isDayDetailOpen}
+        onOpenChange={setIsDayDetailOpen}
+        dateLabel={formatDateOption(selectedDate)}
+        checkIns={selectedDateCheckIns}
+        habitsMap={habitsMap}
+      />
 
       {/* Per-habit links */}
       {habits && habits.length > 0 && (
