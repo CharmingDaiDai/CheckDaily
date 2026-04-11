@@ -120,3 +120,36 @@ export function useYearlyCheckInCounts(habitId?: string, year?: number) {
     enabled: !!userId,
   })
 }
+
+export function useCheckInCombo() {
+  const qc = useQueryClient()
+  const userId = useAuthStore((s) => s.user?.id)
+
+  return useMutation({
+    mutationFn: async (params: { habitIds: string[], checkedAt?: string }) => {
+      if (!userId) throw new Error('Not logged in')
+      if (!params.habitIds.length) return []
+
+      const payloads = params.habitIds.map(hId => ({
+        habit_id: hId,
+        user_id: userId,
+        checked_at: params.checkedAt || new Date().toISOString()
+      }))
+
+      const { data, error } = await supabase
+        .from('check_ins')
+        .insert(payloads)
+        .select()
+
+      if (error) throw new Error(error.message)
+      return data
+    },
+    onSuccess: () => {
+      // Invalidate all variations of checkIns
+      void qc.invalidateQueries({ queryKey: ['checkIns'] })
+      void qc.invalidateQueries({ queryKey: ['todayCheckIns'] })
+      void qc.invalidateQueries({ queryKey: ['yearCounts'] })
+    },
+    onError: (err) => toast.error(`组合打卡失败: ${err.message}`),
+  })
+}

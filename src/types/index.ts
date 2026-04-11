@@ -1,6 +1,7 @@
-import type { Habit } from '@/lib/database.types'
 
-export type { Habit, HabitInsert, HabitUpdate, CheckIn, CheckInInsert } from '@/lib/database.types'
+import type { Habit, HabitInsert, HabitUpdate, HabitCombo, HabitComboInsert, HabitComboUpdate, CheckIn, CheckInInsert } from '@/lib/database.types'
+
+export type { Habit, HabitInsert, HabitUpdate, HabitCombo, HabitComboInsert, HabitComboUpdate, CheckIn, CheckInInsert }
 
 export type StatTab = 'day' | 'week' | 'month' | 'year'
 

@@ -3,45 +3,46 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn, HABIT_COLORS, HABIT_ICONS } from '@/lib/utils'
-import type { Habit } from '@/types'
-import { useCreateHabit, useUpdateHabit } from '@/hooks/useHabits'
+import type { Habit, HabitCombo } from '@/types'
+import { useCreateCombo, useUpdateCombo } from '@/hooks/useCombos'
+import { Check } from 'lucide-react'
 
-const COLOR_NAMES: Record<string, string> = {
-  '#f97316': '橙色', '#ef4444': '红色', '#ec4899': '粉色', '#a855f7': '紫色',
-  '#6366f1': '靛蓝', '#3b82f6': '蓝色', '#06b6d4': '青色', '#14b8a6': '绿松石',
-  '#22c55e': '绿色', '#84cc16': '黄绿', '#eab308': '黄色', '#f59e0b': '琥珀',
-}
 
-interface HabitFormProps {
-  existing?: Habit
+
+interface ComboFormProps {
+  existing?: HabitCombo
+  habits: Habit[]
   onClose: () => void
 }
 
-export function HabitForm({ existing, onClose }: HabitFormProps) {
+export function ComboForm({ existing, habits, onClose }: ComboFormProps) {
   const [name, setName] = useState(existing?.name ?? '')
   const [color, setColor] = useState(existing?.color ?? HABIT_COLORS[0])
-  const [icon, setIcon] = useState(existing?.icon ?? '🏃')
-  // custom input: pre-fill only if existing icon is not in presets
+  const [icon, setIcon] = useState(existing?.icon ?? '🚀')
+  const [selectedHabitIds, setSelectedHabitIds] = useState<string[]>(existing?.habit_ids ?? [])
+  
   const [customIcon, setCustomIcon] = useState(
     existing?.icon && !HABIT_ICONS.includes(existing.icon) ? existing.icon : ''
   )
 
-  const create = useCreateHabit()
-  const update = useUpdateHabit()
+  const create = useCreateCombo()
+  const update = useUpdateCombo()
   const isPending = create.isPending || update.isPending
 
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault()
     if (!name.trim()) return
+    if (selectedHabitIds.length === 0) return
+
     try {
       if (existing) {
-        await update.mutateAsync({ id: existing.id, name: name.trim(), color, icon })
+        await update.mutateAsync({ id: existing.id, name: name.trim(), color, icon, habit_ids: selectedHabitIds })
       } else {
-        await create.mutateAsync({ name: name.trim(), color, icon })
+        await create.mutateAsync({ name: name.trim(), color, icon, habit_ids: selectedHabitIds })
       }
       onClose()
     } catch {
-      // toast.error is handled by the mutation's onError
+      // errors handled by mutation
     }
   }
 
@@ -56,14 +57,19 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
     if (val.trim()) setIcon(val.trim())
   }
 
+  function toggleHabit(id: string) {
+    setSelectedHabitIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Name */}
       <div className="space-y-2">
-        <Label htmlFor="habit-name">项目名称 <span aria-hidden="true" className="text-brand-600">*</span></Label>
+        <Label htmlFor="combo-name">组合名称 <span aria-hidden="true" className="text-brand-600">*</span></Label>
         <Input
-          id="habit-name"
-          placeholder="例：晨跑、俯卧撑、冥想…"
+          id="combo-name"
+          placeholder="例：全身燃脂、睡前放松…"
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={30}
@@ -72,12 +78,49 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
         />
       </div>
 
-      {/* Icon picker */}
+      <div className="space-y-2">
+        <Label>选择组合包含的项目 <span aria-hidden="true" className="text-brand-600">*</span></Label>
+        {habits.length === 0 ? (
+          <div className="text-xs text-stone-500 py-2">暂无项目，请先创建单个项目</div>
+        ) : (
+          <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1 custom-scrollbar">
+            {habits.map(h => {
+              const selected = selectedHabitIds.includes(h.id)
+              return (
+                <button
+                  key={h.id}
+                  type="button"
+                  onClick={() => toggleHabit(h.id)}
+                  className={cn(
+                    "flex flex-col items-start gap-1 p-2 rounded-xl border text-left transition-all tap-scale",
+                    selected 
+                      ? "border-brand-500 bg-brand-50 shadow-sm" 
+                      : "border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50"
+                  )}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-lg leading-none" style={{ color: h.color }}>{h.icon}</span>
+                    <div className={cn(
+                      "w-4 h-4 rounded-full flex items-center justify-center border",
+                      selected ? "bg-brand-500 border-brand-500 text-white" : "border-stone-300"
+                    )}>
+                      {selected && <Check className="w-3 h-3" />}
+                    </div>
+                  </div>
+                  <span className="text-[13px] font-bold text-stone-900 truncate w-full mt-1">
+                    {h.name}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
       <div className="space-y-2">
         <Label>选择图标</Label>
         <fieldset className="space-y-2">
-          <legend className="sr-only">图标选择器</legend>
-          <div className="grid grid-cols-8 gap-1.5 max-h-44 overflow-y-auto pr-0.5">
+          <div className="grid grid-cols-8 gap-1.5 max-h-44 overflow-y-auto pr-0.5 custom-scrollbar">
           {HABIT_ICONS.map((e) => (
             <button
               key={e}
@@ -90,7 +133,6 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
                   ? 'border-brand-500 bg-brand-50'
                   : 'border-transparent bg-stone-100 hover:bg-stone-200'
               )}
-              aria-label={`选择图标 ${e}`}
             >
               {e}
             </button>
@@ -98,7 +140,6 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
           </div>
         </fieldset>
 
-        {/* Custom emoji input */}
         <div className="flex items-center gap-2 pt-1">
           <span className="text-xs text-stone-500 font-medium shrink-0 w-16">自定义：</span>
           <div className="relative flex-1">
@@ -108,7 +149,6 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
               onChange={handleCustomChange}
               className="text-base pr-10"
               maxLength={8}
-              aria-label="自定义图标"
             />
             {customIcon && (
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xl pointer-events-none">
@@ -117,12 +157,8 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
             )}
           </div>
         </div>
-        <div className="text-xs text-[var(--color-ink-500)] font-medium" aria-live="polite">
-          自定义图标长度：{customIcon.length}/8
-        </div>
       </div>
 
-      {/* Color picker */}
       <div className="space-y-2">
         <Label>选择颜色</Label>
         <div className="flex flex-wrap gap-2.5">
@@ -137,40 +173,24 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
                 color === c ? 'ring-2 ring-stone-700 scale-110' : 'hover:scale-105'
               )}
               style={{ backgroundColor: c }}
-              aria-label={COLOR_NAMES[c] ?? c}
             />
           ))}
         </div>
       </div>
 
-      {/* Preview */}
-      <div
-        className="flex items-center gap-3 p-3 rounded-xl border-2"
-        style={{ borderColor: color + '60', backgroundColor: color + '0e' }}
-      >
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-          style={{ backgroundColor: color + '25' }}
-        >
-          {icon}
-        </div>
-        <span className="font-bold text-stone-900 text-sm">{name || '项目名称预览'}</span>
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-3 pt-1">
+      <div className="flex gap-3 pt-2">
         <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
           取消
         </Button>
         <Button
           type="submit"
           className="flex-1"
-          disabled={!name.trim()}
+          disabled={!name.trim() || selectedHabitIds.length === 0}
           style={{ backgroundColor: color }}
           isLoading={isPending}
           loadingText="保存中…"
         >
-          {existing ? '保存修改' : '创建项目'}
+          {existing ? '保存修改' : '创建组合'}
         </Button>
       </div>
     </form>

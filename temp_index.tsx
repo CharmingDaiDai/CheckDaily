@@ -8,9 +8,8 @@ import {
   List,
   CalendarClock,
 } from "lucide-react";
-import { useHabits } from '@/hooks/useHabits';
-import { useCombos } from '@/hooks/useCombos';
-import { useTodayCheckIns, useCheckIns, useCheckInCombo } from '@/hooks/useCheckIns';
+import { useHabits } from "@/hooks/useHabits";
+import { useTodayCheckIns, useCheckIns } from "@/hooks/useCheckIns";
 import { HabitCard } from "@/components/habits/HabitCard";
 import { CheckInDayDetailDialog } from "@/components/habits/CheckInDayDetailDialog";
 import { SimpleBarChart } from "@/components/charts/BarCharts";
@@ -33,9 +32,13 @@ function Dashboard() {
     return () => clearTimeout(timer);
   }, []);
 
-  const { data: habits, isLoading: habitsLoading, isFetching: habitsFetching, error: habitsError, refetch: refetchHabits } = useHabits();
-  const { data: combos, isLoading: combosLoading } = useCombos();
-  const checkInCombo = useCheckInCombo();
+  const {
+    data: habits,
+    isLoading: habitsLoading,
+    isFetching: habitsFetching,
+    error: habitsError,
+    refetch: refetchHabits,
+  } = useHabits();
   const {
     data: todayCheckIns,
     isLoading: todayLoading,
@@ -108,15 +111,6 @@ function Dashboard() {
     return map;
   }, [streakCheckIns, habits]);
 
-  // Combos status
-  const renderedCombos = useMemo(() => {
-    if (!combos || !habits) return [];
-    return combos.map(combo => {
-      const isDone = combo.habit_ids.length > 0 && combo.habit_ids.every(id => (todayCountMap[id] ?? 0) > 0);
-      return { ...combo, isDone };
-    }).sort((a, b) => (a.isDone === b.isDone ? 0 : a.isDone ? 1 : -1));
-  }, [combos, habits, todayCountMap]);
-
   // Sort: incomplete first, completed at bottom
   const sortedHabits = useMemo(() => {
     if (!habits) return [];
@@ -168,7 +162,7 @@ function Dashboard() {
   const doneCount = Object.values(todayCountMap).filter((c) => c > 0).length;
   const totalCount = habits?.length ?? 0;
 
-  const isLoading = habitsLoading || todayLoading || combosLoading;
+  const isLoading = habitsLoading || todayLoading;
   const isRefreshing = !isLoading && (habitsFetching || todayFetching || recentFetching || streakFetching);
   const hasLoadError = Boolean(habitsError || todayError || recentError || streakError);
 
@@ -361,32 +355,6 @@ function Dashboard() {
         habitsMap={habitsMap}
       />
 
-      {/* Combos grid */}
-      {!isLoading && renderedCombos.length > 0 && (
-        <motion.div variants={sectionReveal} className="space-y-3 mb-8">
-          <div className="text-sm font-bold text-stone-500 px-1 border-b border-stone-100 pb-2">运动组合</div>
-          <div className={gridClass}>
-            {renderedCombos.map(combo => (
-              <button
-                key={combo.id}
-                disabled={combo.isDone || checkInCombo.isPending || combo.habit_ids.length === 0}
-                onClick={() => checkInCombo.mutate({ habitIds: combo.habit_ids })}
-                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-[var(--radius-card-lg)] border-2 transition-all tap-scale ${combo.isDone ? 'opacity-60 bg-stone-50 border-stone-200 grayscale cursor-not-allowed' : 'bg-white border-transparent shadow-sm hover:shadow-md'}`}
-                style={!combo.isDone ? { borderColor: combo.color + '40' } : undefined}
-              >
-                <div 
-                  className="w-11 h-11 rounded-[0.85rem] flex items-center justify-center text-2xl shrink-0 transition-transform" 
-                  style={{ backgroundColor: combo.color + (combo.isDone ? '05' : '18') }}
-                >
-                  {combo.icon || '🚀'}
-                </div>
-                <div className="font-bold text-[13px] text-stone-800 text-center truncate w-full">{combo.name}</div>
-              </button>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
       {/* Habit grid */}
       {hasLoadError && !isLoading && sortedHabits.length === 0 ? (
         <motion.div variants={sectionReveal} className="flex flex-col items-center justify-center py-16 text-center">
@@ -512,3 +480,4 @@ export const Route = createFileRoute("/")({
     if (!context.auth.user) throw redirect({ to: "/login" });
   },
 });
+

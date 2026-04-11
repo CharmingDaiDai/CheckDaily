@@ -3,6 +3,36 @@ export type Json = string | number | boolean | null | { [key: string]: Json } | 
 export type Database = {
   public: {
     Tables: {
+      habit_combos: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          color: string
+          icon: string
+          habit_ids: string[]
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string
+          name: string
+          color?: string
+          icon?: string
+          habit_ids?: string[]
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          color?: string
+          icon?: string
+          habit_ids?: string[]
+          created_at?: string
+        }
+        Relationships: []
+      }
       habits: {
         Row: {
           id: string
@@ -79,6 +109,10 @@ export type Database = {
 export type Habit = Database['public']['Tables']['habits']['Row']
 export type HabitInsert = Database['public']['Tables']['habits']['Insert']
 export type HabitUpdate = Database['public']['Tables']['habits']['Update']
+
+export type HabitCombo = Database['public']['Tables']['habit_combos']['Row']
+export type HabitComboInsert = Database['public']['Tables']['habit_combos']['Insert']
+export type HabitComboUpdate = Database['public']['Tables']['habit_combos']['Update']
 
 export type CheckIn = Database['public']['Tables']['check_ins']['Row']
 export type CheckInInsert = Database['public']['Tables']['check_ins']['Insert']

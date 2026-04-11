@@ -1,62 +1,85 @@
 import { useState, useMemo } from 'react'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { motion, AnimatePresence } from 'motion/react'
-import { Plus, Pencil, Archive, MoreHorizontal, ListCheck, Search, X, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Pencil, Archive, MoreHorizontal, ListCheck, Search, X, RotateCcw, ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ModalOverlay } from '@/components/ui/modal-overlay'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { HabitForm } from '@/components/habits/HabitForm'
+import { ComboForm } from '@/components/habits/ComboForm'
 import { useHabits, useArchiveHabit, useRestoreHabit } from '@/hooks/useHabits'
+import { useCombos, useDeleteCombo } from '@/hooks/useCombos'
 import { toast } from '@/hooks/useToast'
-import type { Habit } from '@/types'
-import { cn } from '@/lib/utils'
-import { pageChoreography, sectionReveal, listItemSlide, spring } from '@/lib/motion'
+import type { Habit, HabitCombo } from '@/types'
+import { pageChoreography, sectionReveal, listItemSlide } from '@/lib/motion'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-function HabitsPage() {
+export const Route = createFileRoute('/habits')({
+  component: HabitsPage,
+})
+
+export default function HabitsPage() {
   const {
     data: habits,
-    isLoading,
-    isFetching: habitsFetching,
+    isLoading: habitsLoading,
     error: habitsError,
     refetch: refetchHabits,
   } = useHabits(false)
+  
   const {
     data: allHabits,
-    isFetching: allHabitsFetching,
     error: allHabitsError,
-    refetch: refetchAllHabits,
   } = useHabits(true)
+
+  const {
+    data: combos,
+    isLoading: combosLoading,
+    error: combosError,
+    refetch: refetchCombos,
+  } = useCombos()
+
+  const [activeTab, setActiveTab] = useState<'habits' | 'combos'>('habits')
+
   const [createOpen, setCreateOpen] = useState(false)
   const [editHabit, setEditHabit] = useState<Habit | null>(null)
+  
+  const [createComboOpen, setCreateComboOpen] = useState(false)
+  const [editCombo, setEditCombo] = useState<HabitCombo | null>(null)
+
   const [search, setSearch] = useState('')
   const [showArchived, setShowArchived] = useState(false)
+  
   const [archiveTarget, setArchiveTarget] = useState<{ id: string; name: string } | null>(null)
+  const [deleteComboTarget, setDeleteComboTarget] = useState<{ id: string; name: string } | null>(null)
+  
   const archive = useArchiveHabit()
   const restore = useRestoreHabit()
-  const hasLoadError = Boolean(habitsError || allHabitsError)
-  const isRefreshing = !isLoading && (habitsFetching || allHabitsFetching)
+  const deleteCombo = useDeleteCombo()
 
-  const filtered = useMemo(
+  const hasLoadError = Boolean(habitsError || allHabitsError || combosError)
+
+  const filteredHabits = useMemo(
     () => habits?.filter(h => h.name.toLowerCase().includes(search.toLowerCase())) ?? [],
     [habits, search]
+  )
+
+  const filteredCombos = useMemo(
+    () => combos?.filter(c => c.name.toLowerCase().includes(search.toLowerCase())) ?? [],
+    [combos, search]
   )
 
   const archivedHabits = useMemo(
     () => allHabits?.filter(h => h.archived) ?? [],
     [allHabits]
   )
-
-  function handleArchive(id: string, name: string) {
-    setArchiveTarget({ id, name })
-  }
 
   return (
     <motion.div
@@ -66,66 +89,54 @@ function HabitsPage() {
       animate="animate"
     >
       {/* Header */}
-      <motion.div variants={sectionReveal} className="flex items-center justify-between">
+      <motion.div variants={sectionReveal} className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between border-b border-[var(--color-line-soft)] pb-5">
         <div>
           <h1 className="headline-premium text-[2.02rem] sm:text-[2.3rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">项目管理</h1>
           <p className="text-sm text-[var(--color-ink-500)] font-medium mt-0.5">
-            {habits?.length ?? 0} 个活跃项目
+            {habits?.length ?? 0} 个项目 · {combos?.length ?? 0} 个组合
           </p>
         </div>
 
-        <Button size="default" onClick={() => setCreateOpen(true)}>
-          <Plus className="w-4 h-4" strokeWidth={2.5} />
-          新建项目
-        </Button>
+        <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto select-none no-scrollbar">
+          <Tabs value={activeTab} onValueChange={(v: any) => { setActiveTab(v); setSearch(''); }} className="shrink-0">
+            <TabsList>
+              <TabsTrigger value="habits">单项运动</TabsTrigger>
+              <TabsTrigger value="combos">运动组合</TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-        <ModalOverlay open={createOpen} onOpenChange={setCreateOpen} title="新建打卡项目">
-          <HabitForm onClose={() => setCreateOpen(false)} />
-        </ModalOverlay>
+          <Button 
+            size="default" 
+            onClick={() => activeTab === 'habits' ? setCreateOpen(true) : setCreateComboOpen(true)}
+            className="shrink-0 ml-auto sm:ml-0"
+          >
+            <Plus className="w-4 h-4" strokeWidth={2.5} />
+            新建{activeTab === 'habits' ? '单项' : '组合'}
+          </Button>
+        </div>
       </motion.div>
 
-      {isRefreshing && (
-        <motion.div
-          variants={sectionReveal}
-          className="rounded-xl border border-brand-100 bg-brand-50/70 px-3.5 py-2 text-xs font-medium text-brand-700"
-        >
-          正在同步项目列表…
-        </motion.div>
-      )}
-
-      {hasLoadError && (
-        <motion.div
-          variants={sectionReveal}
-          className="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3"
-        >
-          <div className="text-sm font-semibold text-rose-700">项目数据加载失败</div>
-          <div className="mt-0.5 text-xs text-rose-600">网络波动时可能出现此问题，请重试。</div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="mt-2"
-            onClick={() => {
-              void refetchHabits()
-              void refetchAllHabits()
-            }}
-          >
-            重新加载
-          </Button>
-        </motion.div>
-      )}
-
-      {/* Edit dialog */}
+      {/* Modals & Dialogs */}
+      <ModalOverlay open={createOpen} onOpenChange={setCreateOpen} title="新建打卡项目">
+        <HabitForm onClose={() => setCreateOpen(false)} />
+      </ModalOverlay>
+      
       <ModalOverlay open={!!editHabit} onOpenChange={(o) => { if (!o) setEditHabit(null) }} title="编辑项目">
-        {editHabit && (
-          <HabitForm existing={editHabit} onClose={() => setEditHabit(null)} />
-        )}
+        {editHabit && <HabitForm existing={editHabit} onClose={() => setEditHabit(null)} />}
       </ModalOverlay>
 
-      {/* Archive confirm dialog */}
+      <ModalOverlay open={createComboOpen} onOpenChange={setCreateComboOpen} title="新建运动组合">
+        <ComboForm habits={habits ?? []} onClose={() => setCreateComboOpen(false)} />
+      </ModalOverlay>
+
+      <ModalOverlay open={!!editCombo} onOpenChange={(o) => { if (!o) setEditCombo(null) }} title="编辑组合">
+        {editCombo && <ComboForm existing={editCombo} habits={habits ?? []} onClose={() => setEditCombo(null)} />}
+      </ModalOverlay>
+
       <ConfirmDialog
         open={!!archiveTarget}
         onOpenChange={(open) => { if (!open) setArchiveTarget(null) }}
-        title={`确认归档「${archiveTarget?.name ?? ''}」？`}
+        title={"确认归档「」？"}
         description="归档后将不再出现在今日打卡列表中。你可以在已归档区域恢复。"
         confirmText="归档"
         variant="danger"
@@ -133,218 +144,219 @@ function HabitsPage() {
           if (!archiveTarget) return
           const target = archiveTarget
           await archive.mutateAsync(target.id)
-          toast.success(`已归档「${target.name}」`, {
+          toast.success("已归档「」", {
             duration: 5200,
             action: {
               label: '撤销',
               onClick: async () => {
                 try {
                   await restore.mutateAsync(target.id)
-                  toast.success(`已恢复「${target.name}」`)
-                } catch {
-                  // Error feedback is already handled in mutation hook.
-                }
+                  toast.success("已恢复「」")
+                } catch {}
               },
             },
           })
         }}
       />
 
-      {/* Search — only show when there are items */}
-      {!isLoading && !hasLoadError && (habits?.length ?? 0) > 0 && (
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-          <Input
-            placeholder="搜索项目…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 pr-14"
-          />
-          {search && (
-            <button
-              className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 rounded-xl flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white transition-colors"
-              onClick={() => setSearch('')}
-              aria-label="清除搜索"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!deleteComboTarget}
+        onOpenChange={(open) => { if (!open) setDeleteComboTarget(null) }}
+        title={"确认删除组合「」？"}
+        description="删除组合不会影响其中的单项运动及其历史打卡记录，操作不可恢复。"
+        confirmText="删除"
+        variant="danger"
+        onConfirm={async () => {
+          if (!deleteComboTarget) return
+          await deleteCombo.mutateAsync(deleteComboTarget.id)
+        }}
+      />
 
-      {/* List */}
-      {hasLoadError && !isLoading && (habits?.length ?? 0) === 0 ? (
+      {/* Loading & Content */}
+      {(hasLoadError && !habitsLoading && !combosLoading) ? (
         <motion.div variants={sectionReveal} className="flex flex-col items-center justify-center py-14 text-center">
-          <div className="font-bold text-rose-700 text-base">项目暂时无法加载</div>
+          <div className="font-bold text-rose-700 text-base">数据暂时无法加载</div>
           <div className="text-rose-500/80 text-sm mt-1 mb-4">请检查网络后重试</div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              void refetchHabits()
-              void refetchAllHabits()
-            }}
-          >
-            再试一次
-          </Button>
+          <Button variant="outline" onClick={() => { refetchHabits(); refetchCombos(); }}>再试一次</Button>
         </motion.div>
-      ) : isLoading ? (
+      ) : (habitsLoading || combosLoading) ? (
         <motion.div variants={sectionReveal} className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 rounded-2xl" />
+            <Skeleton key={i} className="h-20 rounded-[var(--radius-card-lg)]" />
           ))}
         </motion.div>
-      ) : habits && habits.length > 0 ? (
-        filtered.length > 0 ? (
-          <motion.div
-            variants={sectionReveal}
-            className="space-y-3"
-          >
-            {filtered.map((habit) => (
-              <motion.div
-                key={habit.id}
-                variants={listItemSlide}
-                className={cn(
-                  'flex items-center gap-4 glass-card rounded-[var(--radius-card-lg)] px-4 py-3.5'
-                )}
-              >
-                {/* Color + icon */}
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"
-                  style={{ backgroundColor: habit.color + '18', borderColor: habit.color + '30' }}
-                >
-                  {habit.icon || '📌'}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="font-bold text-stone-900 text-sm truncate">{habit.name}</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: habit.color }} />
-                      <span className="text-xs text-[var(--color-ink-500)] font-medium">
-                      {new Date(habit.created_at).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} 创建
-                    </span>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon-sm" className="shrink-0" aria-label={`${habit.name} 更多操作`}>
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setEditHabit(habit)}>
-                      <Pencil className="w-3.5 h-3.5 mr-2" />
-                      编辑
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleArchive(habit.id, habit.name)}
-                      className="text-red-600 focus:text-red-700 focus:bg-red-50"
-                    >
-                      <Archive className="w-3.5 h-3.5 mr-2" />
-                      归档
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </motion.div>
-            ))}
-          </motion.div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Search className="w-10 h-10 text-stone-200 mb-3" strokeWidth={1.5} />
-            <div className="font-bold text-stone-700 mb-1">没有找到「{search}」</div>
-            <button
-              className="text-sm text-stone-400 hover:text-brand-500 font-medium mt-2 transition-colors"
-              onClick={() => setSearch('')}
-            >
-              清除搜索
-            </button>
-          </div>
-        )
       ) : (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mb-4">
-            <ListCheck className="w-10 h-10 text-stone-300" strokeWidth={1.5} />
-          </div>
-          <div className="font-bold text-stone-700 text-lg mb-1">还没有打卡项目</div>
-          <div className="text-stone-400 text-sm mb-5">创建你的第一个习惯开始打卡</div>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="w-4 h-4" strokeWidth={2.5} />
-            新建项目
-          </Button>
-        </div>
-      )}
-
-      {/* Archived habits */}
-      {archivedHabits.length > 0 && (
-        <div>
-          <button
-            className="flex items-center gap-2 w-full text-sm font-semibold text-stone-400 hover:text-stone-600 transition-colors py-1"
-            onClick={() => setShowArchived(v => !v)}
-          >
-            {showArchived ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            已归档项目（{archivedHabits.length}）
-          </button>
-
-          {showArchived && (
-            <AnimatePresence>
-              <motion.div
-                className="space-y-3 mt-3"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={spring.gentle}
-              >
-              {archivedHabits.map((habit) => (
-                <div
-                  key={habit.id}
-                  className="flex items-center gap-4 bg-white/45 rounded-[var(--radius-card)] px-4 py-3.5 border border-[var(--color-line-soft)]"
+        <>
+          {/* Search bar */}
+          {((activeTab === 'habits' && (habits?.length ?? 0) > 0) || (activeTab === 'combos' && (combos?.length ?? 0) > 0)) && (
+            <div className="relative mb-4">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+              <Input
+                placeholder="搜索…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 pr-14"
+              />
+              {search && (
+                <button
+                  className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 rounded-xl flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white transition-colors"
+                  onClick={() => setSearch('')}
                 >
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 opacity-60"
-                    style={{ backgroundColor: habit.color + '18' }}
-                  >
-                    {habit.icon || '📌'}
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'habits' && (
+            <motion.div key="habits-list" variants={sectionReveal} initial="initial" animate="animate">
+              {(habits?.length ?? 0) === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mb-4">
+                    <ListCheck className="w-10 h-10 text-stone-300" strokeWidth={1.5} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-stone-400 text-sm truncate">{habit.name}</div>
-                    <div className="text-xs text-stone-300 font-medium mt-0.5">已归档</div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0 gap-1.5"
-                    onClick={async () => {
-                      try {
-                        await restore.mutateAsync(habit.id)
-                        toast.success(`已恢复「${habit.name}」`)
-                      } catch {
-                        // Error feedback is already handled in mutation hook.
-                      }
-                    }}
-                    isLoading={restore.isPending}
-                    loadingText="恢复中…"
-                    requestGuard
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    恢复
+                  <div className="font-bold text-stone-700 text-lg mb-1">还没有单项运动</div>
+                  <div className="text-stone-400 text-sm mb-5">开始创建你的第一个运动项目</div>
+                  <Button onClick={() => setCreateOpen(true)}>
+                    <Plus className="w-4 h-4" strokeWidth={2.5} /> 新建项目
                   </Button>
                 </div>
-              ))}
+              ) : filteredHabits.length > 0 ? (
+                <div className="space-y-3">
+                  {filteredHabits.map((habit) => (
+                    <motion.div key={habit.id} variants={listItemSlide} className="flex items-center gap-4 glass-card rounded-[var(--radius-card-lg)] px-4 py-3.5">
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0" style={{ backgroundColor: habit.color + '18', borderColor: habit.color + '30' }}>
+                        {habit.icon || '📌'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-stone-900 text-base truncate">{habit.name}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: habit.color }} />
+                            <span className="text-[11px] text-[var(--color-ink-500)] font-medium">
+                            {new Date(habit.created_at).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })} 创建
+                          </span>
+                        </div>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon-sm" className="shrink-0"><MoreHorizontal className="w-4 h-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setEditHabit(habit)}>
+                            <Pencil className="w-3.5 h-3.5 mr-2" /> 编辑
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setArchiveTarget({ id: habit.id, name: habit.name })} className="text-red-600 focus:bg-red-50">
+                            <Archive className="w-3.5 h-3.5 mr-2" /> 归档
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-10 text-center text-stone-400 text-sm">没有找到对应的单项</div>
+              )}
+
+              {/* Archived */}
+              {archivedHabits.length > 0 && (
+                <div className="mt-8 pt-4 border-t border-[var(--color-line-soft)]">
+                  <button
+                    className="flex items-center gap-2 w-full text-sm font-semibold text-stone-400 hover:text-stone-600 transition-colors py-1"
+                    onClick={() => setShowArchived(v => !v)}
+                  >
+                    {showArchived ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    已归档项目（{archivedHabits.length}）
+                  </button>
+
+                  {showArchived && (
+                    <AnimatePresence>
+                      <motion.div className="space-y-3 mt-3" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
+                        {archivedHabits.map((habit) => (
+                          <div key={habit.id} className="flex items-center gap-4 bg-white/45 rounded-2xl px-4 py-3.5 border border-stone-200/60">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl opacity-60" style={{ backgroundColor: habit.color + '18' }}>
+                              {habit.icon || '📌'}
+                            </div>
+                            <div className="flex-1 min-w-0 opacity-70">
+                              <div className="font-bold text-stone-600 text-sm truncate">{habit.name}</div>
+                            </div>
+                            <Button variant="outline" size="sm" onClick={() => restore.mutate(habit.id)} isLoading={restore.isPending}>
+                              <RotateCcw className="w-3.5 h-3.5 mr-1" /> 恢复
+                            </Button>
+                          </div>
+                        ))}
+                      </motion.div>
+                    </AnimatePresence>
+                  )}
+                </div>
+              )}
             </motion.div>
-            </AnimatePresence>
           )}
-        </div>
+
+          {activeTab === 'combos' && (
+            <motion.div key="combos-list" variants={sectionReveal} initial="initial" animate="animate">
+              {(combos?.length ?? 0) === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="w-20 h-20 rounded-full bg-brand-50 flex items-center justify-center mb-4">
+                    <ListCheck className="w-10 h-10 text-brand-300" strokeWidth={1.5} />
+                  </div>
+                  <div className="font-bold text-stone-700 text-lg mb-1">还没有运动组合</div>
+                  <div className="text-stone-400 text-sm mb-5">把经常一起做的运动打包，一键轻松打卡</div>
+                  <Button onClick={() => setCreateComboOpen(true)}>
+                    <Plus className="w-4 h-4" strokeWidth={2.5} /> 创建组合
+                  </Button>
+                </div>
+              ) : filteredCombos.length > 0 ? (
+                <div className="space-y-3">
+                  {filteredCombos.map((combo) => {
+                    const linkedHabits = (habits ?? []).filter(h => combo.habit_ids.includes(h.id))
+                    
+                    return (
+                      <motion.div key={combo.id} variants={listItemSlide} className="flex flex-col gap-3 glass-card rounded-[var(--radius-card-lg)] px-4 py-3.5 border-t border-[var(--color-line-soft)]">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-[0.8rem] flex items-center justify-center text-xl shrink-0 border" style={{ backgroundColor: combo.color + '15', borderColor: combo.color + '40' }}>
+                              {combo.icon || '🚀'}
+                            </div>
+                            <div>
+                              <div className="font-bold text-stone-900 text-[15px]">{combo.name}</div>
+                              <div className="text-[11px] text-stone-500 font-medium leading-none mt-1">
+                                包含 {combo.habit_ids.length} 个项目
+                              </div>
+                            </div>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon-sm" className="shrink-0"><MoreHorizontal className="w-4 h-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setEditCombo(combo)}>
+                                <Pencil className="w-3.5 h-3.5 mr-2" /> 编辑
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setDeleteComboTarget(combo)} className="text-red-600 focus:bg-red-50">
+                                <Trash2 className="w-3.5 h-3.5 mr-2" /> 删除
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-1.5">
+                          {linkedHabits.map(h => (
+                            <span key={h.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-stone-100 text-[10px] font-bold text-stone-600">
+                              <span style={{color: h.color}}>{h.icon}</span> {h.name}
+                            </span>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="py-10 text-center text-stone-400 text-sm">没有找到对应的组合</div>
+              )}
+            </motion.div>
+          )}
+        </>
       )}
     </motion.div>
   )
 }
-
-export const Route = createFileRoute('/habits')({
-  component: HabitsPage,
-  beforeLoad: ({ context }) => {
-    if (context.auth.loading) return
-    if (!context.auth.user) throw redirect({ to: '/login' })
-  },
-})
