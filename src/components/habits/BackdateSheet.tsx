@@ -1,13 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { CalendarClock, Check } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { cn, formatDate } from '@/lib/utils'
 import type { Habit } from '@/types'
-import {
-  BottomSheet,
-  BottomSheetContent,
-  BottomSheetHeader,
-  BottomSheetTitle,
-} from '@/components/ui/bottom-sheet'
+import { ModalOverlay } from '@/components/ui/modal-overlay'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -146,17 +141,10 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
   }
 
   return (
-    <BottomSheet open={open} onOpenChange={onOpenChange}>
-      <BottomSheetContent>
-        <BottomSheetHeader>
-          <BottomSheetTitle>
-            <CalendarClock className="w-5 h-5 text-brand-500 inline-block mr-1.5 -mt-0.5" />
-            补卡
-          </BottomSheetTitle>
-          <p className="text-sm text-stone-500">补录最近遗漏的打卡记录</p>
-        </BottomSheetHeader>
-
-        <div className="space-y-5">
+    <ModalOverlay open={open} onOpenChange={onOpenChange} title="补卡 📆">
+        <div className="space-y-4 pt-1">
+          <p className="text-sm text-stone-500 font-medium mb-4 -mt-2">补录最近3天遗漏的打卡记录。</p>
+          
           {recentError && (
             <div className="rounded-2xl border border-rose-200 bg-rose-50/70 px-3.5 py-3">
               <div className="text-sm font-semibold text-rose-700">补卡记录同步失败</div>
@@ -350,7 +338,6 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
             补卡记录会标注"补"标签 · 每日最多补 {MAX_PER_DAY} 项
           </p>
         </div>
-      </BottomSheetContent>
-    </BottomSheet>
+    </ModalOverlay>
   )
 }

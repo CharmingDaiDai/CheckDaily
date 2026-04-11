@@ -369,13 +369,17 @@ function Dashboard() {
             {renderedCombos.map(combo => (
               <button
                 key={combo.id}
-                disabled={combo.isDone || checkInCombo.isPending || combo.habit_ids.length === 0}
+                disabled={checkInCombo.isPending || combo.habit_ids.length === 0}
                 onClick={() => checkInCombo.mutate({ habitIds: combo.habit_ids })}
-                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-[var(--radius-card-lg)] border-2 transition-all tap-scale ${combo.isDone ? 'opacity-60 bg-stone-50 border-stone-200 grayscale cursor-not-allowed' : 'bg-white border-transparent shadow-sm hover:shadow-md'}`}
-                style={!combo.isDone ? { borderColor: combo.color + '40' } : undefined}
+                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-[var(--radius-card-lg)] border-2 transition-all tap-scale ${
+                  combo.isDone 
+                    ? 'bg-stone-50/80 border-stone-200/60 shadow-sm opacity-90' 
+                    : 'bg-white border-transparent shadow-sm hover:shadow-md'
+                }`}
+                style={!combo.isDone ? { borderColor: combo.color + '40' } : { borderColor: combo.color + '15' }}
               >
                 <div 
-                  className="w-11 h-11 rounded-[0.85rem] flex items-center justify-center text-2xl shrink-0 transition-transform" 
+                  className={`w-11 h-11 rounded-[0.85rem] flex items-center justify-center text-2xl shrink-0 transition-transform ${combo.isDone ? 'opacity-80 grayscale-[30%]' : ''}`} 
                   style={{ backgroundColor: combo.color + (combo.isDone ? '05' : '18') }}
                 >
                   {combo.icon || '🚀'}

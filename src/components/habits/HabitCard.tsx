@@ -5,12 +5,7 @@ import { cn } from '@/lib/utils'
 import { celebrate } from '@/lib/celebrate'
 import { spring } from '@/lib/motion'
 import type { Habit } from '@/types'
-import {
-  BottomSheet,
-  BottomSheetContent,
-  BottomSheetHeader,
-  BottomSheetTitle,
-} from '@/components/ui/bottom-sheet'
+import { ModalOverlay } from '@/components/ui/modal-overlay'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -182,16 +177,12 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
   }, [handleQuickCheckIn])
 
   const sheetContent = (
-    <BottomSheetContent>
-      <BottomSheetHeader>
-        <BottomSheetTitle>
-          <span className="mr-2">{habit.icon || '📌'}</span>
-          {habit.name}
-        </BottomSheetTitle>
-        <p className="text-sm text-stone-500">
-          今日已打卡 <strong>{todayCount}</strong> 次 · 确认新增一次打卡
+    <div className="space-y-4">
+      <div className="mb-6 -mt-2">
+        <p className="text-sm text-stone-500 font-medium">
+          今日已打卡 <strong className="text-stone-900 mx-0.5">{todayCount}</strong> 次 · 确认新增一次打卡
         </p>
-      </BottomSheetHeader>
+      </div>
 
       <div className="space-y-4">
         {showNote ? (
@@ -244,7 +235,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
           </button>
         )}
       </div>
-    </BottomSheetContent>
+    </div>
   )
 
   // More-options trigger (opens BottomSheet)
@@ -430,9 +421,9 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
             </AnimatePresence>
           </div>
         </motion.button>
-        <BottomSheet open={open} onOpenChange={setOpen}>
+        <ModalOverlay open={open} onOpenChange={setOpen} title={`${habit.icon || '📌'} ${habit.name}`}>
           {sheetContent}
-        </BottomSheet>
+        </ModalOverlay>
       </>
     )
   }
@@ -551,9 +542,9 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
           </div>
         </div>
       </motion.button>
-      <BottomSheet open={open} onOpenChange={setOpen}>
+      <ModalOverlay open={open} onOpenChange={setOpen} title={`${habit.icon || '📌'} ${habit.name}`}>
         {sheetContent}
-      </BottomSheet>
+      </ModalOverlay>
     </>
   )
 }
