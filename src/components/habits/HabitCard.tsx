@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useCheckIn, useDeleteCheckIn } from '@/hooks/useCheckIns'
 import { toast } from '@/hooks/useToast'
+import { HabitIcon, getHabitIconLabel } from '@/lib/habitIcons'
 
 interface HabitCardProps {
   habit: Habit
@@ -364,7 +365,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
                 ...(reduceMotion ? {} : { x: iconX, y: iconY }),
               }}
             >
-              {habit.icon || '📌'}
+              <HabitIcon icon={habit.icon} className="w-5 h-5" color={habit.color} fallback="📌" />
             </motion.div>
             {/* Check overlay on icon */}
             <AnimatePresence>
@@ -421,7 +422,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
             </AnimatePresence>
           </div>
         </motion.button>
-        <ModalOverlay open={open} onOpenChange={setOpen} title={`${habit.icon || '📌'} ${habit.name}`}>
+        <ModalOverlay open={open} onOpenChange={setOpen} title={`${getHabitIconLabel(habit.icon)} ${habit.name}`}>
           {sheetContent}
         </ModalOverlay>
       </>
@@ -482,7 +483,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
               ...(reduceMotion ? {} : { x: iconX, y: iconY }),
             }}
           >
-            {habit.icon || '📌'}
+            <HabitIcon icon={habit.icon} className="w-[18px] h-[18px]" color={habit.color} fallback="📌" />
           </motion.div>
           {/* Check overlay */}
           <AnimatePresence>
@@ -542,7 +543,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
           </div>
         </div>
       </motion.button>
-      <ModalOverlay open={open} onOpenChange={setOpen} title={`${habit.icon || '📌'} ${habit.name}`}>
+      <ModalOverlay open={open} onOpenChange={setOpen} title={`${getHabitIconLabel(habit.icon)} ${habit.name}`}>
         {sheetContent}
       </ModalOverlay>
     </>

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { CalendarCheck2, Clock3, NotebookPen } from "lucide-react";
 import { ModalOverlay } from "@/components/ui/modal-overlay";
 import { cn, formatDate, formatTime } from "@/lib/utils";
+import { HabitIcon } from '@/lib/habitIcons'
 import type { CheckIn } from "@/types";
 
 type HabitMeta = {
@@ -97,7 +98,7 @@ export function CheckInDayDetailDialog({
                     className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base"
                     style={{ backgroundColor: (habit?.color ?? "#d6d3d1") + "24" }}
                   >
-                    {habit?.icon ?? "\uD83D\uDCCC"}
+                    <HabitIcon icon={habit?.icon} className="w-4 h-4" color={habit?.color ?? '#a8a29e'} fallback="📌" />
                   </div>
 
                   <div className="min-w-0 flex-1">

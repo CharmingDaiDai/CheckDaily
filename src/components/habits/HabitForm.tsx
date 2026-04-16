@@ -2,9 +2,15 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { cn, HABIT_COLORS, HABIT_ICONS } from '@/lib/utils'
+import { cn, HABIT_COLORS } from '@/lib/utils'
 import type { Habit } from '@/types'
 import { useCreateHabit, useUpdateHabit } from '@/hooks/useHabits'
+import {
+  DEFAULT_HABIT_ICON_KEY,
+  HABIT_ICON_OPTIONS,
+  HabitIcon,
+  isPresetHabitIcon,
+} from '@/lib/habitIcons'
 
 const COLOR_NAMES: Record<string, string> = {
   '#f97316': '橙色', '#ef4444': '红色', '#ec4899': '粉色', '#a855f7': '紫色',
@@ -20,11 +26,8 @@ interface HabitFormProps {
 export function HabitForm({ existing, onClose }: HabitFormProps) {
   const [name, setName] = useState(existing?.name ?? '')
   const [color, setColor] = useState(existing?.color ?? HABIT_COLORS[0])
-  const [icon, setIcon] = useState(existing?.icon ?? '🏃')
-  // custom input: pre-fill only if existing icon is not in presets
-  const [customIcon, setCustomIcon] = useState(
-    existing?.icon && !HABIT_ICONS.includes(existing.icon) ? existing.icon : ''
-  )
+  const [icon, setIcon] = useState(existing?.icon ?? DEFAULT_HABIT_ICON_KEY)
+  const usingLegacyIcon = !!existing?.icon && !isPresetHabitIcon(existing.icon)
 
   const create = useCreateHabit()
   const update = useUpdateHabit()
@@ -45,15 +48,8 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
     }
   }
 
-  function selectPreset(emoji: string) {
-    setIcon(emoji)
-    setCustomIcon('')
-  }
-
-  function handleCustomChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const val = e.target.value
-    setCustomIcon(val)
-    if (val.trim()) setIcon(val.trim())
+  function selectPreset(iconKey: string) {
+    setIcon(iconKey)
   }
 
   return (
@@ -77,49 +73,39 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
         <Label>选择图标</Label>
         <fieldset className="space-y-2">
           <legend className="sr-only">图标选择器</legend>
-          <div className="grid grid-cols-8 gap-1.5 max-h-44 overflow-y-auto pr-0.5">
-          {HABIT_ICONS.map((e) => (
-            <button
-              key={e}
-              type="button"
-              onClick={() => selectPreset(e)}
-              className={cn(
-                'w-10 h-10 rounded-xl flex items-center justify-center text-xl',
-                'border-2 transition-all duration-150 tap-scale',
-                icon === e && !customIcon
-                  ? 'border-brand-500 bg-brand-50'
-                  : 'border-transparent bg-stone-100 hover:bg-stone-200'
-              )}
-              aria-label={`选择图标 ${e}`}
-            >
-              {e}
-            </button>
-          ))}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 max-h-52 overflow-y-auto pr-0.5 custom-scrollbar">
+          {HABIT_ICON_OPTIONS.map((option) => {
+            const selected = icon === option.key
+            const tone = option.tone
+            return (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => selectPreset(option.key)}
+                className={cn(
+                  'flex items-center gap-2.5 p-2 rounded-xl border transition-all duration-150 tap-scale text-left',
+                  selected
+                    ? 'shadow-sm'
+                    : 'border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50'
+                )}
+                style={selected ? { borderColor: tone + '88', backgroundColor: tone + '14' } : undefined}
+                aria-label={`选择图标 ${option.label}`}
+              >
+                <span
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: tone + (selected ? '26' : '14'), color: tone }}
+                >
+                  <HabitIcon icon={option.key} className="w-5 h-5" color={tone} strokeWidth={2.3} />
+                </span>
+                <span className="text-[12px] font-semibold text-stone-700 truncate">{option.label}</span>
+              </button>
+            )
+          })}
           </div>
         </fieldset>
-
-        {/* Custom emoji input */}
-        <div className="flex items-center gap-2 pt-1">
-          <span className="text-xs text-stone-500 font-medium shrink-0 w-16">自定义：</span>
-          <div className="relative flex-1">
-            <Input
-              placeholder="粘贴或输入任意 Emoji"
-              value={customIcon}
-              onChange={handleCustomChange}
-              className="text-base pr-10"
-              maxLength={8}
-              aria-label="自定义图标"
-            />
-            {customIcon && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xl pointer-events-none">
-                {customIcon.trim()}
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="text-xs text-[var(--color-ink-500)] font-medium" aria-live="polite">
-          自定义图标长度：{customIcon.length}/8
-        </div>
+        {usingLegacyIcon && (
+          <p className="text-xs text-amber-600 font-medium">当前项目使用旧版 emoji 图标，保存后可切换为素材库图标。</p>
+        )}
       </div>
 
       {/* Color picker */}
@@ -149,10 +135,10 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
         style={{ borderColor: color + '60', backgroundColor: color + '0e' }}
       >
         <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+          className="w-10 h-10 rounded-xl flex items-center justify-center"
           style={{ backgroundColor: color + '25' }}
         >
-          {icon}
+          <HabitIcon icon={icon} className="w-5 h-5" color={color} fallback="📌" />
         </div>
         <span className="font-bold text-stone-900 text-sm">{name || '项目名称预览'}</span>
       </div>

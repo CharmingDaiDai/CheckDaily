@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BackdateSheet } from "@/components/habits/BackdateSheet";
 import { formatDate, getLast7Days, computeStreak } from "@/lib/utils";
 import { pageChoreography, sectionReveal } from "@/lib/motion";
+import { HabitIcon } from '@/lib/habitIcons'
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -413,7 +414,7 @@ function Dashboard() {
                     className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)] transition-all ${combo.isDone ? 'grayscale-[30%]' : ''}`} 
                     style={{ background: `linear-gradient(135deg, ${combo.color}14, ${combo.color}22)` }}
                   >
-                    {combo.icon || '🚀'}
+                    <HabitIcon icon={combo.icon} className="w-[18px] h-[18px]" color={combo.color} fallback="🚀" />
                   </div>
                   {combo.isDone && (
                     <div 

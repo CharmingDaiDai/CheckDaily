@@ -14,6 +14,7 @@ import { useCombos, useDeleteCombo } from '@/hooks/useCombos'
 import { toast } from '@/hooks/useToast'
 import type { Habit, HabitCombo } from '@/types'
 import { pageChoreography, sectionReveal, listItemSlide } from '@/lib/motion'
+import { HabitIcon } from '@/lib/habitIcons'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -226,7 +227,7 @@ export default function HabitsPage() {
                   {filteredHabits.map((habit) => (
                     <motion.div key={habit.id} variants={listItemSlide} className="flex items-center gap-4 glass-card rounded-[var(--radius-card-lg)] px-4 py-3.5">
                       <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0" style={{ backgroundColor: habit.color + '18', borderColor: habit.color + '30' }}>
-                        {habit.icon || '📌'}
+                        <HabitIcon icon={habit.icon} className="w-6 h-6" color={habit.color} fallback="📌" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-bold text-stone-900 text-base truncate">{habit.name}</div>
@@ -274,7 +275,7 @@ export default function HabitsPage() {
                         {archivedHabits.map((habit) => (
                           <div key={habit.id} className="flex items-center gap-4 bg-white/45 rounded-2xl px-4 py-3.5 border border-stone-200/60">
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl opacity-60" style={{ backgroundColor: habit.color + '18' }}>
-                              {habit.icon || '📌'}
+                              <HabitIcon icon={habit.icon} className="w-5 h-5" color={habit.color} fallback="📌" />
                             </div>
                             <div className="flex-1 min-w-0 opacity-70">
                               <div className="font-bold text-stone-600 text-sm truncate">{habit.name}</div>
@@ -315,7 +316,7 @@ export default function HabitsPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-[0.8rem] flex items-center justify-center text-xl shrink-0 border" style={{ backgroundColor: combo.color + '15', borderColor: combo.color + '40' }}>
-                              {combo.icon || '🚀'}
+                              <HabitIcon icon={combo.icon} className="w-[18px] h-[18px]" color={combo.color} fallback="🚀" />
                             </div>
                             <div>
                               <div className="font-bold text-stone-900 text-[15px]">{combo.name}</div>
@@ -342,7 +343,7 @@ export default function HabitsPage() {
                         <div className="flex flex-wrap gap-1.5">
                           {linkedHabits.map(h => (
                             <span key={h.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-stone-100 text-[10px] font-bold text-stone-600">
-                              <span style={{color: h.color}}>{h.icon}</span> {h.name}
+                              <HabitIcon icon={h.icon} className="w-3.5 h-3.5" color={h.color} fallback="📌" /> {h.name}
                             </span>
                           ))}
                         </div>

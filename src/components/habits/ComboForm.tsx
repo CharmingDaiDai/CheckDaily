@@ -2,10 +2,16 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { cn, HABIT_COLORS, HABIT_ICONS } from '@/lib/utils'
+import { cn, HABIT_COLORS } from '@/lib/utils'
 import type { Habit, HabitCombo } from '@/types'
 import { useCreateCombo, useUpdateCombo } from '@/hooks/useCombos'
 import { Check } from 'lucide-react'
+import {
+  COMBO_ICON_OPTIONS,
+  DEFAULT_COMBO_ICON_KEY,
+  HabitIcon,
+  isPresetComboIcon,
+} from '@/lib/habitIcons'
 
 
 
@@ -18,12 +24,9 @@ interface ComboFormProps {
 export function ComboForm({ existing, habits, onClose }: ComboFormProps) {
   const [name, setName] = useState(existing?.name ?? '')
   const [color, setColor] = useState(existing?.color ?? HABIT_COLORS[0])
-  const [icon, setIcon] = useState(existing?.icon ?? '🚀')
+  const [icon, setIcon] = useState(existing?.icon ?? DEFAULT_COMBO_ICON_KEY)
   const [selectedHabitIds, setSelectedHabitIds] = useState<string[]>(existing?.habit_ids ?? [])
-  
-  const [customIcon, setCustomIcon] = useState(
-    existing?.icon && !HABIT_ICONS.includes(existing.icon) ? existing.icon : ''
-  )
+  const usingLegacyIcon = !!existing?.icon && !isPresetComboIcon(existing.icon)
 
   const create = useCreateCombo()
   const update = useUpdateCombo()
@@ -46,15 +49,8 @@ export function ComboForm({ existing, habits, onClose }: ComboFormProps) {
     }
   }
 
-  function selectPreset(emoji: string) {
-    setIcon(emoji)
-    setCustomIcon('')
-  }
-
-  function handleCustomChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const val = e.target.value
-    setCustomIcon(val)
-    if (val.trim()) setIcon(val.trim())
+  function selectPreset(iconKey: string) {
+    setIcon(iconKey)
   }
 
   function toggleHabit(id: string) {
@@ -99,7 +95,9 @@ export function ComboForm({ existing, habits, onClose }: ComboFormProps) {
                   )}
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-lg leading-none" style={{ color: h.color }}>{h.icon}</span>
+                    <span className="inline-flex items-center justify-center w-[18px] h-[18px]" style={{ color: h.color }}>
+                      <HabitIcon icon={h.icon} className="w-[18px] h-[18px]" color={h.color} fallback="📌" />
+                    </span>
                     <div className={cn(
                       "w-4 h-4 rounded-full flex items-center justify-center border",
                       selected ? "bg-brand-500 border-brand-500 text-white" : "border-stone-300"
@@ -120,43 +118,39 @@ export function ComboForm({ existing, habits, onClose }: ComboFormProps) {
       <div className="space-y-2">
         <Label>选择图标</Label>
         <fieldset className="space-y-2">
-          <div className="grid grid-cols-8 gap-1.5 max-h-44 overflow-y-auto pr-0.5 custom-scrollbar">
-          {HABIT_ICONS.map((e) => (
-            <button
-              key={e}
-              type="button"
-              onClick={() => selectPreset(e)}
-              className={cn(
-                'w-10 h-10 rounded-xl flex items-center justify-center text-xl',
-                'border-2 transition-all duration-150 tap-scale',
-                icon === e && !customIcon
-                  ? 'border-brand-500 bg-brand-50'
-                  : 'border-transparent bg-stone-100 hover:bg-stone-200'
-              )}
-            >
-              {e}
-            </button>
-          ))}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 max-h-52 overflow-y-auto pr-0.5 custom-scrollbar">
+          {COMBO_ICON_OPTIONS.map((option) => {
+            const selected = icon === option.key
+            const tone = option.tone
+            return (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => selectPreset(option.key)}
+                className={cn(
+                  'flex items-center gap-2.5 p-2 rounded-xl border transition-all duration-150 tap-scale text-left',
+                  selected
+                    ? 'shadow-sm'
+                    : 'border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50'
+                )}
+                style={selected ? { borderColor: tone + '88', backgroundColor: tone + '14' } : undefined}
+                aria-label={`选择图标 ${option.label}`}
+              >
+                <span
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: tone + (selected ? '26' : '14'), color: tone }}
+                >
+                  <HabitIcon icon={option.key} className="w-5 h-5" color={tone} strokeWidth={2.3} />
+                </span>
+                <span className="text-[12px] font-semibold text-stone-700 truncate">{option.label}</span>
+              </button>
+            )
+          })}
           </div>
         </fieldset>
-
-        <div className="flex items-center gap-2 pt-1">
-          <span className="text-xs text-stone-500 font-medium shrink-0 w-16">自定义：</span>
-          <div className="relative flex-1">
-            <Input
-              placeholder="粘贴或输入任意 Emoji"
-              value={customIcon}
-              onChange={handleCustomChange}
-              className="text-base pr-10"
-              maxLength={8}
-            />
-            {customIcon && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xl pointer-events-none">
-                {customIcon.trim()}
-              </span>
-            )}
-          </div>
-        </div>
+        {usingLegacyIcon && (
+          <p className="text-xs text-amber-600 font-medium">当前组合使用旧版 emoji 图标，保存后可切换为素材库图标。</p>
+        )}
       </div>
 
       <div className="space-y-2">

@@ -32,6 +32,7 @@ import {
 } from "@/lib/utils";
 import type { CalendarDatum } from "@/types";
 import { pageChoreography, sectionReveal } from "@/lib/motion";
+import { HabitIcon } from '@/lib/habitIcons'
 
 type TabValue = "day" | "week" | "month" | "year";
 
@@ -421,7 +422,7 @@ function StatsPage() {
                         className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
                         style={{ backgroundColor: (h?.color ?? "#ccc") + "20" }}
                       >
-                        {h?.icon ?? "📌"}
+                        <HabitIcon icon={h?.icon} className="w-4 h-4" color={h?.color ?? '#a8a29e'} fallback="📌" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-bold text-stone-800 text-sm">
@@ -663,7 +664,7 @@ function StatsPage() {
                       className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
                       style={{ backgroundColor: h.color + "18" }}
                     >
-                      {h.icon}
+                      <HabitIcon icon={h.icon} className="w-[18px] h-[18px]" color={h.color} fallback="📌" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-[var(--color-ink-900)] text-sm truncate">

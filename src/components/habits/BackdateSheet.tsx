@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useCheckIn, useCheckIns } from '@/hooks/useCheckIns'
 import { toast } from '@/hooks/useToast'
+import { HabitIcon } from '@/lib/habitIcons'
 
 const MAX_PER_DAY = 3
 
@@ -271,7 +272,7 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
                         className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
                         style={{ backgroundColor: habit.color + '18' }}
                       >
-                        {habit.icon || '📌'}
+                        <HabitIcon icon={habit.icon} className="w-4 h-4" color={habit.color} fallback="📌" />
                       </div>
                       <span className="flex-1 text-sm font-semibold text-stone-800 truncate">
                         {habit.name}

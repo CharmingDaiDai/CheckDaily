@@ -19,6 +19,7 @@ import {
 } from '@/lib/utils'
 import { pageChoreography } from '@/lib/motion'
 import type { CalendarDatum } from '@/types'
+import { HabitIcon } from '@/lib/habitIcons'
 
 function HabitStatsPage() {
   const { habitId } = Route.useParams()
@@ -112,7 +113,7 @@ function HabitStatsPage() {
               className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
               style={{ backgroundColor: color + '18' }}
             >
-              {habit.icon}
+              <HabitIcon icon={habit.icon} className="w-6 h-6" color={color} fallback="📌" />
             </div>
             <div>
               <h1 className="headline-premium text-[2rem] sm:text-[2.28rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">{habit.name}</h1>
