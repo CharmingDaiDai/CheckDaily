@@ -57,13 +57,13 @@ export function StatCard({ label, value, sublabel, icon: Icon, iconColor = '#f97
         className,
         primary && 'shine-border',
       )}
-      style={primary ? { background: `linear-gradient(152deg, ${iconColor}1f 0%, rgba(255,255,255,0.96) 46%, rgba(255,248,238,0.88) 100%)`, borderColor: 'rgb(130 108 87 / 0.26)' } : undefined}
+      style={primary ? { background: `linear-gradient(152deg, ${iconColor}1a 0%, rgba(255,255,255,0.96) 46%, rgba(255,248,238,0.9) 100%)`, borderColor: 'rgb(130 108 87 / 0.22)' } : undefined}
     >
       <div className="flex items-start justify-between">
         <div className="text-[11px] font-semibold text-[var(--color-ink-500)]">{label}</div>
         {Icon && (
           <motion.div
-            className="w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center border border-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.66)]"
+            className="w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center border border-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.66)] backdrop-blur-sm"
             style={{ backgroundColor: iconColor + '18' }}
             initial={reduceMotion ? false : { scale: 0.9 }}
             animate={reduceMotion ? undefined : { scale: 1 }}

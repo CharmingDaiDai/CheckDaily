@@ -14,7 +14,7 @@ const sizeClasses = {
 const variantClasses = {
   light: 'border-white/40 border-t-white',
   brand: 'border-brand-500/30 border-t-brand-500',
-  muted: 'border-stone-300 border-t-stone-500',
+  muted: 'border-[var(--color-line-soft)] border-t-[var(--color-ink-600)]',
 } as const
 
 export function Spinner({ size = 'sm', variant = 'light', className }: SpinnerProps) {

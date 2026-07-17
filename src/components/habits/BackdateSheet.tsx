@@ -144,12 +144,12 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
   return (
     <ModalOverlay open={open} onOpenChange={onOpenChange} title="补卡 📆">
         <div className="space-y-4 pt-1">
-          <p className="text-sm text-stone-500 font-medium mb-4 -mt-2">补录最近3天遗漏的打卡记录。</p>
+          <p className="text-sm text-[var(--color-ink-600)] font-medium mb-4 -mt-2">补录最近 3 天遗漏的打卡记录。</p>
           
           {recentError && (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50/70 px-3.5 py-3">
-              <div className="text-sm font-semibold text-rose-700">补卡记录同步失败</div>
-              <div className="mt-0.5 text-xs text-rose-600">请重试后再选择补卡项目。</div>
+            <div className="rounded-2xl border border-brand-200 bg-brand-50/70 px-3.5 py-3">
+              <div className="text-sm font-semibold text-brand-800">补卡记录同步失败</div>
+              <div className="mt-0.5 text-xs text-brand-700">请重试后再选择补卡项目。</div>
               <Button
                 size="sm"
                 variant="outline"
@@ -169,7 +169,7 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
 
           {/* Date selector */}
           <div className="space-y-2">
-            <Label className="text-xs text-stone-500 font-semibold">选择日期</Label>
+            <Label className="text-xs text-[var(--color-ink-500)] font-semibold">选择日期</Label>
             <div className="flex gap-2">
               {backdateDays.map((date) => {
                 const { month, day, weekday } = formatShortDate(date)
@@ -185,10 +185,10 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
                     key={date}
                     aria-label={`${month}月${day}日 周${weekday}${dayRemaining <= 0 ? ' 已满' : ''}`}
                     className={cn(
-                      'flex-1 flex flex-col items-center gap-0.5 py-2.5 px-2 rounded-xl border-2 transition-all',
+                      'flex-1 flex flex-col items-center gap-0.5 py-2.5 px-2 rounded-[var(--radius-control)] border-2 transition-all',
                       isSelected
-                        ? 'border-brand-500 bg-brand-50'
-                        : 'border-stone-200 bg-white hover:border-stone-300',
+                        ? 'border-brand-500 bg-brand-50/80'
+                        : 'border-[var(--color-line-soft)] bg-white/70 hover:border-brand-200',
                       dayRemaining <= 0 && !isSelected && 'opacity-50',
                     )}
                     onClick={() => setSelectedDate(date)}
@@ -196,7 +196,7 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
                     <span
                       className={cn(
                         'text-sm font-bold',
-                        isSelected ? 'text-brand-600' : 'text-stone-800',
+                        isSelected ? 'text-brand-700' : 'text-[var(--color-ink-800)]',
                       )}
                     >
                       {month}/{day}
@@ -204,13 +204,13 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
                     <span
                       className={cn(
                         'text-xs',
-                        isSelected ? 'text-brand-500' : 'text-stone-400',
+                        isSelected ? 'text-brand-600' : 'text-[var(--color-ink-500)]',
                       )}
                     >
                       {'周' + weekday}
                     </span>
                     {dayRemaining < MAX_PER_DAY && (
-                      <span className="text-[10px] text-stone-400">
+                      <span className="text-[10px] text-[var(--color-ink-500)]">
                         {dayRemaining <= 0 ? '已满' : `剩${dayRemaining}项`}
                       </span>
                     )}
@@ -223,10 +223,10 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
           {/* Habit selector */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="text-xs text-stone-500 font-semibold">选择项目</Label>
-              <span className="text-xs text-stone-400">
+              <Label className="text-xs text-[var(--color-ink-500)] font-semibold">选择项目</Label>
+              <span className="text-xs text-[var(--color-ink-500)]">
                 {remaining <= 0 ? (
-                  <span className="text-amber-500">该日补卡已满</span>
+                  <span className="text-brand-700">该日补卡已满</span>
                 ) : (
                   `还可补 ${remainingSlots} 项`
                 )}
@@ -245,7 +245,7 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
                 </button>
               </div>
             ) : availableHabits.length === 0 ? (
-              <div className="flex flex-col items-center py-6 text-stone-400 gap-1.5">
+              <div className="flex flex-col items-center py-6 text-[var(--color-ink-500)] gap-1.5">
                 <span className="text-2xl">🎉</span>
                 <span className="text-xs font-medium">该日所有项目都已打卡</span>
               </div>
@@ -258,12 +258,12 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
                     <button
                       key={habit.id}
                       className={cn(
-                        'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left',
+                        'w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-control)] border transition-all text-left',
                         isSelected
-                          ? 'border-brand-500 bg-brand-50'
+                          ? 'border-brand-500 bg-brand-50/80'
                           : disabled
-                            ? 'border-stone-100 bg-stone-50 opacity-40 cursor-not-allowed'
-                            : 'border-stone-200 bg-white hover:border-stone-300',
+                            ? 'border-[var(--color-line-soft)] bg-white/46 opacity-40 cursor-not-allowed'
+                            : 'border-[var(--color-line-soft)] bg-white/72 hover:border-brand-200',
                       )}
                       onClick={() => !disabled && toggleHabit(habit.id)}
                       disabled={disabled}
@@ -274,7 +274,7 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
                       >
                         <HabitIcon icon={habit.icon} className="w-4 h-4" color={habit.color} fallback="📌" />
                       </div>
-                      <span className="flex-1 text-sm font-semibold text-stone-800 truncate">
+                      <span className="flex-1 text-sm font-semibold text-[var(--color-ink-800)] truncate">
                         {habit.name}
                       </span>
                       <div
@@ -282,7 +282,7 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
                           'w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0',
                           isSelected
                             ? 'border-brand-500 bg-brand-500'
-                            : 'border-stone-300 bg-white',
+                            : 'border-[var(--color-line-soft)] bg-white',
                         )}
                       >
                         {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
@@ -310,7 +310,7 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
           ) : (
             <button
               type="button"
-              className="text-xs text-stone-400 hover:text-brand-500 transition-colors font-medium"
+              className="text-xs text-[var(--color-ink-500)] hover:text-brand-600 transition-colors font-medium"
               onClick={() => setShowNote(true)}
             >
               + 添加备注
@@ -335,7 +335,7 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
           </div>
 
           {/* Info hint */}
-          <p className="text-[11px] text-stone-300 text-center">
+          <p className="text-[11px] text-[var(--color-ink-500)] text-center">
             补卡记录会标注"补"标签 · 每日最多补 {MAX_PER_DAY} 项
           </p>
         </div>

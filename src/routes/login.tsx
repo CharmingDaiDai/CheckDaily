@@ -118,7 +118,7 @@ function LoginPage() {
             打卡
           </motion.h1>
           <motion.p
-            className="text-stone-500 text-sm mt-1.5 font-medium"
+            className="text-[var(--color-ink-500)] text-sm mt-1.5 font-medium"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...spring.gentle, delay: 0.25 }}
@@ -144,18 +144,18 @@ function LoginPage() {
             <TabsContent value="magic">
               {mlSent ? (
                 <div className="flex flex-col items-center text-center gap-4 py-2">
-                    <div className="w-14 h-14 rounded-[var(--radius-card-lg)] bg-green-100 flex items-center justify-center">
-                    <CheckCircle2 className="w-8 h-8 text-green-500" strokeWidth={2} />
+                    <div className="w-14 h-14 rounded-[var(--radius-card-lg)] bg-brand-100/80 flex items-center justify-center">
+                    <CheckCircle2 className="w-8 h-8 text-brand-500" strokeWidth={2} />
                   </div>
                   <div>
-                    <div className="font-bold text-stone-900 text-lg">邮件已发送</div>
-                    <div className="text-stone-500 text-sm mt-1.5 leading-relaxed">
-                      请查看 <strong className="text-stone-700">{mlEmail}</strong> 的收件箱，
+                    <div className="font-semibold text-[var(--color-ink-950)] text-lg">邮件已发送</div>
+                    <div className="text-[var(--color-ink-600)] text-sm mt-1.5 leading-relaxed">
+                      请查看 <strong className="text-[var(--color-ink-700)]">{mlEmail}</strong> 的收件箱，
                       点击邮件中的链接完成登录
                     </div>
                   </div>
                   <button
-                    className="text-sm text-stone-400 hover:text-stone-600 mt-2 font-medium underline-offset-2 hover:underline"
+                    className="text-sm text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] mt-2 font-medium underline-offset-2 hover:underline"
                     onClick={() => { setMlSent(false); setMlEmail('') }}
                   >
                     重新发送
@@ -164,14 +164,14 @@ function LoginPage() {
               ) : (
                 <form onSubmit={handleMagicLink} className="space-y-5">
                   <div>
-                    <h2 className="text-xl font-bold text-stone-900 mb-1">无密码登录</h2>
-                    <p className="text-stone-500 text-sm">输入邮箱，我们将发送一个登录链接</p>
+                    <h2 className="text-xl font-semibold text-[var(--color-ink-950)] mb-1">无密码登录</h2>
+                    <p className="text-[var(--color-ink-500)] text-sm">输入邮箱，我们将发送一个登录链接</p>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="ml-email">邮箱地址</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-ink-400)]" />
                       <Input
                         id="ml-email"
                         type="email"
@@ -187,7 +187,7 @@ function LoginPage() {
                   </div>
 
                   {mlError && (
-                    <div className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-xl font-medium">
+                    <div className="text-sm text-brand-700 bg-brand-50 px-3 py-2 rounded-xl font-medium">
                       {mlError}
                     </div>
                   )}
@@ -212,18 +212,18 @@ function LoginPage() {
             <TabsContent value="password">
               {registered ? (
                 <div className="flex flex-col items-center text-center gap-4 py-2">
-                  <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
-                    <CheckCircle2 className="w-8 h-8 text-green-500" strokeWidth={2} />
+                  <div className="w-14 h-14 rounded-full bg-brand-100/80 flex items-center justify-center">
+                    <CheckCircle2 className="w-8 h-8 text-brand-500" strokeWidth={2} />
                   </div>
                   <div>
-                    <div className="font-bold text-stone-900 text-lg">注册成功</div>
-                    <div className="text-stone-500 text-sm mt-1.5 leading-relaxed">
-                      请查看 <strong className="text-stone-700">{pwEmail}</strong> 的收件箱，
+                    <div className="font-semibold text-[var(--color-ink-950)] text-lg">注册成功</div>
+                    <div className="text-[var(--color-ink-600)] text-sm mt-1.5 leading-relaxed">
+                      请查看 <strong className="text-[var(--color-ink-700)]">{pwEmail}</strong> 的收件箱，
                       点击验证链接激活账号后即可登录
                     </div>
                   </div>
                   <button
-                    className="text-sm text-stone-400 hover:text-stone-600 mt-2 font-medium underline-offset-2 hover:underline"
+                    className="text-sm text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] mt-2 font-medium underline-offset-2 hover:underline"
                     onClick={() => { setRegistered(false); switchMode('login') }}
                   >
                     去登录
@@ -232,10 +232,10 @@ function LoginPage() {
               ) : (
                 <form onSubmit={handlePassword} className="space-y-5">
                   <div>
-                    <h2 className="text-xl font-bold text-stone-900 mb-1">
+                    <h2 className="text-xl font-semibold text-[var(--color-ink-950)] mb-1">
                       {mode === 'login' ? '密码登录' : '注册账号'}
                     </h2>
-                    <p className="text-stone-500 text-sm">
+                    <p className="text-[var(--color-ink-500)] text-sm">
                       {mode === 'login' ? '使用邮箱和密码登录' : '创建一个新账号'}
                     </p>
                   </div>
@@ -244,7 +244,7 @@ function LoginPage() {
                     <div className="space-y-2">
                       <Label htmlFor="pw-email">邮箱地址</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-ink-400)]" />
                         <Input
                           id="pw-email"
                           type="email"
@@ -262,7 +262,7 @@ function LoginPage() {
                     <div className="space-y-2">
                       <Label htmlFor="pw-password">密码</Label>
                       <div className="relative">
-                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-ink-400)]" />
                         <Input
                           id="pw-password"
                           type={showPw ? 'text' : 'password'}
@@ -272,9 +272,9 @@ function LoginPage() {
                           className="pl-10 pr-10"
                           required
                         />
-                        <button
+                          <button
                           type="button"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/70 active:scale-95 transition-all"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/70 active:scale-95 transition-all"
                           onClick={() => setShowPw((v) => !v)}
                           tabIndex={-1}
                           aria-label={showPw ? '隐藏密码' : '显示密码'}
@@ -288,7 +288,7 @@ function LoginPage() {
                       <div className="space-y-2">
                         <Label htmlFor="pw-confirm">确认密码</Label>
                         <div className="relative">
-                          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-ink-400)]" />
                           <Input
                             id="pw-confirm"
                             type={showConfirm ? 'text' : 'password'}
@@ -300,7 +300,7 @@ function LoginPage() {
                           />
                           <button
                             type="button"
-                            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/70 active:scale-95 transition-all"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/70 active:scale-95 transition-all"
                             onClick={() => setShowConfirm((v) => !v)}
                             tabIndex={-1}
                             aria-label={showConfirm ? '隐藏确认密码' : '显示确认密码'}
@@ -335,7 +335,7 @@ function LoginPage() {
                     {mode === 'login' ? (
                       <button
                         type="button"
-                        className="text-sm text-stone-400 hover:text-brand-500 font-medium transition-colors"
+                        className="text-sm text-[var(--color-ink-500)] hover:text-brand-500 font-medium transition-colors"
                         onClick={() => switchMode('register')}
                       >
                         没有账号？去注册
@@ -343,7 +343,7 @@ function LoginPage() {
                     ) : (
                       <button
                         type="button"
-                        className="text-sm text-stone-400 hover:text-brand-500 font-medium transition-colors"
+                        className="text-sm text-[var(--color-ink-500)] hover:text-brand-500 font-medium transition-colors"
                         onClick={() => switchMode('login')}
                       >
                         已有账号？去登录
@@ -357,7 +357,7 @@ function LoginPage() {
         </motion.div>
 
         <motion.p
-          className="text-center text-xs text-stone-400 mt-6 font-medium leading-relaxed"
+          className="text-center text-xs text-[var(--color-ink-500)] mt-6 font-medium leading-relaxed"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.4 }}

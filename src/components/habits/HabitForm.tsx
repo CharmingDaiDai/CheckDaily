@@ -83,10 +83,10 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
                 type="button"
                 onClick={() => selectPreset(option.key)}
                 className={cn(
-                  'flex items-center gap-2.5 p-2 rounded-xl border transition-all duration-150 tap-scale text-left',
+                  'flex items-center gap-2.5 p-2 rounded-[var(--radius-control)] border transition-all duration-150 tap-scale text-left',
                   selected
-                    ? 'shadow-sm'
-                    : 'border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50'
+                    ? 'shadow-sm border-brand-200 bg-brand-50/80'
+                    : 'border-[var(--color-line-soft)] bg-white/72 hover:border-brand-200 hover:bg-white'
                 )}
                 style={selected ? { borderColor: tone + '88', backgroundColor: tone + '14' } : undefined}
                 aria-label={`选择图标 ${option.label}`}
@@ -97,14 +97,14 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
                 >
                   <HabitIcon icon={option.key} className="w-5 h-5" color={tone} strokeWidth={2.3} />
                 </span>
-                <span className="text-[12px] font-semibold text-stone-700 truncate">{option.label}</span>
+                <span className="text-[12px] font-semibold text-[var(--color-ink-700)] truncate">{option.label}</span>
               </button>
             )
           })}
           </div>
         </fieldset>
         {usingLegacyIcon && (
-          <p className="text-xs text-amber-600 font-medium">当前项目使用旧版 emoji 图标，保存后可切换为素材库图标。</p>
+          <p className="text-xs text-brand-700 font-medium">当前项目使用旧版 emoji 图标，保存后可切换为素材库图标。</p>
         )}
       </div>
 
@@ -120,7 +120,7 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
               className={cn(
                 'w-8 h-8 rounded-full transition-all duration-150 tap-scale',
                 'ring-offset-2 ring-offset-white',
-                color === c ? 'ring-2 ring-stone-700 scale-110' : 'hover:scale-105'
+                color === c ? 'ring-2 ring-brand-700 scale-110' : 'hover:scale-105'
               )}
               style={{ backgroundColor: c }}
               aria-label={COLOR_NAMES[c] ?? c}
@@ -131,7 +131,7 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
 
       {/* Preview */}
       <div
-        className="flex items-center gap-3 p-3 rounded-xl border-2"
+        className="flex items-center gap-3 p-3 rounded-[var(--radius-control)] border-2"
         style={{ borderColor: color + '60', backgroundColor: color + '0e' }}
       >
         <div
@@ -140,7 +140,7 @@ export function HabitForm({ existing, onClose }: HabitFormProps) {
         >
           <HabitIcon icon={icon} className="w-5 h-5" color={color} fallback="📌" />
         </div>
-        <span className="font-bold text-stone-900 text-sm">{name || '项目名称预览'}</span>
+        <span className="font-semibold text-[var(--color-ink-900)] text-sm">{name || '项目名称预览'}</span>
       </div>
 
       {/* Actions */}

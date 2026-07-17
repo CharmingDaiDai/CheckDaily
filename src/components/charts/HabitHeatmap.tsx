@@ -18,20 +18,20 @@ export function HabitHeatmap({ data, from, to, color = '#f97316' }: HabitHeatmap
         data={data}
         from={from}
         to={to}
-        emptyColor="#f5f5f4"
+        emptyColor="#f3f0ea"
         colors={colors}
         margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
         yearSpacing={40}
-        monthBorderColor="#fafaf9"
+        monthBorderColor="#f8f4ee"
         dayBorderWidth={2}
-        dayBorderColor="#fafaf9"
+        dayBorderColor="#f8f4ee"
         tooltip={({ day, value }) => (
-          <div className="bg-stone-900 text-white text-xs px-2.5 py-1.5 rounded-lg shadow-lg font-medium">
+          <div className="bg-[rgba(255,255,255,0.9)] text-[var(--color-ink-800)] text-xs px-2.5 py-1.5 rounded-lg shadow-lg font-medium border border-white/70 backdrop-blur-xl">
             {day}：{value} 次
           </div>
         )}
         theme={{
-          text: { fontFamily: 'Plus Jakarta Sans, system-ui, sans-serif', fontSize: 11, fill: '#a8a29e' },
+          text: { fontFamily: 'system-ui, sans-serif', fontSize: 11, fill: '#938b7f' },
           tooltip: { container: { background: 'transparent', boxShadow: 'none', padding: 0 } },
         }}
         maxValue={max > 4 ? max : 4}

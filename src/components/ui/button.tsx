@@ -10,11 +10,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'text-white border-brand-500/35 bg-[linear-gradient(155deg,#e98c4c_0%,#d86f2f_48%,#a94b22_100%)] shadow-[0_10px_24px_rgb(185_84_34/0.28),inset_0_1px_0_rgb(255_255_255/0.28)] hover:shadow-[0_14px_28px_rgb(185_84_34/0.34),inset_0_1px_0_rgb(255_255_255/0.36)] hover:brightness-[1.03] active:brightness-[0.96]',
-        secondary: 'text-[var(--color-ink-800)] border-[color:rgb(255_255_255/0.58)] bg-[linear-gradient(160deg,rgba(255,255,255,0.78)_0%,rgba(248,246,240,0.64)_100%)] shadow-[0_8px_18px_rgb(61_52_41/0.1),inset_0_1px_0_rgb(255_255_255/0.76)] backdrop-blur-xl hover:border-[color:rgb(255_255_255/0.76)] hover:bg-[linear-gradient(160deg,rgba(255,255,255,0.9)_0%,rgba(248,246,240,0.76)_100%)] hover:shadow-[0_12px_24px_rgb(61_52_41/0.12)]',
-        outline: 'border-[color:rgb(39_35_31/0.16)] bg-[rgba(255,255,255,0.56)] text-[var(--color-ink-800)] shadow-[0_2px_10px_rgb(61_52_41/0.06)] backdrop-blur-md hover:bg-[rgba(255,255,255,0.82)] hover:border-[color:rgb(39_35_31/0.24)] active:bg-[rgba(255,255,255,0.92)]',
-        ghost: 'text-[var(--color-ink-700)] bg-transparent hover:bg-[rgba(255,255,255,0.5)] hover:text-[var(--color-ink-900)] active:bg-[rgba(255,255,255,0.72)]',
-        danger: 'text-white border-red-600/40 bg-[linear-gradient(160deg,#f87171_0%,#ef4444_48%,#dc2626_100%)] shadow-[0_10px_20px_rgb(239_68_68/0.28)] hover:brightness-[1.03] active:brightness-[0.95]',
+        default: 'text-white border-brand-500/35 bg-[linear-gradient(155deg,#e99658_0%,#d86f2f_46%,#a94b22_100%)] shadow-[0_10px_24px_rgb(185_84_34/0.24),inset_0_1px_0_rgb(255_255_255/0.28)] hover:shadow-[0_14px_28px_rgb(185_84_34/0.3),inset_0_1px_0_rgb(255_255_255/0.36)] hover:brightness-[1.03] active:brightness-[0.96]',
+        secondary: 'text-[var(--color-ink-800)] border-[color:rgb(255_255_255/0.58)] bg-[linear-gradient(160deg,rgba(255,255,255,0.8)_0%,rgba(248,246,240,0.66)_100%)] shadow-[0_8px_18px_rgb(61_52_41/0.1),inset_0_1px_0_rgb(255_255_255/0.76)] backdrop-blur-xl hover:border-[color:rgb(255_255_255/0.76)] hover:bg-[linear-gradient(160deg,rgba(255,255,255,0.92)_0%,rgba(248,246,240,0.8)_100%)] hover:shadow-[0_12px_24px_rgb(61_52_41/0.12)]',
+        outline: 'border-[color:rgb(39_35_31/0.16)] bg-[rgba(255,255,255,0.6)] text-[var(--color-ink-800)] shadow-[0_2px_10px_rgb(61_52_41/0.06)] backdrop-blur-md hover:bg-[rgba(255,255,255,0.84)] hover:border-[color:rgb(39_35_31/0.24)] active:bg-[rgba(255,255,255,0.94)]',
+        ghost: 'text-[var(--color-ink-700)] bg-transparent hover:bg-[rgba(255,255,255,0.56)] hover:text-[var(--color-ink-900)] active:bg-[rgba(255,255,255,0.72)]',
+        danger: 'text-white border-red-600/40 bg-[linear-gradient(160deg,#fb7a7a_0%,#ef4444_48%,#dc2626_100%)] shadow-[0_10px_20px_rgb(239_68_68/0.24)] hover:brightness-[1.03] active:brightness-[0.95]',
         'danger-ghost': 'text-red-700 hover:bg-red-50/85 active:bg-red-100/70',
       },
       size: {

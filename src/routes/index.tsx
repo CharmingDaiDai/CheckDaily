@@ -19,7 +19,7 @@ import { SimpleBarChart } from "@/components/charts/BarCharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BackdateSheet } from "@/components/habits/BackdateSheet";
 import { formatDate, getLast7Days, computeStreak } from "@/lib/utils";
-import { pageChoreography, sectionReveal } from "@/lib/motion";
+import { sectionReveal } from "@/lib/motion";
 import { HabitIcon } from '@/lib/habitIcons'
 import type { HabitCombo } from '@/types'
 
@@ -212,12 +212,7 @@ function Dashboard() {
     : "grid grid-cols-2 sm:grid-cols-3 gap-2";
 
   return (
-    <motion.div
-      className="app-page space-y-6"
-      variants={pageChoreography}
-      initial="initial"
-      animate="animate"
-    >
+    <div className="app-page space-y-6">
       {/* Header */}
       <motion.div variants={sectionReveal}>
         <div className="page-kicker mb-1">
@@ -306,12 +301,12 @@ function Dashboard() {
       {hasLoadError && (
         <motion.div
           variants={sectionReveal}
-          className="rounded-[var(--radius-card-lg)] border border-rose-200 bg-rose-50/78 px-4 py-3 shadow-[0_10px_24px_rgb(225_29_72/0.08)]"
+          className="surface-frame px-4 py-3"
         >
-          <div className="text-sm font-semibold text-rose-700">首页数据加载失败</div>
-          <div className="mt-0.5 text-xs text-rose-600">部分卡片可能展示不完整，请重新同步。</div>
+          <div className="text-sm font-semibold text-[var(--color-ink-900)]">首页数据加载失败</div>
+          <div className="mt-0.5 text-xs text-[var(--color-ink-600)]">部分卡片可能展示不完整，请重新同步。</div>
           <button
-            className="mt-2 h-9 rounded-lg border border-rose-200 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-50 transition-colors"
+            className="mt-3 inline-flex h-9 items-center rounded-[var(--radius-control)] border border-brand-200 bg-white/78 px-3 text-xs font-semibold text-brand-700 transition-colors hover:bg-white"
             onClick={() => {
               void refetchHabits();
               void refetchToday();
@@ -350,7 +345,7 @@ function Dashboard() {
               />
             ))}
           </div>
-          <div className="font-bold text-[var(--color-ink-900)]">
+          <div className="font-semibold text-[var(--color-ink-900)]">
             今日已全部完成
           </div>
           <div className="text-sm text-[var(--color-ink-600)] mt-0.5">
@@ -474,12 +469,12 @@ function Dashboard() {
         </motion.div>
       ) : isLoading ? (
         <motion.div variants={sectionReveal} className="space-y-3">
-          <div className="text-xs text-stone-400 font-medium">加载今日打卡内容…</div>
+          <div className="text-xs text-[var(--color-ink-500)] font-medium">加载今日打卡内容…</div>
           <div className={gridClass}>
             {Array.from({ length: compact ? 8 : 6 }).map((_, i) => (
               <Skeleton
                 key={i}
-                className={compact ? "h-24 rounded-2xl" : "h-14 rounded-2xl"}
+                className={compact ? "h-24 rounded-[var(--radius-card-lg)]" : "h-14 rounded-[var(--radius-card-lg)]"}
               />
             ))}
           </div>
@@ -535,17 +530,17 @@ function Dashboard() {
         </motion.div>
       ) : (
         <motion.div variants={sectionReveal} className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mb-4">
+          <div className="w-20 h-20 rounded-full bg-white/72 border border-white/72 shadow-[0_12px_28px_rgb(61_52_41/0.08)] flex items-center justify-center mb-4">
             <span className="text-4xl animate-float">📋</span>
           </div>
-          <div className="font-bold text-stone-700 text-lg mb-1">
+          <div className="font-semibold text-[var(--color-ink-900)] text-lg mb-1">
             还没有打卡项目
           </div>
-          <div className="text-stone-400 text-sm mb-5">
+          <div className="text-[var(--color-ink-500)] text-sm mb-5">
             去添加你的第一个习惯吧
           </div>
           <button
-            className="px-5 py-2.5 bg-brand-500 text-white rounded-xl font-semibold text-sm hover:bg-brand-600 transition-colors tap-scale"
+            className="px-5 py-2.5 bg-[linear-gradient(155deg,#e98c4c_0%,#d86f2f_48%,#a94b22_100%)] text-white rounded-[var(--radius-control)] font-semibold text-sm shadow-[0_10px_24px_rgb(185_84_34/0.22)] hover:brightness-[1.02] transition-colors tap-scale"
             onClick={() => void navigate({ to: "/habits" })}
           >
             添加项目
@@ -555,7 +550,7 @@ function Dashboard() {
 
       {/* Onboarding hint */}
       {!isLoading && sortedHabits.length > 0 && doneCount === 0 && (
-        <div className="flex items-center justify-center gap-1.5 py-1 text-stone-300">
+        <div className="flex items-center justify-center gap-1.5 py-1 text-[var(--color-ink-500)]/80">
           <span className="text-sm">👆</span>
           <span className="text-xs font-medium">轻触卡片即可完成今日打卡</span>
         </div>
@@ -569,7 +564,7 @@ function Dashboard() {
           habits={habits}
         />
       )}
-    </motion.div>
+    </div>
   );
 }
 

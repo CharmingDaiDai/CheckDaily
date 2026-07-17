@@ -35,7 +35,7 @@ export function BottomNav() {
                   {active && (
                     <motion.div
                       layoutId="nav-indicator"
-                      className="absolute inset-1.5 rounded-[0.76rem] border border-white/60 bg-[linear-gradient(160deg,rgba(255,255,255,0.88)_0%,rgba(216,111,47,0.18)_100%)] shadow-[0_8px_16px_rgba(185,84,34,0.16)]"
+                      className="absolute inset-1.5 rounded-[0.76rem] border border-white/60 bg-[linear-gradient(160deg,rgba(255,255,255,0.9)_0%,rgba(216,111,47,0.14)_100%)] shadow-[0_8px_16px_rgba(185,84,34,0.14)]"
                       transition={spring.smooth}
                     />
                   )}

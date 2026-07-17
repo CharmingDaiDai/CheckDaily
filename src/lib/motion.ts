@@ -28,9 +28,8 @@ export const easing = {
 
 /* ── Page choreography (stagger container) ── */
 export const pageChoreography = {
-  initial: { opacity: 0 },
+  initial: {},
   animate: {
-    opacity: 1,
     transition: {
       when: 'beforeChildren' as const,
       staggerChildren: 0.07,
