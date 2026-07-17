@@ -85,7 +85,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         return
       }
 
-      if (requestGuard) {
+      const isSubmitButton = event.currentTarget.type === 'submit'
+
+      if (requestGuard && !isSubmitButton) {
         setGuardLocked(true)
         if (guardTimerRef.current) {
           clearTimeout(guardTimerRef.current)
