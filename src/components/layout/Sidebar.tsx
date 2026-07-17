@@ -16,14 +16,14 @@ export function Sidebar() {
   const pathname = location.pathname
 
   return (
-    <aside className="hidden md:flex md:h-dvh md:min-h-0 flex-col w-52 lg:w-60 shrink-0 bg-white/82 backdrop-blur-xl border-r border-[var(--color-line-soft)]">
+    <aside className="hidden md:flex md:h-dvh md:min-h-0 flex-col w-52 lg:w-60 shrink-0 border-r border-white/55 bg-white/54 backdrop-blur-2xl">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-6">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-b from-brand-500 to-brand-600 flex items-center justify-center shadow-[0_10px_18px_rgb(249_115_22/0.32)] animate-glow-pulse" style={{ '--glow-color': 'rgba(249,115,22,0.25)' } as React.CSSProperties}>
+        <div className="w-10 h-10 rounded-[0.8rem] bg-gradient-to-b from-brand-400 to-brand-600 flex items-center justify-center shadow-[0_10px_18px_rgb(185_84_34/0.24)]" style={{ '--glow-color': 'rgba(216,111,47,0.18)' } as React.CSSProperties}>
           <Flame className="w-5 h-5 text-white" strokeWidth={2.5} />
         </div>
         <div>
-          <div className="text-base font-extrabold text-[var(--color-ink-900)] leading-tight tracking-tight">打卡</div>
+          <div className="text-base font-extrabold text-[var(--color-ink-900)] leading-tight tracking-[0]">打卡</div>
           <div className="text-xs text-[var(--color-ink-500)] font-medium">习惯追踪</div>
         </div>
       </div>
@@ -39,17 +39,17 @@ export function Sidebar() {
                 to={to}
                 className={cn(
                   'group relative flex items-center gap-3 px-3.5 py-2.5 rounded-[var(--radius-control)] text-sm font-semibold',
-                  'transition-colors duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+                  'transition-[color,transform] duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 active:scale-[0.992]',
                   active
                     ? 'text-brand-700'
-                    : 'text-[var(--color-ink-600)] hover:text-[var(--color-ink-800)]'
+                    : 'text-[var(--color-ink-600)] hover:text-[var(--color-ink-900)]'
                 )}
               >
                 {active && (
                   <motion.div
-                    layoutId="sidebar-indicator"
-                    className="absolute inset-0 rounded-[var(--radius-control)] bg-brand-50/80 shadow-[0_6px_14px_rgb(249_115_22/0.2)]"
-                    transition={spring.gentle}
+                      layoutId="sidebar-indicator"
+                    className="absolute inset-0 rounded-[var(--radius-control)] border border-white/62 bg-[linear-gradient(160deg,rgba(255,255,255,0.76),rgba(216,111,47,0.14))] shadow-[0_8px_20px_rgb(185_84_34/0.13)]"
+                    transition={spring.smooth}
                   />
                 )}
                 <Icon
@@ -70,7 +70,7 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-5 py-4 border-t border-[var(--color-line-soft)]">
+      <div className="px-5 py-4 border-t border-white/50">
         <div className="text-xs text-[var(--color-ink-500)] font-medium">打卡 · 习惯追踪</div>
       </div>
     </aside>

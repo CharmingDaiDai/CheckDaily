@@ -88,22 +88,22 @@ export default function HabitsPage() {
 
   return (
     <motion.div
-      className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6"
+      className="app-page space-y-6"
       variants={pageChoreography}
       initial="initial"
       animate="animate"
     >
       {/* Header */}
-      <motion.div variants={sectionReveal} className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between border-b border-[var(--color-line-soft)] pb-5">
+      <motion.div variants={sectionReveal} className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="headline-premium text-[2.02rem] sm:text-[2.3rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">项目管理</h1>
+          <h1 className="headline-premium text-[2.08rem] sm:text-[2.42rem] text-[var(--color-ink-950)]">项目管理</h1>
           <p className="text-sm text-[var(--color-ink-500)] font-medium mt-0.5">
             {habits?.length ?? 0} 个项目 · {combos?.length ?? 0} 个组合
           </p>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto select-none no-scrollbar">
-          <Tabs value={activeTab} onValueChange={(v: any) => { setActiveTab(v); setSearch(''); }} className="shrink-0">
+          <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as 'habits' | 'combos'); setSearch(''); }} className="shrink-0">
             <TabsList>
               <TabsTrigger value="habits">单项运动</TabsTrigger>
               <TabsTrigger value="combos">运动组合</TabsTrigger>
@@ -141,7 +141,7 @@ export default function HabitsPage() {
       <ConfirmDialog
         open={!!archiveTarget}
         onOpenChange={(open) => { if (!open) setArchiveTarget(null) }}
-        title={"确认归档「」？"}
+        title={`确认归档「${archiveTarget?.name ?? ''}」？`}
         description="归档后将不再出现在今日打卡列表中。你可以在已归档区域恢复。"
         confirmText="归档"
         variant="danger"
@@ -149,15 +149,17 @@ export default function HabitsPage() {
           if (!archiveTarget) return
           const target = archiveTarget
           await archive.mutateAsync(target.id)
-          toast.success("已归档「」", {
+          toast.success(`已归档「${target.name}」`, {
             duration: 5200,
             action: {
               label: '撤销',
               onClick: async () => {
                 try {
                   await restore.mutateAsync(target.id)
-                  toast.success("已恢复「」")
-                } catch {}
+                  toast.success(`已恢复「${target.name}」`)
+                } catch {
+                  toast.error('恢复失败，请重试')
+                }
               },
             },
           })
@@ -167,7 +169,7 @@ export default function HabitsPage() {
       <ConfirmDialog
         open={!!deleteComboTarget}
         onOpenChange={(open) => { if (!open) setDeleteComboTarget(null) }}
-        title={"确认删除组合「」？"}
+        title={`确认删除组合「${deleteComboTarget?.name ?? ''}」？`}
         description="删除组合不会影响其中的单项运动及其历史打卡记录，操作不可恢复。"
         confirmText="删除"
         variant="danger"
@@ -204,8 +206,9 @@ export default function HabitsPage() {
               />
               {search && (
                 <button
-                  className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 rounded-xl flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white transition-colors"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 rounded-[var(--radius-control)] flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/70 active:scale-95 transition-all"
                   onClick={() => setSearch('')}
+                  aria-label="清除搜索"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -217,7 +220,7 @@ export default function HabitsPage() {
             <motion.div key="habits-list" variants={sectionReveal} initial="initial" animate="animate">
               {(habits?.length ?? 0) === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mb-4">
+                  <div className="w-20 h-20 rounded-[1.25rem] bg-white/62 border border-white/70 shadow-[var(--shadow-card)] flex items-center justify-center mb-4">
                     <ListCheck className="w-10 h-10 text-stone-300" strokeWidth={1.5} />
                   </div>
                   <div className="font-bold text-stone-700 text-lg mb-1">还没有单项运动</div>
@@ -229,8 +232,8 @@ export default function HabitsPage() {
               ) : filteredHabits.length > 0 ? (
                 <div className="space-y-3">
                   {filteredHabits.map((habit) => (
-                    <motion.div key={habit.id} variants={listItemSlide} className="flex items-center gap-4 glass-card rounded-[var(--radius-card-lg)] px-4 py-3.5">
-                      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0" style={{ backgroundColor: habit.color + '18', borderColor: habit.color + '30' }}>
+                    <motion.div key={habit.id} variants={listItemSlide} className="ios-list-row flex items-center gap-4 glass-card rounded-[var(--radius-card-lg)] px-4 py-3.5">
+                      <div className="w-12 h-12 rounded-[var(--radius-control)] flex items-center justify-center text-2xl shrink-0 border border-white/55 shadow-[inset_0_1px_0_rgb(255_255_255/0.58)]" style={{ backgroundColor: habit.color + '18', borderColor: habit.color + '30' }}>
                         <HabitIcon icon={habit.icon} className="w-6 h-6" color={habit.color} fallback="📌" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -266,7 +269,7 @@ export default function HabitsPage() {
               {archivedHabits.length > 0 && (
                 <div className="mt-8 pt-4 border-t border-[var(--color-line-soft)]">
                   <button
-                    className="flex items-center gap-2 w-full text-sm font-semibold text-stone-400 hover:text-stone-600 transition-colors py-1"
+                    className="flex items-center gap-2 w-full rounded-[var(--radius-control)] text-sm font-semibold text-stone-400 hover:text-stone-600 hover:bg-white/46 transition-colors py-2 px-2 -mx-2"
                     onClick={() => setShowArchived(v => !v)}
                   >
                     {showArchived ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -277,8 +280,8 @@ export default function HabitsPage() {
                     <AnimatePresence>
                       <motion.div className="space-y-3 mt-3" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
                         {archivedHabits.map((habit) => (
-                          <div key={habit.id} className="flex items-center gap-4 bg-white/45 rounded-2xl px-4 py-3.5 border border-stone-200/60">
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl opacity-60" style={{ backgroundColor: habit.color + '18' }}>
+                          <div key={habit.id} className="ios-list-row flex items-center gap-4 bg-white/45 rounded-[var(--radius-card-lg)] px-4 py-3.5 border border-white/60">
+                            <div className="w-10 h-10 rounded-[var(--radius-control)] flex items-center justify-center text-xl opacity-60" style={{ backgroundColor: habit.color + '18' }}>
                               <HabitIcon icon={habit.icon} className="w-5 h-5" color={habit.color} fallback="📌" />
                             </div>
                             <div className="flex-1 min-w-0 opacity-70">
@@ -301,7 +304,7 @@ export default function HabitsPage() {
             <motion.div key="combos-list" variants={sectionReveal} initial="initial" animate="animate">
               {(combos?.length ?? 0) === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="w-20 h-20 rounded-full bg-brand-50 flex items-center justify-center mb-4">
+                  <div className="w-20 h-20 rounded-[1.25rem] bg-brand-50/80 border border-white/70 shadow-[var(--shadow-card)] flex items-center justify-center mb-4">
                     <ListCheck className="w-10 h-10 text-brand-300" strokeWidth={1.5} />
                   </div>
                   <div className="font-bold text-stone-700 text-lg mb-1">还没有运动组合</div>
@@ -316,10 +319,10 @@ export default function HabitsPage() {
                     const linkedHabits = (habits ?? []).filter(h => combo.habit_ids.includes(h.id))
                     
                     return (
-                      <motion.div key={combo.id} variants={listItemSlide} className="flex flex-col gap-3 glass-card rounded-[var(--radius-card-lg)] px-4 py-3.5 border-t border-[var(--color-line-soft)]">
+                      <motion.div key={combo.id} variants={listItemSlide} className="ios-list-row flex flex-col gap-3 glass-card rounded-[var(--radius-card-lg)] px-4 py-3.5">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-[0.8rem] flex items-center justify-center text-xl shrink-0 border" style={{ backgroundColor: combo.color + '15', borderColor: combo.color + '40' }}>
+                            <div className="w-10 h-10 rounded-[var(--radius-control)] flex items-center justify-center text-xl shrink-0 border border-white/55" style={{ backgroundColor: combo.color + '15', borderColor: combo.color + '40' }}>
                               <HabitIcon icon={combo.icon} className="w-[18px] h-[18px]" color={combo.color} fallback="🚀" />
                             </div>
                             <div>
@@ -346,7 +349,7 @@ export default function HabitsPage() {
                         
                         <div className="flex flex-wrap gap-1.5">
                           {linkedHabits.map(h => (
-                            <span key={h.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-stone-100 text-[10px] font-bold text-stone-600">
+                            <span key={h.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.45rem] bg-white/62 border border-white/60 text-[10px] font-bold text-stone-600">
                               <HabitIcon icon={h.icon} className="w-3.5 h-3.5" color={h.color} fallback="📌" /> {h.name}
                             </span>
                           ))}

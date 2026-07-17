@@ -253,21 +253,21 @@ function StatsPage() {
 
   return (
     <motion.div
-      className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6"
+      className="app-page space-y-6"
       variants={pageChoreography}
       initial="initial"
       animate="animate"
     >
       {/* Header */}
       <motion.div variants={sectionReveal}>
-        <h1 className="headline-premium text-[2.02rem] sm:text-[2.3rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">
+        <h1 className="headline-premium text-[2.08rem] sm:text-[2.42rem] text-[var(--color-ink-950)]">
           统计分析
         </h1>
         <div className="flex items-center gap-2 mt-0.5">
           {activeTab === "year" ? (
             <>
               <button
-                className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors"
+                className="h-8 w-8 rounded-[var(--radius-control)] inline-flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-white/58 active:scale-95 transition-all"
                 onClick={() => setSelectedYear((y) => y - 1)}
                 aria-label="上一年"
               >
@@ -280,7 +280,7 @@ function StatsPage() {
                 {selectedYear} 年度数据
               </span>
               <button
-                className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="h-8 w-8 rounded-[var(--radius-control)] inline-flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-white/58 active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                 onClick={() => setSelectedYear((y) => y + 1)}
                 disabled={selectedYear >= currentYear}
                 aria-label="下一年"
@@ -299,7 +299,7 @@ function StatsPage() {
       {isRefreshing && (
         <motion.div
           variants={sectionReveal}
-          className="rounded-xl border border-brand-100 bg-brand-50/70 px-3.5 py-2 text-xs font-medium text-brand-700"
+          className="floating-chrome rounded-[var(--radius-control)] px-3.5 py-2 text-xs font-semibold text-brand-700"
         >
           正在同步统计数据…
         </motion.div>
@@ -308,7 +308,7 @@ function StatsPage() {
       {hasStatsError && (
         <motion.div
           variants={sectionReveal}
-          className="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3"
+          className="rounded-[var(--radius-card-lg)] border border-rose-200 bg-rose-50/78 px-4 py-3 shadow-[0_10px_24px_rgb(225_29_72/0.08)]"
         >
           <div className="text-sm font-semibold text-rose-700">统计数据加载失败</div>
           <div className="mt-0.5 text-xs text-rose-600">图表或列表可能不完整，请重试同步。</div>
@@ -486,7 +486,7 @@ function StatsPage() {
               <select
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="h-8 rounded-lg border border-stone-200 bg-white px-2.5 text-xs font-medium text-stone-700"
+              className="h-8 rounded-[var(--radius-control)] border border-[var(--color-line-soft)] bg-white/70 px-2.5 text-xs font-medium text-stone-700"
               >
                 {dateOptions.map((d) => (
                   <option key={d} value={d}>
@@ -495,7 +495,7 @@ function StatsPage() {
                 ))}
               </select>
               <button
-                className="h-8 rounded-lg border border-stone-200 px-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                className="h-8 rounded-[var(--radius-control)] border border-[var(--color-line-soft)] bg-white/42 px-2.5 text-xs font-semibold text-stone-700 hover:bg-white/72 active:scale-[0.98] transition-all"
                 onClick={() => setIsDayDetailOpen(true)}
               >
                 查看
@@ -542,7 +542,7 @@ function StatsPage() {
               <select
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="h-8 rounded-lg border border-stone-200 bg-white px-2.5 text-xs font-medium text-stone-700"
+              className="h-8 rounded-[var(--radius-control)] border border-[var(--color-line-soft)] bg-white/70 px-2.5 text-xs font-medium text-stone-700"
               >
                 {dateOptions.map((d) => (
                   <option key={d} value={d}>
@@ -551,7 +551,7 @@ function StatsPage() {
                 ))}
               </select>
               <button
-                className="h-8 rounded-lg border border-stone-200 px-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                className="h-8 rounded-[var(--radius-control)] border border-[var(--color-line-soft)] bg-white/42 px-2.5 text-xs font-semibold text-stone-700 hover:bg-white/72 active:scale-[0.98] transition-all"
                 onClick={() => setIsDayDetailOpen(true)}
               >
                 查看
@@ -589,7 +589,7 @@ function StatsPage() {
               <select
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="h-8 rounded-lg border border-stone-200 bg-white px-2.5 text-xs font-medium text-stone-700"
+              className="h-8 rounded-[var(--radius-control)] border border-[var(--color-line-soft)] bg-white/70 px-2.5 text-xs font-medium text-stone-700"
               >
                 {dateOptions.map((d) => (
                   <option key={d} value={d}>
@@ -598,7 +598,7 @@ function StatsPage() {
                 ))}
               </select>
               <button
-                className="h-8 rounded-lg border border-stone-200 px-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                className="h-8 rounded-[var(--radius-control)] border border-[var(--color-line-soft)] bg-white/42 px-2.5 text-xs font-semibold text-stone-700 hover:bg-white/72 active:scale-[0.98] transition-all"
                 onClick={() => setIsDayDetailOpen(true)}
               >
                 查看
@@ -658,7 +658,7 @@ function StatsPage() {
                     key={h.id}
                     to="/stats/$habitId"
                     params={{ habitId: h.id }}
-                    className="flex items-center gap-3 px-5 py-3.5 hover:bg-white/65 transition-colors"
+                    className="ios-list-row flex items-center gap-3 px-5 py-3.5"
                   >
                     <div
                       className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"

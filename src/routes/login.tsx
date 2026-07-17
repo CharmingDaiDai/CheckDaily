@@ -89,7 +89,7 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_20%_-10%,rgb(251_146_60/0.28),transparent_35%),radial-gradient(circle_at_80%_0%,rgb(253_186_116/0.26),transparent_40%),linear-gradient(180deg,#fffdf9_0%,#f6f3ee_55%,#f1ede7_100%)] flex items-center justify-center p-5">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_20%_-10%,rgb(216_111_47/0.18),transparent_35%),radial-gradient(circle_at_84%_0%,rgb(53_118_132/0.13),transparent_40%),linear-gradient(180deg,#fffdf9_0%,#f6f2eb_55%,#ece8de_100%)] flex items-center justify-center p-5">
       <div className="w-full max-w-sm">
         {/* Logo + title */}
         <motion.div
@@ -104,13 +104,13 @@ function LoginPage() {
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             transition={spring.emphasized}
           >
-            <div className="absolute inset-0 w-32 h-32 -left-8 -top-8 rounded-full bg-brand-200/30 blur-3xl" />
-            <div className="relative w-16 h-16 rounded-2xl bg-brand-500 flex items-center justify-center shadow-[0_8px_24px_rgb(249_115_22/0.35)]">
+            <div className="absolute inset-0 w-32 h-32 -left-8 -top-8 rounded-full bg-brand-200/24 blur-3xl" />
+            <div className="relative w-16 h-16 rounded-[1rem] bg-brand-500 flex items-center justify-center shadow-[0_8px_24px_rgb(185_84_34/0.28)]">
               <Flame className="w-9 h-9 text-white" strokeWidth={2.5} />
             </div>
           </motion.div>
           <motion.h1
-            className="headline-premium text-[2.32rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]"
+            className="headline-premium text-[2.4rem] text-[var(--color-ink-950)]"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...spring.gentle, delay: 0.15 }}
@@ -129,7 +129,7 @@ function LoginPage() {
 
         {/* Card */}
         <motion.div
-          className="surface-frame glass-card rounded-3xl p-7"
+          className="surface-frame rounded-[1rem] p-7"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...spring.gentle, delay: 0.35 }}
@@ -144,11 +144,11 @@ function LoginPage() {
             <TabsContent value="magic">
               {mlSent ? (
                 <div className="flex flex-col items-center text-center gap-4 py-2">
-                  <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-[var(--radius-card-lg)] bg-green-100 flex items-center justify-center">
                     <CheckCircle2 className="w-8 h-8 text-green-500" strokeWidth={2} />
                   </div>
                   <div>
-                    <div className="font-bold text-stone-900 text-lg">邮件已发送！</div>
+                    <div className="font-bold text-stone-900 text-lg">邮件已发送</div>
                     <div className="text-stone-500 text-sm mt-1.5 leading-relaxed">
                       请查看 <strong className="text-stone-700">{mlEmail}</strong> 的收件箱，
                       点击邮件中的链接完成登录
@@ -216,7 +216,7 @@ function LoginPage() {
                     <CheckCircle2 className="w-8 h-8 text-green-500" strokeWidth={2} />
                   </div>
                   <div>
-                    <div className="font-bold text-stone-900 text-lg">注册成功！</div>
+                    <div className="font-bold text-stone-900 text-lg">注册成功</div>
                     <div className="text-stone-500 text-sm mt-1.5 leading-relaxed">
                       请查看 <strong className="text-stone-700">{pwEmail}</strong> 的收件箱，
                       点击验证链接激活账号后即可登录
@@ -274,9 +274,10 @@ function LoginPage() {
                         />
                         <button
                           type="button"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/80"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/70 active:scale-95 transition-all"
                           onClick={() => setShowPw((v) => !v)}
                           tabIndex={-1}
+                          aria-label={showPw ? '隐藏密码' : '显示密码'}
                         >
                           {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -299,9 +300,10 @@ function LoginPage() {
                           />
                           <button
                             type="button"
-                            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/80"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/70 active:scale-95 transition-all"
                             onClick={() => setShowConfirm((v) => !v)}
                             tabIndex={-1}
+                            aria-label={showConfirm ? '隐藏确认密码' : '显示确认密码'}
                           >
                             {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>

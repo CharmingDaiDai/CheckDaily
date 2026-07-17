@@ -96,21 +96,24 @@ const HighKneesActionIcon = (props: ActionIconProps) => (
   </ActionCanvas>
 )
 type IconFamily = 'lucide' | 'react-icons' | 'custom'
+type HabitIconComponentProps = ActionIconProps & {
+  'aria-hidden'?: boolean | 'true'
+}
 
 export type HabitIconOption = {
   key: string
   label: string
-  Icon: ComponentType<any>
+  Icon: ComponentType<HabitIconComponentProps>
   family: IconFamily
   tone: string
 }
 
 function fromLucide(key: string, label: string, Icon: LucideIcon, tone: string): HabitIconOption {
-  return { key, label, Icon, family: 'lucide', tone }
+  return { key, label, Icon: Icon as ComponentType<HabitIconComponentProps>, family: 'lucide', tone }
 }
 
 function fromReactIcon(key: string, label: string, Icon: IconType, tone: string): HabitIconOption {
-  return { key, label, Icon, family: 'react-icons', tone }
+  return { key, label, Icon: Icon as ComponentType<HabitIconComponentProps>, family: 'react-icons', tone }
 }
 
 function fromCustomIcon(key: string, label: string, Icon: ComponentType<ActionIconProps>, tone: string): HabitIconOption {

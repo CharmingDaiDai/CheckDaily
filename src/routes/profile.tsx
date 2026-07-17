@@ -123,19 +123,19 @@ function ProfilePage() {
 
   return (
     <motion.div
-      className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6"
+      className="app-page space-y-6"
       variants={pageChoreography}
       initial="initial"
       animate="animate"
     >
       <div>
-        <h1 className="headline-premium text-[2rem] sm:text-[2.28rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">我的</h1>
+        <h1 className="headline-premium text-[2.08rem] sm:text-[2.42rem] text-[var(--color-ink-950)]">我的</h1>
       </div>
 
       {/* User card */}
       <motion.div variants={sectionReveal} className="glass-card rounded-[var(--radius-card-lg)] p-5">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-brand-100 flex items-center justify-center">
+          <div className="w-14 h-14 rounded-[var(--radius-card-lg)] bg-brand-100/78 border border-white/70 shadow-[inset_0_1px_0_rgb(255_255_255/0.72)] flex items-center justify-center">
             <User className="w-7 h-7 text-brand-500" strokeWidth={1.8} />
           </div>
           <div>
@@ -155,7 +155,7 @@ function ProfilePage() {
           <span className="font-semibold text-stone-700 text-sm">账户安全</span>
         </div>
         <button
-          className="w-full flex items-center justify-between px-5 py-4 border-b luxury-divider hover:bg-white/65 transition-colors text-left"
+          className="ios-list-row w-full flex items-center justify-between px-5 py-4 border-b luxury-divider text-left"
           onClick={emailDialog.openDialog}
         >
           <div className="flex items-center gap-3">
@@ -165,7 +165,7 @@ function ProfilePage() {
           <ChevronRight className="w-4 h-4 text-stone-300" />
         </button>
         <button
-          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/65 transition-colors text-left"
+          className="ios-list-row w-full flex items-center justify-between px-5 py-4 text-left"
           onClick={pwDialog.openDialog}
         >
           <div className="flex items-center gap-3">
@@ -183,7 +183,7 @@ function ProfilePage() {
           <span className="font-semibold text-stone-700 text-sm">数据管理</span>
         </div>
         <button
-          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/65 transition-colors text-left disabled:opacity-50"
+          className="ios-list-row w-full flex items-center justify-between px-5 py-4 text-left disabled:opacity-50"
           onClick={handleExport}
           disabled={exporting}
         >
@@ -327,7 +327,8 @@ function ProfilePage() {
                   />
                   <button
                     type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/70 active:scale-95 transition-all"
+                    aria-label={showPw ? '隐藏密码' : '显示密码'}
                     onClick={() => setShowPw((v) => !v)}
                     tabIndex={-1}
                   >
@@ -350,7 +351,8 @@ function ProfilePage() {
                   />
                   <button
                     type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/70 active:scale-95 transition-all"
+                    aria-label={showConfirm ? '隐藏确认密码' : '显示确认密码'}
                     onClick={() => setShowConfirm((v) => !v)}
                     tabIndex={-1}
                   >
