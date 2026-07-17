@@ -1,5 +1,5 @@
-import { useLayoutEffect, useMemo, useRef } from 'react'
-import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { createRootRouteWithContext, Outlet, useNavigate } from '@tanstack/react-router'
 import { useRouterState } from '@tanstack/react-router'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useAuthInit } from '@/hooks/useAuth'
@@ -40,9 +40,11 @@ function RootLayout() {
   useAuthInit()
   const { loading, user } = useAuthStore()
   const { location } = useRouterState()
+  const navigate = useNavigate()
   const reduceMotion = useReducedMotion()
   const prevPathRef = useRef(location.pathname)
   const mainRef = useRef<HTMLElement | null>(null)
+  const isPublicRoute = location.pathname === '/login' || location.pathname === '/auth/callback'
   const direction = useMemo(() => {
     const currentPath = normalizePath(location.pathname)
     const prevPath = normalizePath(prevPathRef.current)
@@ -56,6 +58,11 @@ function RootLayout() {
   useLayoutEffect(() => {
     prevPathRef.current = location.pathname
   }, [location.pathname])
+
+  useEffect(() => {
+    if (loading || user || isPublicRoute) return
+    void navigate({ to: '/login', replace: true })
+  }, [loading, user, isPublicRoute, navigate])
 
   const routeVariants = useMemo(
     () => (reduceMotion ? directionalRouteTransitionReduced : directionalRouteTransition),
@@ -98,22 +105,48 @@ function RootLayout() {
   if (!user) {
     return (
       <ErrorBoundary>
-        <AnimatePresence
-          mode="wait"
-          initial={false}
-          onExitComplete={resetScrollPosition}
-        >
-          <motion.div
-            key={location.pathname}
-            custom={direction}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            variants={routeVariants}
+        {isPublicRoute ? (
+          <AnimatePresence
+            mode="wait"
+            initial={false}
+            onExitComplete={resetScrollPosition}
           >
-            <Outlet />
-          </motion.div>
-        </AnimatePresence>
+            <motion.div
+              key={location.pathname}
+              custom={direction}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              variants={routeVariants}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
+        ) : (
+          <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(circle_at_50%_10%,rgb(251_146_60/0.18),transparent_40%),linear-gradient(180deg,#fffdf9_0%,#f6f3ee_60%,#f1ede7_100%)]">
+            <motion.div
+              className="flex flex-col items-center gap-4"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={spring.gentle}
+            >
+              <motion.div
+                className="w-12 h-12 rounded-2xl bg-gradient-to-b from-brand-400 to-brand-600 flex items-center justify-center shadow-[0_10px_24px_rgb(249_115_22/0.35)]"
+                initial={{ scale: 0.6, rotate: -12 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={spring.emphasized}
+              >
+                <span className="text-white text-2xl">🔥</span>
+              </motion.div>
+              <motion.div
+                className="w-5 h-5 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.3 }}
+              />
+            </motion.div>
+          </div>
+        )}
         <Toaster />
       </ErrorBoundary>
     )

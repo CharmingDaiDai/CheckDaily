@@ -15,6 +15,26 @@ function toUtcEndOfLocalDay(dateStr: string): string {
   return new Date(y, m - 1, d, 23, 59, 59, 999).toISOString()
 }
 
+async function assertOwnedHabitIds(userId: string, habitIds: string[]) {
+  const uniqueHabitIds = [...new Set(habitIds)]
+  if (uniqueHabitIds.length === 0) return
+
+  const { data, error } = await supabase
+    .from('habits')
+    .select('id')
+    .eq('user_id', userId)
+    .in('id', uniqueHabitIds)
+
+  if (error) throw error
+
+  const ownedIds = new Set((data ?? []).map((row) => row.id))
+  const missingIds = uniqueHabitIds.filter((id) => !ownedIds.has(id))
+
+  if (missingIds.length > 0) {
+    throw new Error('包含无权限的打卡项目')
+  }
+}
+
 export function useCheckIns(opts?: { habitId?: string; startDate?: string; endDate?: string }) {
   const userId = useAuthStore((s) => s.user?.id)
   const { habitId, startDate, endDate } = opts ?? {}
@@ -31,7 +51,6 @@ export function useCheckIns(opts?: { habitId?: string; startDate?: string; endDa
       if (habitId) q = q.eq('habit_id', habitId)
       if (startDate) q = q.gte('checked_at', toUtcStartOfLocalDay(startDate))
       if (endDate) q = q.lte('checked_at', toUtcEndOfLocalDay(endDate))
-      q = q.limit(10000)
       const { data, error } = await q
       if (error) throw error
       return (data ?? []) as CheckIn[]
@@ -52,6 +71,7 @@ export function useCheckIn() {
   return useMutation({
     mutationFn: async (payload: Omit<CheckInInsert, 'user_id'> & { note?: string }): Promise<CheckIn> => {
       if (!userId) throw new Error('Not authenticated')
+      await assertOwnedHabitIds(userId, [payload.habit_id])
       const { data, error } = await supabase
         .from('check_ins')
         .insert({
@@ -114,7 +134,6 @@ export function useYearlyCheckInCounts(habitId?: string, year?: number) {
         .gte('checked_at', toUtcStartOfLocalDay(`${resolvedYear}-01-01`))
         .lte('checked_at', toUtcEndOfLocalDay(`${resolvedYear}-12-31`))
       if (habitId) q = q.eq('habit_id', habitId)
-      q = q.limit(10000)
       const { data, error } = await q
       if (error) throw error
       const counts: Record<string, number> = {}
@@ -136,6 +155,7 @@ export function useCheckInCombo() {
     mutationFn: async (params: { habitIds: string[], checkedAt?: string }): Promise<CheckIn[]> => {
       if (!userId) throw new Error('Not logged in')
       if (!params.habitIds.length) return []
+      await assertOwnedHabitIds(userId, params.habitIds)
 
       const payloads = params.habitIds.map(hId => ({
         habit_id: hId,
