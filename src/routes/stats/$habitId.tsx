@@ -1,6 +1,5 @@
 import { useMemo, useState, lazy, Suspense } from 'react'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
-import { motion } from 'motion/react'
 import { ArrowLeft, Flame, Trophy, Target, Hash, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 const HabitHeatmap = lazy(() => import('@/components/charts/HabitHeatmap'))
 import { TrendLineChart } from '@/components/charts/LineCharts'
@@ -17,7 +16,6 @@ import {
   computeStreak,
   computeLongestStreak,
 } from '@/lib/utils'
-import { pageChoreography } from '@/lib/motion'
 import type { CalendarDatum } from '@/types'
 import { HabitIcon } from '@/lib/habitIcons'
 
@@ -94,15 +92,10 @@ function HabitStatsPage() {
   const color = habit?.color ?? '#f97316'
 
   return (
-    <motion.div
-      className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-32 md:pb-10 space-y-6"
-      variants={pageChoreography}
-      initial="initial"
-      animate="animate"
-    >
+    <div className="app-page pb-32 md:pb-10 space-y-6">
       {/* Header */}
       <div>
-        <Link to="/stats" className="inline-flex items-center gap-1.5 text-sm text-stone-400 font-semibold hover:text-stone-600 mb-4">
+        <Link to="/stats" className="inline-flex min-h-10 items-center gap-1.5 rounded-[var(--radius-control)] px-2 -ml-2 text-sm text-stone-500 font-semibold hover:text-stone-700 hover:bg-white/48 active:scale-[0.98] transition-all mb-4">
           <ArrowLeft className="w-3.5 h-3.5" strokeWidth={2.5} />
           返回统计
         </Link>
@@ -110,16 +103,16 @@ function HabitStatsPage() {
         {habit ? (
           <div className="flex items-center gap-3">
             <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+              className="w-12 h-12 rounded-[var(--radius-control)] border border-white/58 shadow-[inset_0_1px_0_rgb(255_255_255/0.66)] flex items-center justify-center text-2xl"
               style={{ backgroundColor: color + '18' }}
             >
               <HabitIcon icon={habit.icon} className="w-6 h-6" color={color} fallback="📌" />
             </div>
             <div>
-              <h1 className="headline-premium text-[2rem] sm:text-[2.28rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">{habit.name}</h1>
+              <h1 className="headline-premium text-[2.08rem] sm:text-[2.42rem] text-[var(--color-ink-950)]">{habit.name}</h1>
               <div className="flex items-center gap-2 mt-0.5">
                 <button
-                  className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors"
+                  className="h-8 w-8 rounded-[var(--radius-control)] inline-flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-white/58 active:scale-95 transition-all"
                   onClick={() => setSelectedYear(y => y - 1)}
                   aria-label="上一年"
                 >
@@ -127,7 +120,7 @@ function HabitStatsPage() {
                 </button>
                 <span className="text-sm text-stone-400 font-medium">{selectedYear} 年度统计</span>
                 <button
-                  className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="h-8 w-8 rounded-[var(--radius-control)] inline-flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-white/58 active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                   onClick={() => setSelectedYear(y => y + 1)}
                   disabled={selectedYear >= currentYear}
                   aria-label="下一年"
@@ -151,8 +144,8 @@ function HabitStatsPage() {
       </div>
 
       {/* Heatmap */}
-      <div className="surface-frame rounded-2xl p-5">
-        <div className="text-sm font-semibold text-stone-500 mb-4 pb-3 border-b border-stone-50">{selectedYear} 年日历热力图</div>
+      <div className="surface-frame rounded-[var(--radius-card-lg)] p-5">
+        <div className="text-sm font-semibold text-stone-500 mb-4 pb-3 border-b luxury-divider">{selectedYear} 年日历热力图</div>
         {isLoading ? (
           <Skeleton className="h-40 w-full" />
         ) : (
@@ -168,8 +161,8 @@ function HabitStatsPage() {
       </div>
 
       {/* 30-day trend */}
-      <div className="surface-frame rounded-2xl p-5">
-        <div className="text-sm font-semibold text-stone-500 mb-4 pb-3 border-b border-stone-50">近30天趋势</div>
+      <div className="surface-frame rounded-[var(--radius-card-lg)] p-5">
+        <div className="text-sm font-semibold text-stone-500 mb-4 pb-3 border-b luxury-divider">近30天趋势</div>
         {isLoading ? (
           <Skeleton className="h-48 w-full" />
         ) : (
@@ -178,8 +171,8 @@ function HabitStatsPage() {
       </div>
 
       {/* History list */}
-      <div className="surface-frame rounded-2xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-stone-50">
+      <div className="surface-frame rounded-[var(--radius-card-lg)] overflow-hidden">
+        <div className="px-5 py-4 border-b luxury-divider">
           <span className="font-bold text-stone-800 text-sm">打卡历史</span>
           <span className="text-xs text-stone-400 font-medium ml-2">
             {total} 条
@@ -194,7 +187,7 @@ function HabitStatsPage() {
           </div>
         ) : groupedHistory.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-stone-400 gap-3">
-            <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-[var(--radius-card-lg)] bg-white/62 border border-white/70 flex items-center justify-center">
               <span className="text-2xl">📭</span>
             </div>
             <span className="text-sm font-medium">暂无记录</span>
@@ -203,12 +196,12 @@ function HabitStatsPage() {
           <div>
             {groupedHistory.map(([date, records]) => (
               <div key={date}>
-                <div className="px-5 py-2 bg-stone-50 text-xs font-semibold text-stone-500">
+                <div className="px-5 py-2 bg-white/42 text-xs font-semibold text-stone-500">
                   {new Date(date).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' })}
                   <span className="ml-2 text-stone-400">{records?.length} 次</span>
                 </div>
                 {records?.map((ci) => (
-                  <div key={ci.id} className="flex items-start gap-3 px-5 py-3 border-b border-stone-50 last:border-b-0 group">
+                  <div key={ci.id} className="ios-list-row flex items-start gap-3 px-5 py-3 border-b luxury-divider last:border-b-0 group">
                     <div className="text-xs font-semibold text-stone-400 mt-0.5 shrink-0 w-12">
                       {formatTime(ci.checked_at)}
                     </div>
@@ -238,7 +231,7 @@ function HabitStatsPage() {
             ))}
             {total > displayCount && (
               <button
-                className="w-full py-3 text-xs font-semibold text-stone-400 hover:text-brand-500 transition-colors border-t border-stone-50"
+                className="w-full py-3 text-xs font-semibold text-stone-400 hover:text-brand-500 hover:bg-white/52 active:scale-[0.99] transition-all border-t luxury-divider"
                 onClick={() => setDisplayCount(n => n + 60)}
               >
                 加载更多（还有 {total - displayCount} 条）
@@ -259,7 +252,7 @@ function HabitStatsPage() {
           if (deleteTarget) await deleteCheckIn.mutateAsync(deleteTarget)
         }}
       />
-    </motion.div>
+    </div>
   )
 }
 

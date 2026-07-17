@@ -14,7 +14,7 @@ import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/useToast'
 import { Spinner } from '@/components/ui/spinner'
 import { useFormDialog } from '@/hooks/useFormDialog'
-import { pageChoreography, sectionReveal } from '@/lib/motion'
+import { sectionReveal } from '@/lib/motion'
 
 function ProfilePage() {
   const user = useAuthStore((s) => s.user)
@@ -122,27 +122,22 @@ function ProfilePage() {
 
 
   return (
-    <motion.div
-      className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6"
-      variants={pageChoreography}
-      initial="initial"
-      animate="animate"
-    >
+    <div className="app-page space-y-6">
       <div>
-        <h1 className="headline-premium text-[2rem] sm:text-[2.28rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">我的</h1>
+        <h1 className="headline-premium text-[2.08rem] sm:text-[2.42rem] text-[var(--color-ink-950)]">我的</h1>
       </div>
 
       {/* User card */}
       <motion.div variants={sectionReveal} className="glass-card rounded-[var(--radius-card-lg)] p-5">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-brand-100 flex items-center justify-center">
+          <div className="w-14 h-14 rounded-[var(--radius-card-lg)] bg-brand-100/78 border border-white/70 shadow-[inset_0_1px_0_rgb(255_255_255/0.72)] flex items-center justify-center">
             <User className="w-7 h-7 text-brand-500" strokeWidth={1.8} />
           </div>
           <div>
-            <div className="font-bold text-stone-900">个人账户</div>
+            <div className="font-semibold text-[var(--color-ink-950)]">个人账户</div>
             <div className="flex items-center gap-1.5 mt-1">
-              <Mail className="w-3 h-3 text-stone-400" />
-              <span className="text-sm text-stone-500 font-medium">{user?.email}</span>
+              <Mail className="w-3 h-3 text-[var(--color-ink-400)]" />
+              <span className="text-sm text-[var(--color-ink-500)] font-medium">{user?.email}</span>
             </div>
           </div>
         </div>
@@ -151,47 +146,47 @@ function ProfilePage() {
       {/* Account security */}
       <motion.div variants={sectionReveal} className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden">
         <div className="flex items-center gap-3 px-5 py-4 border-b luxury-divider">
-          <Shield className="w-4 h-4 text-stone-400" />
-          <span className="font-semibold text-stone-700 text-sm">账户安全</span>
+          <Shield className="w-4 h-4 text-[var(--color-ink-400)]" />
+          <span className="font-semibold text-[var(--color-ink-700)] text-sm">账户安全</span>
         </div>
         <button
-          className="w-full flex items-center justify-between px-5 py-4 border-b luxury-divider hover:bg-white/65 transition-colors text-left"
+          className="ios-list-row w-full flex items-center justify-between px-5 py-4 border-b luxury-divider text-left"
           onClick={emailDialog.openDialog}
         >
           <div className="flex items-center gap-3">
-            <Mail className="w-4 h-4 text-stone-400" />
-            <span className="text-sm font-medium text-stone-700">修改邮箱</span>
+            <Mail className="w-4 h-4 text-[var(--color-ink-400)]" />
+            <span className="text-sm font-medium text-[var(--color-ink-700)]">修改邮箱</span>
           </div>
-          <ChevronRight className="w-4 h-4 text-stone-300" />
+          <ChevronRight className="w-4 h-4 text-[var(--color-ink-300)]" />
         </button>
         <button
-          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/65 transition-colors text-left"
+          className="ios-list-row w-full flex items-center justify-between px-5 py-4 text-left"
           onClick={pwDialog.openDialog}
         >
           <div className="flex items-center gap-3">
-            <Lock className="w-4 h-4 text-stone-400" />
-            <span className="text-sm font-medium text-stone-700">修改密码</span>
+            <Lock className="w-4 h-4 text-[var(--color-ink-400)]" />
+            <span className="text-sm font-medium text-[var(--color-ink-700)]">修改密码</span>
           </div>
-          <ChevronRight className="w-4 h-4 text-stone-300" />
+          <ChevronRight className="w-4 h-4 text-[var(--color-ink-300)]" />
         </button>
       </motion.div>
 
       {/* Data management */}
       <motion.div variants={sectionReveal} className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden">
         <div className="flex items-center gap-3 px-5 py-4 border-b luxury-divider">
-          <Database className="w-4 h-4 text-stone-400" />
-          <span className="font-semibold text-stone-700 text-sm">数据管理</span>
+          <Database className="w-4 h-4 text-[var(--color-ink-400)]" />
+          <span className="font-semibold text-[var(--color-ink-700)] text-sm">数据管理</span>
         </div>
         <button
-          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/65 transition-colors text-left disabled:opacity-50"
+          className="ios-list-row w-full flex items-center justify-between px-5 py-4 text-left disabled:opacity-50"
           onClick={handleExport}
           disabled={exporting}
         >
           <div className="flex items-center gap-3">
-            <Download className="w-4 h-4 text-stone-400" />
+            <Download className="w-4 h-4 text-[var(--color-ink-400)]" />
             <div>
-              <div className="text-sm font-medium text-stone-700">导出数据</div>
-              <div className="text-xs text-stone-400 mt-0.5">下载全部习惯和打卡记录 (JSON)</div>
+              <div className="text-sm font-medium text-[var(--color-ink-700)]">导出数据</div>
+              <div className="text-xs text-[var(--color-ink-500)] mt-0.5">下载全部习惯和打卡记录 (JSON)</div>
             </div>
           </div>
           {exporting ? (
@@ -205,21 +200,21 @@ function ProfilePage() {
       {/* App info */}
       <motion.div variants={sectionReveal} className="glass-card rounded-[var(--radius-card-lg)] overflow-hidden">
         <div className="flex items-center gap-3 px-5 py-4 border-b luxury-divider">
-          <Info className="w-4 h-4 text-stone-400" />
-          <span className="font-semibold text-stone-700 text-sm">关于</span>
+          <Info className="w-4 h-4 text-[var(--color-ink-400)]" />
+          <span className="font-semibold text-[var(--color-ink-700)] text-sm">关于</span>
         </div>
         <div className="px-5 py-4 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-stone-500 font-medium">应用版本</span>
-            <span className="font-semibold text-stone-700">{__APP_VERSION__}</span>
+            <span className="text-[var(--color-ink-500)] font-medium">应用版本</span>
+            <span className="font-semibold text-[var(--color-ink-700)]">{__APP_VERSION__}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-stone-500 font-medium">开发者</span>
-            <span className="font-semibold text-stone-700">CharmingDaiDai</span>
+            <span className="text-[var(--color-ink-500)] font-medium">开发者</span>
+            <span className="font-semibold text-[var(--color-ink-700)]">CharmingDaiDai</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-stone-500 font-medium">主页</span>
-            <span className="font-semibold text-stone-700">https://github.com/CharmingDaiDai</span>
+            <span className="text-[var(--color-ink-500)] font-medium">主页</span>
+            <span className="font-semibold text-[var(--color-ink-700)]">https://github.com/CharmingDaiDai</span>
           </div>
         </div>
       </motion.div>
@@ -253,7 +248,7 @@ function ProfilePage() {
           </DialogHeader>
           {emailDialog.msg ? (
             <div className="py-4 text-center space-y-3">
-              <div className="text-sm text-stone-600 leading-relaxed">{emailDialog.msg}</div>
+              <div className="text-sm text-[var(--color-ink-600)] leading-relaxed">{emailDialog.msg}</div>
               <Button variant="outline" className="w-full" onClick={() => emailDialog.close()}>
                 知道了
               </Button>
@@ -263,7 +258,7 @@ function ProfilePage() {
               <div className="space-y-2">
                 <Label htmlFor="new-email">新邮箱地址</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-ink-400)]" />
                   <Input
                     id="new-email"
                     type="email"
@@ -278,7 +273,7 @@ function ProfilePage() {
                 </div>
               </div>
               {emailDialog.error && (
-                <div className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-xl font-medium">
+                <div className="text-sm text-brand-700 bg-brand-50 px-3 py-2 rounded-xl font-medium">
                   {emailDialog.error}
                 </div>
               )}
@@ -305,7 +300,7 @@ function ProfilePage() {
           </DialogHeader>
           {pwDialog.msg ? (
             <div className="py-4 text-center space-y-3">
-              <div className="text-sm text-green-600 font-medium">{pwDialog.msg}</div>
+              <div className="text-sm text-brand-700 font-medium">{pwDialog.msg}</div>
               <Button variant="outline" className="w-full" onClick={() => pwDialog.close()}>
                 完成
               </Button>
@@ -315,7 +310,7 @@ function ProfilePage() {
               <div className="space-y-2">
                 <Label htmlFor="new-pw">新密码</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-ink-400)]" />
                   <Input
                     id="new-pw"
                     type={showPw ? 'text' : 'password'}
@@ -327,7 +322,8 @@ function ProfilePage() {
                   />
                   <button
                     type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/70 active:scale-95 transition-all"
+                    aria-label={showPw ? '隐藏密码' : '显示密码'}
                     onClick={() => setShowPw((v) => !v)}
                     tabIndex={-1}
                   >
@@ -338,7 +334,7 @@ function ProfilePage() {
               <div className="space-y-2">
                 <Label htmlFor="confirm-pw">确认新密码</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-ink-400)]" />
                   <Input
                     id="confirm-pw"
                     type={showConfirm ? 'text' : 'password'}
@@ -350,7 +346,8 @@ function ProfilePage() {
                   />
                   <button
                     type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/70 active:scale-95 transition-all"
+                    aria-label={showConfirm ? '隐藏确认密码' : '显示确认密码'}
                     onClick={() => setShowConfirm((v) => !v)}
                     tabIndex={-1}
                   >
@@ -377,7 +374,7 @@ function ProfilePage() {
           )}
         </DialogContent>
       </Dialog>
-    </motion.div>
+    </div>
   )
 }
 

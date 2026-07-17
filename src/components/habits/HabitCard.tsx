@@ -41,12 +41,12 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
   // 3D tilt motion values
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
-  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [4, -4]), { stiffness: 300, damping: 30 })
-  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-4, 4]), { stiffness: 300, damping: 30 })
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [1.4, -1.4]), { stiffness: 360, damping: 34 })
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-1.4, 1.4]), { stiffness: 360, damping: 34 })
 
   // Magnetic icon follow
-  const iconX = useSpring(useTransform(mouseX, [-0.5, 0.5], [-3, 3]), { stiffness: 200, damping: 20 })
-  const iconY = useSpring(useTransform(mouseY, [-0.5, 0.5], [-3, 3]), { stiffness: 200, damping: 20 })
+  const iconX = useSpring(useTransform(mouseX, [-0.5, 0.5], [-1.5, 1.5]), { stiffness: 260, damping: 24 })
+  const iconY = useSpring(useTransform(mouseY, [-0.5, 0.5], [-1.5, 1.5]), { stiffness: 260, damping: 24 })
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     if (reduceMotion) return
@@ -151,6 +151,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
   // Long-press handlers
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
     if (e.button !== 0) return
+    e.currentTarget.setPointerCapture?.(e.pointerId)
     didLongPress.current = false
     setIsLongPressing(true)
     longPressTimer.current = setTimeout(() => {
@@ -180,8 +181,8 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
   const sheetContent = (
     <div className="space-y-4">
       <div className="mb-6 -mt-2">
-        <p className="text-sm text-stone-500 font-medium">
-          今日已打卡 <strong className="text-stone-900 mx-0.5">{todayCount}</strong> 次 · 确认新增一次打卡
+        <p className="text-sm text-[var(--color-ink-600)] font-medium">
+          今日已打卡 <strong className="text-[var(--color-ink-950)] mx-0.5">{todayCount}</strong> 次 · 确认新增一次打卡
         </p>
       </div>
 
@@ -201,7 +202,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
         ) : (
           <button
             type="button"
-            className="text-xs text-stone-400 hover:text-brand-500 transition-colors font-medium"
+            className="rounded-[var(--radius-control)] px-2 py-1 text-xs text-[var(--color-ink-500)] hover:text-brand-600 hover:bg-white/62 active:scale-[0.98] transition-all font-semibold"
             onClick={() => setShowNote(true)}
           >
             + 添加备注
@@ -227,7 +228,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
 
         {isDone && latestCheckInId && (
           <button
-            className="w-full flex items-center justify-center gap-1.5 py-1 text-xs text-stone-400 hover:text-stone-600 transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-1.5 py-1 text-xs text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] transition-colors disabled:opacity-50"
             onClick={handleUndo}
             disabled={deleteCheckIn.isPending}
           >
@@ -245,9 +246,9 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
       role="button"
       tabIndex={0}
       className={cn(
-        'absolute top-1.5 right-1.5 z-10 w-11 h-11 rounded-xl',
+        'absolute top-1.5 right-1.5 z-10 w-11 h-11 rounded-[var(--radius-control)]',
         'flex items-center justify-center cursor-pointer',
-        'text-stone-400 hover:text-stone-600 hover:bg-black/5 bg-white/70 backdrop-blur-[2px]',
+        'text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/72 bg-white/54 backdrop-blur-md',
         'transition-all duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
         isDone ? 'opacity-70' : 'opacity-80 sm:opacity-0 sm:group-hover:opacity-100',
       )}
@@ -318,9 +319,9 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
   if (compact) {
     return (
       <>
-        <motion.button
-          whileTap={reduceMotion ? undefined : { scale: 0.96, transition: spring.snappy }}
-          whileHover={reduceMotion || isDone ? undefined : { y: -2 }}
+      <motion.button
+          whileTap={reduceMotion ? undefined : { scale: 0.975, transition: spring.snappy }}
+          whileHover={reduceMotion || isDone ? undefined : { y: -1 }}
           style={{
             ...style,
             ...tiltStyle,
@@ -328,12 +329,12 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
           ref={cardRef}
           className={cn(
             'group relative flex flex-col items-center gap-1 pt-3 pb-2 px-1.5',
-            'rounded-2xl tap-scale w-full select-none overflow-hidden',
+            'rounded-[var(--radius-card-lg)] tap-scale w-full select-none overflow-hidden',
             'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
               isQuickSubmitting && 'pointer-events-none',
             isDone
-              ? 'bg-white/60 shadow-sm'
-              : 'bg-white shadow-[var(--shadow-card)]',
+              ? 'bg-white/52 border border-white/56 shadow-sm'
+              : 'bg-white/78 border border-white/64 shadow-[var(--shadow-card)]',
             celebrating && 'animate-celebrate',
           )}
           aria-label={`打卡：${habit.name}`}
@@ -357,7 +358,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
           <div className="relative">
             <motion.div
               className={cn(
-                'w-10 h-10 rounded-xl flex items-center justify-center text-xl',
+                'w-10 h-10 rounded-[var(--radius-control)] flex items-center justify-center text-xl',
                 'shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)]',
               )}
               style={{
@@ -386,7 +387,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
           {/* Name */}
           <div className={cn(
             'text-[11px] font-semibold text-center line-clamp-1 w-full px-0.5 leading-snug',
-            isDone ? 'text-stone-500' : 'text-stone-800',
+            isDone ? 'text-[var(--color-ink-500)]' : 'text-[var(--color-ink-800)]',
           )}>
             {habit.name}
           </div>
@@ -408,7 +409,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
               ) : streak >= 2 ? (
                 <motion.span
                   key="streak"
-                  className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-600"
+                  className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-brand-700"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -433,21 +434,21 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
   return (
     <>
       <motion.button
-        whileTap={reduceMotion ? undefined : { scale: 0.97, transition: spring.snappy }}
-        whileHover={reduceMotion || isDone ? undefined : { y: -2, transition: spring.smooth }}
+        whileTap={reduceMotion ? undefined : { scale: 0.975, transition: spring.snappy }}
+        whileHover={reduceMotion || isDone ? undefined : { y: -1, transition: spring.smooth }}
         style={{
           ...style,
           ...tiltStyle,
         }}
         ref={cardRef}
         className={cn(
-          'group relative flex items-center gap-2.5 px-3 py-2.5 rounded-2xl tap-scale',
+          'group relative flex items-center gap-2.5 px-3 py-2.5 rounded-[var(--radius-card-lg)] tap-scale',
           'text-left w-full select-none overflow-hidden',
           'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
           isQuickSubmitting && 'pointer-events-none',
           isDone
-            ? 'bg-white/60 shadow-sm'
-            : 'bg-white shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] transition-[box-shadow,transform] duration-200',
+            ? 'bg-white/52 border border-white/56 shadow-sm'
+            : 'bg-white/78 border border-white/64 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] transition-[box-shadow,transform,background-color] duration-200',
           celebrating && 'animate-celebrate',
         )}
         aria-label={`打卡：${habit.name}`}
@@ -475,7 +476,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
         <div className="relative shrink-0">
           <motion.div
             className={cn(
-              'w-9 h-9 rounded-xl flex items-center justify-center text-lg',
+              'w-9 h-9 rounded-[var(--radius-control)] flex items-center justify-center text-lg',
               'shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)]',
             )}
             style={{
@@ -505,8 +506,8 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className={cn(
-            'font-bold text-[13px] leading-snug line-clamp-1',
-            isDone ? 'text-stone-500' : 'text-stone-900',
+            'font-semibold text-[13px] leading-snug line-clamp-1',
+            isDone ? 'text-[var(--color-ink-500)]' : 'text-[var(--color-ink-950)]',
           )}>
             {habit.name}
           </div>
@@ -528,7 +529,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
               ) : (
                 <motion.span
                   key="undone"
-                  className="text-[11px] text-stone-400 font-medium"
+                  className="text-[11px] text-[var(--color-ink-500)] font-medium"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -538,7 +539,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
                 </motion.span>
               )}
             </AnimatePresence>
-            {streakBadge && <span className="text-stone-200">·</span>}
+            {streakBadge && <span className="text-[var(--color-ink-300)]">·</span>}
             {streakBadge}
           </div>
         </div>
