@@ -58,13 +58,13 @@ export function StatCard({ label, value, sublabel, icon: Icon, iconColor = 'var(
         className,
         primary && 'shine-border',
       )}
-      style={primary ? { borderColor: 'rgb(130 108 87 / 0.26)' } : undefined}
+      style={primary ? { borderColor: 'rgb(130 108 87 / 0.22)' } : undefined}
     >
       <div className="flex items-start justify-between">
-        <div className="text-[11px] font-semibold text-[var(--color-ink-500)] tracking-[0.07em]">{label}</div>
+        <div className="text-[11px] font-semibold text-[var(--color-ink-500)]">{label}</div>
         {Icon && (
           <motion.div
-            className="w-8 h-8 rounded-xl flex items-center justify-center border border-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.66)]"
+            className="w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center border border-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.66)] backdrop-blur-sm"
             style={{ backgroundColor: `color-mix(in srgb, ${iconColor} 10%, transparent)` }}
             initial={reduceMotion ? false : { scale: 0.9 }}
             animate={reduceMotion ? undefined : { scale: 1 }}
@@ -75,7 +75,7 @@ export function StatCard({ label, value, sublabel, icon: Icon, iconColor = 'var(
         )}
       </div>
       <motion.div
-        className={cn('mt-2 font-black text-[var(--color-ink-900)] leading-none tracking-tight tabular-nums', primary ? 'text-3xl' : 'text-2xl')}
+        className={cn('mt-2 font-black text-[var(--color-ink-900)] leading-none tracking-[0] tabular-nums', primary ? 'text-3xl' : 'text-2xl')}
         variants={statNumberReveal}
         initial={reduceMotion ? false : 'initial'}
         animate={reduceMotion ? undefined : 'animate'}

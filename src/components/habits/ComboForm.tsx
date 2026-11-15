@@ -77,7 +77,7 @@ export function ComboForm({ existing, habits, onClose }: ComboFormProps) {
       <div className="space-y-2">
         <Label>选择组合包含的项目 <span aria-hidden="true" className="text-brand-600">*</span></Label>
         {habits.length === 0 ? (
-          <div className="text-xs text-stone-500 py-2">暂无项目，请先创建单个项目</div>
+          <div className="text-xs text-[var(--color-ink-500)] py-2">暂无项目，请先创建单个项目</div>
         ) : (
           <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1 custom-scrollbar">
             {habits.map(h => {
@@ -88,10 +88,10 @@ export function ComboForm({ existing, habits, onClose }: ComboFormProps) {
                   type="button"
                   onClick={() => toggleHabit(h.id)}
                   className={cn(
-                    "flex flex-col items-start gap-1 p-2 rounded-xl border text-left transition-all tap-scale",
+                    "flex flex-col items-start gap-1 p-2 rounded-[var(--radius-control)] border text-left transition-all tap-scale",
                     selected 
-                      ? "border-brand-500 bg-brand-50 shadow-sm" 
-                      : "border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50"
+                      ? "border-brand-500 bg-brand-50/80 shadow-sm" 
+                      : "border-[var(--color-line-soft)] bg-white/72 hover:border-brand-200 hover:bg-white"
                   )}
                 >
                   <div className="flex items-center justify-between w-full">
@@ -105,7 +105,7 @@ export function ComboForm({ existing, habits, onClose }: ComboFormProps) {
                       {selected && <Check className="w-3 h-3" />}
                     </div>
                   </div>
-                  <span className="text-[13px] font-bold text-stone-900 truncate w-full mt-1">
+                  <span className="text-[13px] font-semibold text-[var(--color-ink-900)] truncate w-full mt-1">
                     {h.name}
                   </span>
                 </button>
@@ -128,10 +128,10 @@ export function ComboForm({ existing, habits, onClose }: ComboFormProps) {
                 type="button"
                 onClick={() => selectPreset(option.key)}
                 className={cn(
-                  'flex items-center gap-2.5 p-2 rounded-xl border transition-all duration-150 tap-scale text-left',
+                  'flex items-center gap-2.5 p-2 rounded-[var(--radius-control)] border transition-all duration-150 tap-scale text-left',
                   selected
-                    ? 'shadow-sm'
-                    : 'border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50'
+                    ? 'shadow-sm border-brand-200 bg-brand-50/80'
+                    : 'border-[var(--color-line-soft)] bg-white/72 hover:border-brand-200 hover:bg-white'
                 )}
                 style={selected ? { borderColor: tone + '88', backgroundColor: tone + '14' } : undefined}
                 aria-label={`选择图标 ${option.label}`}
@@ -142,14 +142,14 @@ export function ComboForm({ existing, habits, onClose }: ComboFormProps) {
                 >
                   <HabitIcon icon={option.key} className="w-5 h-5" color={tone} strokeWidth={2.3} />
                 </span>
-                <span className="text-[12px] font-semibold text-stone-700 truncate">{option.label}</span>
+                <span className="text-[12px] font-semibold text-[var(--color-ink-700)] truncate">{option.label}</span>
               </button>
             )
           })}
           </div>
         </fieldset>
         {usingLegacyIcon && (
-          <p className="text-xs text-amber-600 font-medium">当前组合使用旧版 emoji 图标，保存后可切换为素材库图标。</p>
+          <p className="text-xs text-brand-700 font-medium">当前组合使用旧版 emoji 图标，保存后可切换为素材库图标。</p>
         )}
       </div>
 
@@ -164,7 +164,7 @@ export function ComboForm({ existing, habits, onClose }: ComboFormProps) {
               className={cn(
                 'w-8 h-8 rounded-full transition-all duration-150 tap-scale',
                 'ring-offset-2 ring-offset-white',
-                color === c ? 'ring-2 ring-stone-700 scale-110' : 'hover:scale-105'
+                color === c ? 'ring-2 ring-brand-700 scale-110' : 'hover:scale-105'
               )}
               style={{ backgroundColor: c }}
             />

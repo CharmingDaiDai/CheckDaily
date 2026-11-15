@@ -24,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { BackdateSheet } from "@/components/habits/BackdateSheet";
 import { formatDate, getLast7Days, computeStreak } from "@/lib/utils";
-import { pageChoreography, sectionReveal } from "@/lib/motion";
+import { sectionReveal } from "@/lib/motion";
 import { HabitIcon } from '@/lib/habitIcons'
 
 function Dashboard() {
@@ -145,7 +145,7 @@ function Dashboard() {
         });
       }
     } catch {
-      // error handled in useCheckInCombo
+      toast.error('组合打卡失败，请重试')
     }
   };
 
@@ -226,27 +226,22 @@ function Dashboard() {
     : "grid grid-cols-2 sm:grid-cols-3 gap-2";
 
   return (
-    <motion.div
-      className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6"
-      variants={pageChoreography}
-      initial="initial"
-      animate="animate"
-    >
+    <div className="app-page space-y-6">
       {/* Header */}
       <motion.div variants={sectionReveal}>
-        <div className="flex items-center gap-2 text-sm text-stone-400 font-medium mb-1">
+        <div className="page-kicker mb-1">
           <CalendarDays className="w-3.5 h-3.5" />
           {todayStr}
         </div>
         <div className="flex items-center justify-between">
-          <h1 className="headline-premium text-[2.05rem] sm:text-[2.35rem] text-[var(--color-ink-950)]">
+          <h1 className="headline-premium text-[2.15rem] sm:text-[2.5rem] text-[var(--color-ink-950)]">
             今日打卡
           </h1>
           {totalCount > 0 && !isLoading && (
-            <div className="flex items-center gap-1">
+            <div className="page-actions">
               <button
                 onClick={() => setBackdateOpen(true)}
-                className="flex min-h-11 items-center gap-1.5 px-3 py-2 rounded-[var(--radius-control)] text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/70 transition-colors"
+                className="icon-action"
                 aria-label="补卡"
               >
                 <CalendarClock className="w-4 h-4" strokeWidth={2} />
@@ -260,7 +255,7 @@ function Dashboard() {
                     return next;
                   })
                 }
-                className="flex min-h-11 items-center gap-1.5 px-3 py-2 rounded-[var(--radius-control)] text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/70 transition-colors"
+                className="icon-action"
                 aria-label={compact ? "切换到卡片视图" : "切换到紧凑视图"}
               >
                 {compact ? (
@@ -275,7 +270,7 @@ function Dashboard() {
             </div>
           )}
         </div>
-        <div className="mt-2 flex items-center gap-3">
+        <div className="mt-3 flex items-center gap-3">
           {!isLoading && (
             <>
               <div className="flex items-center gap-1.5">
@@ -286,7 +281,7 @@ function Dashboard() {
               </div>
               {totalCount > 0 && (
                 <div
-                  className="h-2.5 flex-1 bg-white/72 rounded-full overflow-hidden border border-[var(--color-line-soft)]"
+                  className="h-2.5 flex-1 bg-white/60 rounded-full overflow-hidden border border-white/65 shadow-[inset_0_1px_2px_rgb(61_52_41/0.08)]"
                   role="progressbar"
                   aria-valuenow={doneCount}
                   aria-valuemin={0}
@@ -294,7 +289,7 @@ function Dashboard() {
                   aria-label={`今日进度：${doneCount}/${totalCount} 项已完成`}
                 >
                   <div
-                    className={`h-full rounded-full transition-all duration-700 ${doneCount === totalCount ? "bg-gradient-to-r from-brand-400 to-brand-500 animate-shimmer" : "bg-gradient-to-r from-brand-400 to-brand-500"}`}
+                    className={`h-full rounded-full transition-all duration-700 ${doneCount === totalCount ? "bg-gradient-to-r from-brand-400 via-brand-500 to-[#5d894e] animate-shimmer" : "bg-gradient-to-r from-brand-400 to-brand-500"}`}
                     style={{
                       width: mounted
                         ? `${(doneCount / totalCount) * 100}%`
@@ -311,7 +306,7 @@ function Dashboard() {
       {isRefreshing && (
         <motion.div
           variants={sectionReveal}
-          className="rounded-xl border border-brand-100 bg-brand-50/70 px-3.5 py-2 text-xs font-medium text-brand-700"
+          className="floating-chrome rounded-[var(--radius-control)] px-3.5 py-2 text-xs font-semibold text-brand-700"
         >
           正在同步今日与趋势数据…
         </motion.div>
@@ -320,12 +315,12 @@ function Dashboard() {
       {hasLoadError && (
         <motion.div
           variants={sectionReveal}
-          className="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3"
+          className="surface-frame px-4 py-3"
         >
-          <div className="text-sm font-semibold text-rose-700">首页数据加载失败</div>
-          <div className="mt-0.5 text-xs text-rose-600">部分卡片可能展示不完整，请重新同步。</div>
+          <div className="text-sm font-semibold text-[var(--color-ink-900)]">首页数据加载失败</div>
+          <div className="mt-0.5 text-xs text-[var(--color-ink-600)]">部分卡片可能展示不完整，请重新同步。</div>
           <button
-            className="mt-2 h-9 rounded-lg border border-rose-200 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-50 transition-colors"
+            className="mt-3 inline-flex h-9 items-center rounded-[var(--radius-control)] border border-brand-200 bg-white/78 px-3 text-xs font-semibold text-brand-700 transition-colors hover:bg-white"
             onClick={() => {
               void refetchHabits();
               void refetchToday();
@@ -342,7 +337,7 @@ function Dashboard() {
       {!isLoading && totalCount > 5 && (
         <motion.div variants={sectionReveal} className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-ink-500)]" />
             <Input
               placeholder="搜索习惯…"
               value={query}
@@ -352,7 +347,7 @@ function Dashboard() {
             />
             {query && (
               <button
-                className="absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/70 transition-colors"
+                className="absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 rounded-[var(--radius-control)] flex items-center justify-center text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/70 transition-colors"
                 onClick={() => setQuery("")}
                 aria-label="清除搜索"
               >
@@ -400,8 +395,8 @@ function Dashboard() {
               />
             ))}
           </div>
-          <div className="font-bold text-[var(--color-ink-900)]">
-            🎉 今日已全部完成！
+          <div className="font-semibold text-[var(--color-ink-900)]">
+            今日已全部完成
           </div>
           <div className="text-sm text-[var(--color-ink-600)] mt-0.5">
             继续保持，养成好习惯
@@ -420,34 +415,34 @@ function Dashboard() {
       {/* Combos grid */}
       {!isLoading && !isFiltering && renderedCombos.length > 0 && (
         <motion.div variants={sectionReveal} className="space-y-3 mb-8">
-          <div className="text-sm font-bold text-stone-500 px-1 border-b border-stone-100 pb-2">运动组合</div>
+          <div className="text-sm font-bold text-[var(--color-ink-600)] px-1 pb-1">运动组合</div>
           <div className={gridClass}>
             {renderedCombos.map(combo => (
               <button
                 key={combo.id}
                 disabled={checkInCombo.isPending || combo.validIds.length === 0}
                 onClick={() => handleComboCheckIn(combo)}
-                className={`group relative flex items-center gap-2.5 px-3 py-2.5 rounded-2xl tap-scale text-left select-none overflow-hidden transition-[box-shadow,transform] duration-200 ${
-                  combo.isDone 
-                    ? 'bg-white/60 shadow-sm opacity-90' 
-                    : 'bg-white shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]'
+                className={`group relative flex items-center gap-2.5 px-3 py-2.5 rounded-[var(--radius-card-lg)] tap-scale text-left select-none overflow-hidden transition-[box-shadow,transform,background-color] duration-200 ${
+                  combo.isDone
+                    ? 'bg-white/52 shadow-sm opacity-90'
+                    : 'bg-white/82 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]'
                 }`}
               >
                 {/* Left color accent bar */}
-                <div 
+                <div
                   className={`absolute top-0 left-0 w-1 h-full rounded-l-2xl transition-colors duration-300 ${combo.isDone ? 'opacity-100' : 'opacity-60'}`}
-                  style={{ backgroundColor: combo.isDone ? combo.color : '#e7e5e4' }} 
+                  style={{ backgroundColor: combo.isDone ? combo.color : '#e7e5e4' }}
                 />
-                
+
                 <div className="relative shrink-0">
-                  <div 
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)] transition-all ${combo.isDone ? 'grayscale-[30%]' : ''}`} 
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)] transition-all ${combo.isDone ? 'grayscale-[30%]' : ''}`}
                     style={{ background: `linear-gradient(135deg, ${combo.color}14, ${combo.color}22)` }}
                   >
                     <HabitIcon icon={combo.icon} className="w-[18px] h-[18px]" color={combo.color} fallback="🚀" />
                   </div>
                   {combo.isDone && (
-                    <div 
+                    <div
                       className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-white"
                       style={{ backgroundColor: combo.color }}
                     >
@@ -455,9 +450,9 @@ function Dashboard() {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="flex-1 min-w-0 pr-1">
-                  <div className={`font-bold text-[13px] leading-snug line-clamp-1 ${combo.isDone ? 'text-stone-500' : 'text-stone-900'}`}>
+                  <div className={`font-bold text-[13px] leading-snug line-clamp-1 ${combo.isDone ? 'text-[var(--color-ink-500)]' : 'text-[var(--color-ink-900)]'}`}>
                     {combo.name}
                   </div>
                   <div className={`mt-0.5 flex flex-wrap items-center gap-1.5`}>
@@ -470,7 +465,7 @@ function Dashboard() {
                         全项已完成
                       </span>
                     ) : (
-                      <span className="text-[11px] text-stone-400 font-medium">
+                      <span className="text-[11px] text-[var(--color-ink-500)] font-medium">
                         包含 {combo.validIds.length} 项
                         {combo.missingCount > 0 && (
                           <span className="text-amber-600"> · {combo.missingCount} 项已删除</span>
@@ -504,12 +499,12 @@ function Dashboard() {
         </motion.div>
       ) : isLoading ? (
         <motion.div variants={sectionReveal} className="space-y-3">
-          <div className="text-xs text-stone-400 font-medium">加载今日打卡内容…</div>
+          <div className="text-xs text-[var(--color-ink-500)] font-medium">加载今日打卡内容…</div>
           <div className={gridClass}>
             {Array.from({ length: compact ? 8 : 6 }).map((_, i) => (
               <Skeleton
                 key={i}
-                className={compact ? "h-24 rounded-2xl" : "h-14 rounded-2xl"}
+                className={compact ? "h-24 rounded-[var(--radius-card-lg)]" : "h-14 rounded-[var(--radius-card-lg)]"}
               />
             ))}
           </div>
@@ -538,11 +533,11 @@ function Dashboard() {
           {/* Divider between incomplete and completed */}
           {hasMixed && (
             <div className="flex items-center gap-2 py-0.5">
-              <div className="h-px flex-1 bg-stone-100" />
-              <span className="text-xs text-stone-400 font-medium px-1">
+              <div className="h-px flex-1 bg-[var(--color-line-soft)]" />
+              <span className="text-xs text-[var(--color-ink-500)] font-semibold px-1">
                 已完成 {visibleDoneCount} 项
               </span>
-              <div className="h-px flex-1 bg-stone-100" />
+              <div className="h-px flex-1 bg-[var(--color-line-soft)]" />
             </div>
           )}
 
@@ -565,17 +560,17 @@ function Dashboard() {
         </motion.div>
       ) : isFiltering ? (
         <motion.div variants={sectionReveal} className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mb-4">
-            <Search className="w-7 h-7 text-stone-300" strokeWidth={1.5} />
+          <div className="w-16 h-16 rounded-full bg-white/72 border border-white/72 shadow-[0_12px_28px_rgb(61_52_41/0.08)] flex items-center justify-center mb-4">
+            <Search className="w-7 h-7 text-[var(--color-ink-500)]" strokeWidth={1.5} />
           </div>
-          <div className="font-semibold text-stone-700 text-base mb-1">
+          <div className="font-semibold text-[var(--color-ink-900)] text-base mb-1">
             {normalizedQuery ? `没有找到「${query.trim()}」` : "今天的项目都已打卡"}
           </div>
-          <div className="text-stone-400 text-sm mb-5">
+          <div className="text-[var(--color-ink-500)] text-sm mb-5">
             {normalizedQuery ? "换个关键词试试，或清除筛选" : "可以切回全部项目看看"}
           </div>
           <button
-            className="px-4 py-2 rounded-xl border border-[var(--color-line-soft)] bg-white/80 text-brand-700 font-semibold text-sm hover:bg-white transition-colors tap-scale"
+            className="px-4 py-2 rounded-[var(--radius-control)] border border-[var(--color-line-soft)] bg-white/80 text-brand-700 font-semibold text-sm hover:bg-white transition-colors tap-scale"
             onClick={() => {
               setQuery("");
               setOnlyPending(false);
@@ -586,17 +581,17 @@ function Dashboard() {
         </motion.div>
       ) : (
         <motion.div variants={sectionReveal} className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mb-4">
-            <ListCheck className="w-9 h-9 text-stone-300" strokeWidth={1.5} />
+          <div className="w-20 h-20 rounded-full bg-white/72 border border-white/72 shadow-[0_12px_28px_rgb(61_52_41/0.08)] flex items-center justify-center mb-4">
+            <ListCheck className="w-9 h-9 text-[var(--color-ink-500)]" strokeWidth={1.5} />
           </div>
-          <div className="font-semibold text-stone-700 text-lg mb-1">
+          <div className="font-semibold text-[var(--color-ink-900)] text-lg mb-1">
             还没有打卡项目
           </div>
-          <div className="text-stone-400 text-sm mb-5">
+          <div className="text-[var(--color-ink-500)] text-sm mb-5">
             去添加你的第一个习惯吧
           </div>
           <button
-            className="px-5 py-2.5 bg-brand-500 text-white rounded-xl font-semibold text-sm hover:bg-brand-600 transition-colors tap-scale"
+            className="px-5 py-2.5 bg-[linear-gradient(155deg,#e98c4c_0%,#d86f2f_48%,#a94b22_100%)] text-white rounded-[var(--radius-control)] font-semibold text-sm shadow-[0_10px_24px_rgb(185_84_34/0.22)] hover:brightness-[1.02] transition-colors tap-scale"
             onClick={() => void navigate({ to: "/habits" })}
           >
             添加项目
@@ -606,7 +601,7 @@ function Dashboard() {
 
       {/* Onboarding hint */}
       {!isLoading && sortedHabits.length > 0 && doneCount === 0 && (
-        <div className="flex items-center justify-center gap-1.5 py-1 text-stone-300">
+        <div className="flex items-center justify-center gap-1.5 py-1 text-[var(--color-ink-500)]/80">
           <Hand className="w-3.5 h-3.5" strokeWidth={1.8} />
           <span className="text-xs font-medium">轻触卡片即可完成今日打卡</span>
         </div>
@@ -643,7 +638,7 @@ function Dashboard() {
           habits={habits}
         />
       )}
-    </motion.div>
+    </div>
   );
 }
 

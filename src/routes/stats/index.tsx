@@ -32,7 +32,7 @@ import {
   computeLongestStreak,
 } from "@/lib/utils";
 import type { CalendarDatum } from "@/types";
-import { pageChoreography, sectionReveal } from "@/lib/motion";
+import { sectionReveal } from "@/lib/motion";
 import { HabitIcon } from '@/lib/habitIcons'
 
 type TabValue = "day" | "week" | "month" | "year";
@@ -253,22 +253,17 @@ function StatsPage() {
   const hasStatsError = Boolean(habitsError || yearError || rollingError || yearCountsError);
 
   return (
-    <motion.div
-      className="max-w-2xl mx-auto px-4 pt-6 sm:pt-8 pb-6 space-y-6"
-      variants={pageChoreography}
-      initial="initial"
-      animate="animate"
-    >
+    <div className="app-page space-y-6">
       {/* Header */}
       <motion.div variants={sectionReveal}>
-        <h1 className="headline-premium text-[2.02rem] sm:text-[2.3rem] text-[var(--color-ink-950)]">
+        <h1 className="headline-premium text-[2.08rem] sm:text-[2.42rem] text-[var(--color-ink-950)]">
           统计分析
         </h1>
         <div className="flex items-center gap-2 mt-0.5">
           {activeTab === "year" ? (
             <>
               <button
-                className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors"
+                className="h-8 w-8 rounded-[var(--radius-control)] inline-flex items-center justify-center text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/58 active:scale-95 transition-all"
                 onClick={() => setSelectedYear((y) => y - 1)}
                 aria-label="上一年"
               >
@@ -281,7 +276,7 @@ function StatsPage() {
                 {selectedYear} 年度数据
               </span>
               <button
-                className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="h-8 w-8 rounded-[var(--radius-control)] inline-flex items-center justify-center text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/58 active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                 onClick={() => setSelectedYear((y) => y + 1)}
                 disabled={selectedYear >= currentYear}
                 aria-label="下一年"
@@ -300,7 +295,7 @@ function StatsPage() {
       {isRefreshing && (
         <motion.div
           variants={sectionReveal}
-          className="rounded-xl border border-brand-100 bg-brand-50/70 px-3.5 py-2 text-xs font-medium text-brand-700"
+          className="floating-chrome rounded-[var(--radius-control)] px-3.5 py-2 text-xs font-semibold text-brand-700"
         >
           正在同步统计数据…
         </motion.div>
@@ -309,12 +304,12 @@ function StatsPage() {
       {hasStatsError && (
         <motion.div
           variants={sectionReveal}
-          className="rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3"
+          className="surface-frame px-4 py-3"
         >
-          <div className="text-sm font-semibold text-rose-700">统计数据加载失败</div>
-          <div className="mt-0.5 text-xs text-rose-600">图表或列表可能不完整，请重试同步。</div>
+          <div className="text-sm font-semibold text-[var(--color-ink-900)]">统计数据加载失败</div>
+          <div className="mt-0.5 text-xs text-[var(--color-ink-600)]">图表或列表可能不完整，请重试同步。</div>
           <button
-            className="mt-2 h-9 rounded-lg border border-rose-200 bg-white px-3 text-xs font-semibold text-rose-700 hover:bg-rose-50 transition-colors"
+            className="mt-2 h-9 rounded-[var(--radius-control)] border border-brand-200 bg-white/78 px-3 text-xs font-semibold text-brand-700 hover:bg-white transition-colors"
             onClick={() => {
               void refetchHabits();
               void refetchYear();
@@ -403,9 +398,9 @@ function StatsPage() {
               今日打卡 {todayTimeline.length} 次
             </div>
             {todayTimeline.length === 0 ? (
-              <div className="flex flex-col items-center py-8 text-stone-400 gap-3">
-                <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center">
-                  <Inbox className="w-7 h-7 text-stone-300" strokeWidth={1.5} />
+              <div className="flex flex-col items-center py-8 text-[var(--color-ink-500)] gap-3">
+                <div className="w-16 h-16 rounded-full bg-white/72 border border-white/72 shadow-[0_10px_22px_rgb(61_52_41/0.06)] flex items-center justify-center">
+                  <Inbox className="w-7 h-7 text-[var(--color-ink-500)]" strokeWidth={1.5} />
                 </div>
                 <span className="text-sm font-medium">今天还没有打卡记录</span>
               </div>
@@ -416,6 +411,7 @@ function StatsPage() {
                   return (
                     <div key={ci.id} className="flex items-start gap-3 py-2">
                       <div className="w-1 h-full self-stretch bg-stone-100 rounded-full mt-1 shrink-0" />
+                      <div className="w-1 h-full self-stretch bg-white/60 rounded-full mt-1 shrink-0" />
                       <div
                         className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
                         style={{ backgroundColor: (h?.color ?? "#ccc") + "20" }}
@@ -423,22 +419,22 @@ function StatsPage() {
                         <HabitIcon icon={h?.icon} className="w-4 h-4" color={h?.color ?? '#a8a29e'} fallback="📌" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-bold text-stone-800 text-sm">
+                        <div className="font-semibold text-[var(--color-ink-800)] text-sm">
                           {h?.name ?? "未知项目"}
                           {formatDate(ci.checked_at) !==
                             formatDate(ci.created_at) && (
-                            <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium align-middle">
+                            <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 font-medium align-middle">
                               补
                             </span>
                           )}
                         </div>
                         {ci.note && (
-                          <div className="text-xs text-stone-500 mt-0.5 font-medium">
+                          <div className="text-xs text-[var(--color-ink-500)] mt-0.5 font-medium">
                             {ci.note}
                           </div>
                         )}
                       </div>
-                      <div className="text-xs text-stone-400 font-medium shrink-0">
+                      <div className="text-xs text-[var(--color-ink-500)] font-medium shrink-0">
                         {new Date(ci.checked_at).toLocaleTimeString("zh-CN", {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -478,13 +474,13 @@ function StatsPage() {
               />
             )}
             <div className="mt-4 flex items-center justify-between gap-3">
-              <span className="text-xs text-stone-500 font-medium">
+              <span className="text-xs text-[var(--color-ink-500)] font-medium">
                 按日期查看项目
               </span>
               <select
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="h-8 rounded-lg border border-stone-200 bg-white px-2.5 text-xs font-medium text-stone-700"
+                className="h-8 rounded-[var(--radius-control)] border border-[var(--color-line-soft)] bg-white/70 px-2.5 text-xs font-medium text-[var(--color-ink-700)]"
               >
                 {dateOptions.map((d) => (
                   <option key={d} value={d}>
@@ -493,7 +489,7 @@ function StatsPage() {
                 ))}
               </select>
               <button
-                className="h-8 rounded-lg border border-stone-200 px-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                className="h-8 rounded-[var(--radius-control)] border border-[var(--color-line-soft)] bg-white/42 px-2.5 text-xs font-semibold text-[var(--color-ink-700)] hover:bg-white/72 active:scale-[0.98] transition-all"
                 onClick={() => setIsDayDetailOpen(true)}
               >
                 查看
@@ -510,7 +506,7 @@ function StatsPage() {
                 : "animate-slide-in-left"
             }
           >
-            <div className="text-sm font-semibold text-stone-500 mb-3">
+            <div className="text-sm font-semibold text-[var(--color-ink-500)] mb-3">
               近30天 · 各项目堆叠
             </div>
             {isLoading ? (
@@ -534,13 +530,13 @@ function StatsPage() {
               />
             )}
             <div className="mt-4 flex items-center justify-between gap-3">
-              <span className="text-xs text-stone-500 font-medium">
+              <span className="text-xs text-[var(--color-ink-500)] font-medium">
                 按日期查看项目
               </span>
               <select
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="h-8 rounded-lg border border-stone-200 bg-white px-2.5 text-xs font-medium text-stone-700"
+                className="h-8 rounded-[var(--radius-control)] border border-[var(--color-line-soft)] bg-white/70 px-2.5 text-xs font-medium text-[var(--color-ink-700)]"
               >
                 {dateOptions.map((d) => (
                   <option key={d} value={d}>
@@ -549,7 +545,7 @@ function StatsPage() {
                 ))}
               </select>
               <button
-                className="h-8 rounded-lg border border-stone-200 px-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                className="h-8 rounded-[var(--radius-control)] border border-[var(--color-line-soft)] bg-white/42 px-2.5 text-xs font-semibold text-[var(--color-ink-700)] hover:bg-white/72 active:scale-[0.98] transition-all"
                 onClick={() => setIsDayDetailOpen(true)}
               >
                 查看
@@ -566,7 +562,7 @@ function StatsPage() {
                 : "animate-slide-in-left"
             }
           >
-            <div className="text-sm font-semibold text-stone-500 mb-3">
+            <div className="text-sm font-semibold text-[var(--color-ink-500)] mb-3">
               {selectedYear} 年全年打卡热力图
             </div>
             {isLoading ? (
@@ -581,13 +577,13 @@ function StatsPage() {
               </Suspense>
             )}
             <div className="mt-4 flex items-center justify-between gap-3">
-              <span className="text-xs text-stone-500 font-medium">
+              <span className="text-xs text-[var(--color-ink-500)] font-medium">
                 按日期查看项目
               </span>
               <select
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="h-8 rounded-lg border border-stone-200 bg-white px-2.5 text-xs font-medium text-stone-700"
+                className="h-8 rounded-[var(--radius-control)] border border-[var(--color-line-soft)] bg-white/70 px-2.5 text-xs font-medium text-[var(--color-ink-700)]"
               >
                 {dateOptions.map((d) => (
                   <option key={d} value={d}>
@@ -596,7 +592,7 @@ function StatsPage() {
                 ))}
               </select>
               <button
-                className="h-8 rounded-lg border border-stone-200 px-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                className="h-8 rounded-[var(--radius-control)] border border-[var(--color-line-soft)] bg-white/42 px-2.5 text-xs font-semibold text-[var(--color-ink-700)] hover:bg-white/72 active:scale-[0.98] transition-all"
                 onClick={() => setIsDayDetailOpen(true)}
               >
                 查看
@@ -623,7 +619,7 @@ function StatsPage() {
             </span>
             {habits.length > 5 && (
               <div className="relative flex-1 max-w-[180px]">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-ink-500)]" />
                 <Input
                   placeholder="搜索项目…"
                   value={habitSearch}
@@ -632,7 +628,7 @@ function StatsPage() {
                 />
                 {habitSearch && (
                   <button
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white transition-colors"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg flex items-center justify-center text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white transition-colors"
                     onClick={() => setHabitSearch("")}
                     aria-label="清除搜索"
                   >
@@ -658,7 +654,7 @@ function StatsPage() {
                     key={h.id}
                     to="/stats/$habitId"
                     params={{ habitId: h.id }}
-                    className="flex items-center gap-3 px-5 py-3.5 hover:bg-white/65 transition-colors"
+                    className="ios-list-row flex items-center gap-3 px-5 py-3.5"
                   >
                     <div
                       className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
@@ -674,7 +670,7 @@ function StatsPage() {
                         全年 {cnt} 次 · 连续 {habitStreak} 天
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-stone-300 shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-[var(--color-ink-300)] shrink-0" />
                   </Link>
                 );
               })}
@@ -682,9 +678,9 @@ function StatsPage() {
               habits.filter((h) =>
                 h.name.toLowerCase().includes(habitSearch.toLowerCase()),
               ).length === 0 && (
-                <div className="flex flex-col items-center py-8 text-stone-400 gap-2">
+                <div className="flex flex-col items-center py-8 text-[var(--color-ink-500)] gap-2">
                   <Search
-                    className="w-8 h-8 text-stone-200"
+                    className="w-8 h-8 text-[var(--color-ink-300)]"
                     strokeWidth={1.5}
                   />
                   <span className="text-sm font-medium">
@@ -695,7 +691,7 @@ function StatsPage() {
           </div>
         </motion.div>
       )}
-    </motion.div>
+    </div>
   );
 }
 

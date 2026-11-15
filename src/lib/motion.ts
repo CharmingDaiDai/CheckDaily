@@ -11,10 +11,11 @@ export const durations = {
 
 /* ── Spring transitions ── */
 export const spring = {
-  smooth:     { type: 'spring' as const, stiffness: 400, damping: 30 },
-  gentle:     { type: 'spring' as const, stiffness: 200, damping: 26, mass: 1.2 },
-  snappy:     { type: 'spring' as const, stiffness: 500, damping: 30, mass: 0.8 },
-  emphasized: { type: 'spring' as const, stiffness: 300, damping: 22 },
+  smooth:     { type: 'spring' as const, stiffness: 420, damping: 34 },
+  gentle:     { type: 'spring' as const, stiffness: 260, damping: 30, mass: 1 },
+  snappy:     { type: 'spring' as const, stiffness: 620, damping: 38, mass: 0.72 },
+  emphasized: { type: 'spring' as const, stiffness: 380, damping: 28 },
+  momentum:   { type: 'spring' as const, stiffness: 420, damping: 24, mass: 0.86 },
   exit:       { duration: durations.fast as number, ease: [0.4, 0, 1, 1] as [number, number, number, number] },
 }
 
@@ -27,9 +28,8 @@ export const easing = {
 
 /* ── Page choreography (stagger container) ── */
 export const pageChoreography = {
-  initial: { opacity: 0 },
+  initial: {},
   animate: {
-    opacity: 1,
     transition: {
       when: 'beforeChildren' as const,
       staggerChildren: 0.07,
@@ -40,7 +40,7 @@ export const pageChoreography = {
 
 /* ── Section reveal (blocks float up) ── */
 export const sectionReveal = {
-  initial: { opacity: 0, y: 20, scale: 0.98 },
+  initial: { opacity: 0, y: 12, scale: 0.99 },
   animate: {
     opacity: 1,
     y: 0,
@@ -51,7 +51,7 @@ export const sectionReveal = {
 
 /* ── Card entrance (playful bounce) ── */
 export const cardEntrance = {
-  initial: { opacity: 0, y: 24, scale: 0.95 },
+  initial: { opacity: 0, y: 14, scale: 0.98 },
   animate: {
     opacity: 1,
     y: 0,
@@ -73,7 +73,7 @@ export const statNumberReveal = {
 
 /* ── List item slide ── */
 export const listItemSlide = {
-  initial: { opacity: 0, x: -16 },
+  initial: { opacity: 0, x: -8 },
   animate: {
     opacity: 1,
     x: 0,
@@ -112,7 +112,7 @@ export const routeTransitionReduced = {
 
 /* ── Directional route transition ── */
 export const directionalRouteTransition = {
-  initial: { opacity: 0, scale: 0.96, y: 15, filter: 'blur(2px)' },
+  initial: { opacity: 0, scale: 0.985, y: 10, filter: 'blur(2px)' },
   animate: {
     opacity: 1,
     scale: 1,
@@ -122,7 +122,7 @@ export const directionalRouteTransition = {
   },
   exit: {
     opacity: 0,
-    scale: 0.98,
+    scale: 0.992,
     filter: 'blur(1px)',
     transition: spring.exit,
   },

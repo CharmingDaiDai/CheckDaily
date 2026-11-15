@@ -44,12 +44,12 @@ export function Toaster() {
                 'data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)]',
                 'data-[swipe=cancel]:translate-x-0 data-[swipe=cancel]:transition-transform',
                 t.variant === 'error'
-                  ? 'bg-red-50 border-red-200 text-red-800'
+                  ? 'bg-brand-50 border-brand-200 text-brand-800'
                   : t.variant === 'success'
-                    ? 'bg-green-50 border-green-200 text-green-800'
+                    ? 'bg-brand-50 border-brand-200 text-brand-800'
                     : t.variant === 'warning'
-                      ? 'bg-amber-50 border-amber-200 text-amber-900'
-                    : 'bg-white border-stone-200 text-stone-800',
+                      ? 'bg-brand-50 border-brand-200 text-brand-800'
+                    : 'bg-white/86 border-white/70 text-[var(--color-ink-800)]',
               )}
               // Success: green glow pulse on border
               style={t.variant === 'success' ? {
@@ -63,7 +63,7 @@ export function Toaster() {
               {t.action && (
                 <button
                   type="button"
-                  className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-semibold text-brand-700 bg-brand-100/70 hover:bg-brand-100 transition-colors"
+                  className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-semibold text-brand-700 bg-white/78 hover:bg-white transition-colors"
                   onClick={() => {
                     try {
                       const maybePromise = t.action?.onClick()
@@ -78,7 +78,7 @@ export function Toaster() {
                   {t.action.label}
                 </button>
               )}
-              <ToastPrimitive.Close className="shrink-0 rounded-lg p-1 opacity-50 hover:opacity-100 transition-opacity">
+              <ToastPrimitive.Close className="shrink-0 rounded-lg p-1 opacity-50 hover:opacity-100 transition-opacity text-[var(--color-ink-500)] hover:text-[var(--color-ink-800)]">
                 <X className="w-3.5 h-3.5" />
               </ToastPrimitive.Close>
             </ToastPrimitive.Root>
