@@ -63,8 +63,8 @@
 
 body {
   font-family: var(--font-sans);
-  font-weight: 500;
-  letter-spacing: 0.01em;
+  font-weight: 400;
+  letter-spacing: 0.006em;
   background:
     radial-gradient(circle at 8% -16%, rgb(251 146 60 / 0.25), transparent 34%),
     radial-gradient(circle at 88% -12%, rgb(234 179 8 / 0.16), transparent 30%),
@@ -349,8 +349,8 @@ body::after {
 
 .headline-premium {
   font-family: var(--font-display);
-  font-weight: 400;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: -0.018em;
   line-height: 1.1;
   color: var(--color-ink-950);
   text-wrap: balance;
@@ -439,6 +439,22 @@ body::after {
 
 .luxury-divider {
   border-color: var(--color-line-soft);
+}
+
+/* ── Plain list row: no blur, no gradients — used inside glass containers ── */
+.list-row {
+  background-color: rgb(255 255 255 / 0.72);
+  border: 1px solid var(--color-line-soft);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .list-row:hover {
+    background-color: rgb(255 255 255 / 0.92);
+    border-color: var(--color-line-strong);
+  }
 }
 
 /* Tabular nums utility */

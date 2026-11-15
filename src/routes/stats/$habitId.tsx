@@ -1,7 +1,7 @@
 import { useMemo, useState, lazy, Suspense } from 'react'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { motion } from 'motion/react'
-import { ArrowLeft, Flame, Trophy, Target, Hash, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Flame, Trophy, Target, Hash, Trash2, ChevronLeft, ChevronRight, Inbox } from 'lucide-react'
 const HabitHeatmap = lazy(() => import('@/components/charts/HabitHeatmap'))
 import { TrendLineChart } from '@/components/charts/LineCharts'
 import { StatCard } from '@/components/charts/StatCard'
@@ -116,7 +116,7 @@ function HabitStatsPage() {
               <HabitIcon icon={habit.icon} className="w-6 h-6" color={color} fallback="📌" />
             </div>
             <div>
-              <h1 className="headline-premium text-[2rem] sm:text-[2.28rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">{habit.name}</h1>
+              <h1 className="headline-premium text-[2rem] sm:text-[2.28rem] text-[var(--color-ink-950)]">{habit.name}</h1>
               <div className="flex items-center gap-2 mt-0.5">
                 <button
                   className="p-0.5 text-stone-300 hover:text-stone-600 transition-colors"
@@ -195,7 +195,7 @@ function HabitStatsPage() {
         ) : groupedHistory.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-stone-400 gap-3">
             <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center">
-              <span className="text-2xl">📭</span>
+              <Inbox className="w-7 h-7 text-stone-300" strokeWidth={1.5} />
             </div>
             <span className="text-sm font-medium">暂无记录</span>
           </div>

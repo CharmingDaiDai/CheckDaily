@@ -51,7 +51,10 @@ VITE_SUPABASE_ANON_KEY=<your-anon-key>
 
 - `habits` 表 — 存储习惯项目
 - `check_ins` 表 — 存储每次打卡记录
+- `habit_combos` 表 — 存储运动组合（多个习惯一键打卡）
 - Row Level Security 策略 — 用户只能访问自己的数据
+
+> 脚本可以重复执行：建表用 `IF NOT EXISTS`，策略前会先 `DROP POLICY IF EXISTS`。
 
 ### 4. 启动开发服务器
 
@@ -92,8 +95,11 @@ src/
 ## 数据库设计
 
 ```sql
-habits      (id, user_id, name, color, icon, archived, created_at)
-check_ins   (id, habit_id, user_id, checked_at, note, created_at)
+habits       (id, user_id, name, color, icon, archived, created_at)
+check_ins    (id, habit_id, user_id, checked_at, note, created_at)
+habit_combos (id, user_id, name, color, icon, habit_ids[], created_at)
 ```
 
-两张表均启用 RLS，所有读写操作严格限制为当前认证用户。
+三张表均启用 RLS，所有读写操作严格限制为当前认证用户。
+
+> `update-combos.sql` 是早期单独升级组合功能时用的脚本，内容已合并进 `supabase-schema.sql`，新环境只需执行后者。

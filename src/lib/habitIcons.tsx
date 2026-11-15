@@ -97,10 +97,12 @@ const HighKneesActionIcon = (props: ActionIconProps) => (
 )
 type IconFamily = 'lucide' | 'react-icons' | 'custom'
 
+export type HabitIconComponent = ComponentType<ActionIconProps>
+
 export type HabitIconOption = {
   key: string
   label: string
-  Icon: ComponentType<any>
+  Icon: HabitIconComponent
   family: IconFamily
   tone: string
 }

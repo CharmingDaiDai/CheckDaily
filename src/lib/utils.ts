@@ -37,6 +37,12 @@ export function formatDate(date: Date | string, fmt = 'yyyy-MM-dd') {
   return `${year}-${month}-${day}`
 }
 
+/** ISO timestamp at local noon of a yyyy-MM-dd date, so the day stays stable in any time zone. */
+export function localNoonIso(dateStr: string) {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d, 12, 0, 0, 0).toISOString()
+}
+
 export function formatTime(date: Date | string) {
   const d = typeof date === 'string' ? new Date(date) : date
   return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })

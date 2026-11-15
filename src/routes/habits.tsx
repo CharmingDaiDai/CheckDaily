@@ -96,14 +96,14 @@ export default function HabitsPage() {
       {/* Header */}
       <motion.div variants={sectionReveal} className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between border-b border-[var(--color-line-soft)] pb-5">
         <div>
-          <h1 className="headline-premium text-[2.02rem] sm:text-[2.3rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">项目管理</h1>
+          <h1 className="headline-premium text-[2.02rem] sm:text-[2.3rem] text-[var(--color-ink-950)]">项目管理</h1>
           <p className="text-sm text-[var(--color-ink-500)] font-medium mt-0.5">
             {habits?.length ?? 0} 个项目 · {combos?.length ?? 0} 个组合
           </p>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto select-none no-scrollbar">
-          <Tabs value={activeTab} onValueChange={(v: any) => { setActiveTab(v); setSearch(''); }} className="shrink-0">
+          <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as 'habits' | 'combos'); setSearch(''); }} className="shrink-0">
             <TabsList>
               <TabsTrigger value="habits">单项运动</TabsTrigger>
               <TabsTrigger value="combos">运动组合</TabsTrigger>
@@ -141,7 +141,7 @@ export default function HabitsPage() {
       <ConfirmDialog
         open={!!archiveTarget}
         onOpenChange={(open) => { if (!open) setArchiveTarget(null) }}
-        title={"确认归档「」？"}
+        title={`确认归档「${archiveTarget?.name ?? ''}」？`}
         description="归档后将不再出现在今日打卡列表中。你可以在已归档区域恢复。"
         confirmText="归档"
         variant="danger"
@@ -149,15 +149,17 @@ export default function HabitsPage() {
           if (!archiveTarget) return
           const target = archiveTarget
           await archive.mutateAsync(target.id)
-          toast.success("已归档「」", {
+          toast.success(`已归档「${target.name}」`, {
             duration: 5200,
             action: {
               label: '撤销',
               onClick: async () => {
                 try {
                   await restore.mutateAsync(target.id)
-                  toast.success("已恢复「」")
-                } catch {}
+                  toast.success(`已恢复「${target.name}」`)
+                } catch {
+                  // error handled in useRestoreHabit
+                }
               },
             },
           })
@@ -167,7 +169,7 @@ export default function HabitsPage() {
       <ConfirmDialog
         open={!!deleteComboTarget}
         onOpenChange={(open) => { if (!open) setDeleteComboTarget(null) }}
-        title={"确认删除组合「」？"}
+        title={`确认删除组合「${deleteComboTarget?.name ?? ''}」？`}
         description="删除组合不会影响其中的单项运动及其历史打卡记录，操作不可恢复。"
         confirmText="删除"
         variant="danger"
@@ -229,7 +231,7 @@ export default function HabitsPage() {
               ) : filteredHabits.length > 0 ? (
                 <div className="space-y-3">
                   {filteredHabits.map((habit) => (
-                    <motion.div key={habit.id} variants={listItemSlide} className="flex items-center gap-4 glass-card rounded-[var(--radius-card-lg)] px-4 py-3.5">
+                    <motion.div key={habit.id} variants={listItemSlide} className="flex items-center gap-4 list-row rounded-[var(--radius-card-lg)] px-4 py-3.5">
                       <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0" style={{ backgroundColor: habit.color + '18', borderColor: habit.color + '30' }}>
                         <HabitIcon icon={habit.icon} className="w-6 h-6" color={habit.color} fallback="📌" />
                       </div>
@@ -316,7 +318,7 @@ export default function HabitsPage() {
                     const linkedHabits = (habits ?? []).filter(h => combo.habit_ids.includes(h.id))
                     
                     return (
-                      <motion.div key={combo.id} variants={listItemSlide} className="flex flex-col gap-3 glass-card rounded-[var(--radius-card-lg)] px-4 py-3.5 border-t border-[var(--color-line-soft)]">
+                      <motion.div key={combo.id} variants={listItemSlide} className="flex flex-col gap-3 list-row rounded-[var(--radius-card-lg)] px-4 py-3.5">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-[0.8rem] flex items-center justify-center text-xl shrink-0 border" style={{ backgroundColor: combo.color + '15', borderColor: combo.color + '40' }}>

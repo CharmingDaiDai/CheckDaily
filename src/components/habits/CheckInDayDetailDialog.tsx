@@ -1,8 +1,12 @@
-import { useMemo } from "react";
-import { CalendarCheck2, Clock3, NotebookPen } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CalendarCheck2, Check, Clock3, NotebookPen, Pencil, Trash2, X } from "lucide-react";
 import { ModalOverlay } from "@/components/ui/modal-overlay";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/input";
 import { cn, formatDate, formatTime } from "@/lib/utils";
 import { HabitIcon } from '@/lib/habitIcons'
+import { useDeleteCheckIn, useUpdateCheckIn } from "@/hooks/useCheckIns";
+import { toast } from "@/hooks/useToast";
 import type { CheckIn } from "@/types";
 
 type HabitMeta = {
@@ -26,6 +30,22 @@ export function CheckInDayDetailDialog({
   checkIns,
   habitsMap,
 }: CheckInDayDetailDialogProps) {
+  const updateCheckIn = useUpdateCheckIn();
+  const deleteCheckIn = useDeleteCheckIn();
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftNote, setDraftNote] = useState("");
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  // Reset transient row state whenever the dialog closes
+  useEffect(() => {
+    if (!open) {
+      setEditingId(null);
+      setDraftNote("");
+      setPendingDeleteId(null);
+    }
+  }, [open]);
+
   const orderedCheckIns = useMemo(
     () => [...checkIns].sort((a, b) => a.checked_at.localeCompare(b.checked_at)),
     [checkIns],
@@ -38,6 +58,39 @@ export function CheckInDayDetailDialog({
       ).length,
     [orderedCheckIns],
   );
+
+  function startEditing(ci: CheckIn) {
+    setPendingDeleteId(null);
+    setEditingId(ci.id);
+    setDraftNote(ci.note ?? "");
+  }
+
+  function cancelEditing() {
+    setEditingId(null);
+    setDraftNote("");
+  }
+
+  async function saveNote(ci: CheckIn) {
+    const next = draftNote.trim();
+    try {
+      await updateCheckIn.mutateAsync({ id: ci.id, note: next || null });
+      setEditingId(null);
+      setDraftNote("");
+      toast.success("备注已保存");
+    } catch {
+      // error handled in useUpdateCheckIn
+    }
+  }
+
+  async function removeCheckIn(ci: CheckIn) {
+    try {
+      await deleteCheckIn.mutateAsync(ci.id);
+      setPendingDeleteId(null);
+      toast.success("已删除这条打卡记录");
+    } catch {
+      // error handled in useDeleteCheckIn
+    }
+  }
 
   return (
     <ModalOverlay open={open} onOpenChange={onOpenChange}>
@@ -87,6 +140,8 @@ export function CheckInDayDetailDialog({
             const habit = habitsMap[ci.habit_id];
             const isBackdated =
               formatDate(ci.checked_at) !== formatDate(ci.created_at);
+            const isEditing = editingId === ci.id;
+            const isConfirmingDelete = pendingDeleteId === ci.id;
 
             return (
               <article
@@ -113,16 +168,45 @@ export function CheckInDayDetailDialog({
                       )}
                     </div>
 
-                    <p
-                      className={cn(
-                        "mt-1 text-xs leading-relaxed",
-                        ci.note
-                          ? "text-[var(--color-ink-600)]"
-                          : "italic text-stone-400",
-                      )}
-                    >
-                      {ci.note || "未填写备注"}
-                    </p>
+                    {isEditing ? (
+                      <div className="mt-2 space-y-2">
+                        <Textarea
+                          value={draftNote}
+                          onChange={(e) => setDraftNote(e.target.value)}
+                          placeholder="记录一下这次的感受、数据或备注…"
+                          rows={2}
+                          autoFocus
+                          aria-label="打卡备注"
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => void saveNote(ci)}
+                            isLoading={updateCheckIn.isPending}
+                            loadingText="保存中…"
+                          >
+                            <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                            保存
+                          </Button>
+                          <Button size="sm" variant="outline" className="flex-1" onClick={cancelEditing}>
+                            <X className="w-3.5 h-3.5" strokeWidth={2.5} />
+                            取消
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p
+                        className={cn(
+                          "mt-1 text-xs leading-relaxed",
+                          ci.note
+                            ? "text-[var(--color-ink-600)]"
+                            : "italic text-stone-400",
+                        )}
+                      >
+                        {ci.note || "未填写备注"}
+                      </p>
+                    )}
 
                     <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-stone-400">
                       <Clock3 className="h-3.5 w-3.5" />
@@ -130,6 +214,48 @@ export function CheckInDayDetailDialog({
                       <span className="text-stone-300">&middot;</span>
                       <span>记录于 {formatTime(ci.created_at)}</span>
                     </div>
+
+                    {!isEditing && (
+                      <div className="mt-2 flex items-center gap-3">
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-stone-400 transition-colors hover:text-brand-600"
+                          onClick={() => startEditing(ci)}
+                        >
+                          <Pencil className="w-3 h-3" />
+                          {ci.note ? "编辑备注" : "添加备注"}
+                        </button>
+
+                        {isConfirmingDelete ? (
+                          <span className="inline-flex items-center gap-2">
+                            <button
+                              type="button"
+                              className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 disabled:opacity-50"
+                              onClick={() => void removeCheckIn(ci)}
+                              disabled={deleteCheckIn.isPending}
+                            >
+                              {deleteCheckIn.isPending ? "删除中…" : "确认删除"}
+                            </button>
+                            <button
+                              type="button"
+                              className="text-[11px] font-medium text-stone-400 hover:text-stone-600"
+                              onClick={() => setPendingDeleteId(null)}
+                            >
+                              取消
+                            </button>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-stone-400 transition-colors hover:text-rose-600"
+                            onClick={() => setPendingDeleteId(ci.id)}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            删除
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </article>

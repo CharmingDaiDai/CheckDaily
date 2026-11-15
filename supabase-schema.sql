@@ -33,21 +33,56 @@ CREATE INDEX IF NOT EXISTS check_ins_habit_id_idx     ON public.check_ins (habit
 CREATE INDEX IF NOT EXISTS check_ins_checked_at_idx   ON public.check_ins (checked_at DESC);
 CREATE INDEX IF NOT EXISTS check_ins_user_date_idx    ON public.check_ins (user_id, checked_at DESC);
 
--- ── 3. ROW LEVEL SECURITY ───────────────────────
-ALTER TABLE public.habits    ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.check_ins ENABLE ROW LEVEL SECURITY;
+-- ── 3. HABIT_COMBOS 表（运动组合）──────────────
+CREATE TABLE IF NOT EXISTS public.habit_combos (
+  id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id     uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name        text NOT NULL,
+  color       text NOT NULL DEFAULT '#f97316',
+  icon        text NOT NULL DEFAULT '🚀',
+  habit_ids   uuid[] NOT NULL DEFAULT '{}',
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS habit_combos_user_id_idx ON public.habit_combos (user_id);
+
+-- ── 4. ROW LEVEL SECURITY ───────────────────────
+ALTER TABLE public.habits       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.check_ins    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.habit_combos ENABLE ROW LEVEL SECURITY;
 
 -- ── habits RLS policies ──
+DROP POLICY IF EXISTS "habits: users can read own"   ON public.habits;
+DROP POLICY IF EXISTS "habits: users can insert own" ON public.habits;
+DROP POLICY IF EXISTS "habits: users can update own" ON public.habits;
+DROP POLICY IF EXISTS "habits: users can delete own" ON public.habits;
+
 CREATE POLICY "habits: users can read own"   ON public.habits FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "habits: users can insert own" ON public.habits FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "habits: users can update own" ON public.habits FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "habits: users can delete own" ON public.habits FOR DELETE USING (auth.uid() = user_id);
 
 -- ── check_ins RLS policies ──
+DROP POLICY IF EXISTS "check_ins: users can read own"   ON public.check_ins;
+DROP POLICY IF EXISTS "check_ins: users can insert own" ON public.check_ins;
+DROP POLICY IF EXISTS "check_ins: users can update own" ON public.check_ins;
+DROP POLICY IF EXISTS "check_ins: users can delete own" ON public.check_ins;
+
 CREATE POLICY "check_ins: users can read own"   ON public.check_ins FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "check_ins: users can insert own" ON public.check_ins FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "check_ins: users can update own" ON public.check_ins FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "check_ins: users can delete own" ON public.check_ins FOR DELETE USING (auth.uid() = user_id);
+
+-- ── habit_combos RLS policies ──
+DROP POLICY IF EXISTS "habit_combos: users can read own"   ON public.habit_combos;
+DROP POLICY IF EXISTS "habit_combos: users can insert own" ON public.habit_combos;
+DROP POLICY IF EXISTS "habit_combos: users can update own" ON public.habit_combos;
+DROP POLICY IF EXISTS "habit_combos: users can delete own" ON public.habit_combos;
+
+CREATE POLICY "habit_combos: users can read own"   ON public.habit_combos FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "habit_combos: users can insert own" ON public.habit_combos FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "habit_combos: users can update own" ON public.habit_combos FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "habit_combos: users can delete own" ON public.habit_combos FOR DELETE USING (auth.uid() = user_id);
 
 -- ================================================
 -- OPTIONAL: Insert sample data for testing

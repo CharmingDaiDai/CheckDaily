@@ -64,6 +64,84 @@ export function useTodayCheckIns() {
   return useCheckIns({ startDate: todayStr, endDate: todayStr })
 }
 
+/**
+ * Fetches check-ins page by page until every habit's current streak is fully
+ * contained in what was fetched. Keeps long streaks correct without a fixed window.
+ */
+export function useStreakCheckIns() {
+  const userId = useAuthStore((s) => s.user?.id)
+
+  return useQuery({
+    queryKey: ['streakCheckIns', userId],
+    queryFn: async (): Promise<Array<{ id: string; habit_id: string; checked_at: string }>> => {
+      if (!userId) return []
+      const pageSize = 1000
+      const rows: Array<{ id: string; habit_id: string; checked_at: string }> = []
+
+      for (let page = 0; page < 50; page += 1) {
+        const { data, error } = await supabase
+          .from('check_ins')
+          .select('id, habit_id, checked_at')
+          .eq('user_id', userId)
+          .order('checked_at', { ascending: false })
+          .range(page * pageSize, page * pageSize + pageSize - 1)
+        if (error) throw error
+
+        const batch = data ?? []
+        rows.push(...batch)
+        if (batch.length < pageSize) break
+        if (!hasOpenStreak(rows)) break
+      }
+
+      return rows
+    },
+    enabled: !!userId,
+  })
+}
+
+function previousDay(dateStr: string) {
+  const d = new Date(Number(dateStr.slice(0, 4)), Number(dateStr.slice(5, 7)) - 1, Number(dateStr.slice(8, 10)))
+  d.setDate(d.getDate() - 1)
+  return formatDate(d)
+}
+
+/** True when some habit's current streak may still extend past the oldest fetched date. */
+function hasOpenStreak(rows: Array<{ habit_id: string; checked_at: string }>) {
+  const byHabit = new Map<string, Set<string>>()
+  for (const row of rows) {
+    const date = formatDate(row.checked_at)
+    const set = byHabit.get(row.habit_id)
+    if (set) set.add(date)
+    else byHabit.set(row.habit_id, new Set([date]))
+  }
+
+  const todayStr = today()
+  const yesterday = previousDay(todayStr)
+
+  for (const dates of byHabit.values()) {
+    // computeStreak starts at today when it is checked, otherwise at yesterday.
+    const start = dates.has(todayStr) ? todayStr : yesterday
+    if (!dates.has(start)) continue
+
+    const boundary = [...dates].sort()[0]
+    let cursor = start
+    let oldest = start
+    while (dates.has(cursor)) {
+      oldest = cursor
+      cursor = previousDay(cursor)
+    }
+
+    // Chain runs off the edge of the fetched window — earlier days might continue it.
+    if (oldest === boundary) {
+      // A streak of just "today" is already complete: yesterday is missing, so
+      // nothing earlier can extend it.
+      if (!(start === todayStr && oldest === todayStr)) return true
+    }
+  }
+
+  return false
+}
+
 export function useCheckIn() {
   const userId = useAuthStore((s) => s.user?.id)
   const qc = useQueryClient()
@@ -87,9 +165,34 @@ export function useCheckIn() {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['checkIns'] })
+      void qc.invalidateQueries({ queryKey: ['streakCheckIns'] })
+      void qc.invalidateQueries({ queryKey: ['yearCounts'] })
     },
     onError: () => {
       toast.error('打卡失败，请稍后重试')
+    },
+  })
+}
+
+export function useUpdateCheckIn() {
+  const qc = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, note }: { id: string; note: string | null }): Promise<CheckIn> => {
+      const { data, error } = await supabase
+        .from('check_ins')
+        .update({ note })
+        .eq('id', id)
+        .select('id, habit_id, user_id, checked_at, note, created_at')
+        .single()
+      if (error) throw error
+      return data as CheckIn
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['checkIns'] })
+    },
+    onError: () => {
+      toast.error('备注保存失败，请稍后重试')
     },
   })
 }
@@ -111,6 +214,8 @@ export function useDeleteCheckIn() {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['checkIns'] })
+      void qc.invalidateQueries({ queryKey: ['streakCheckIns'] })
+      void qc.invalidateQueries({ queryKey: ['yearCounts'] })
     },
     onError: () => {
       toast.error('撤销失败，请稍后重试')
@@ -174,7 +279,7 @@ export function useCheckInCombo() {
     onSuccess: () => {
       // Invalidate all variations of checkIns
       void qc.invalidateQueries({ queryKey: ['checkIns'] })
-      void qc.invalidateQueries({ queryKey: ['todayCheckIns'] })
+      void qc.invalidateQueries({ queryKey: ['streakCheckIns'] })
       void qc.invalidateQueries({ queryKey: ['yearCounts'] })
     },
     onError: (err) => toast.error(`组合打卡失败: ${err.message}`),

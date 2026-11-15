@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion, useReducedMotion, useMotionValue, useSpring, useTransform, AnimatePresence } from 'motion/react'
 import { Check, RotateCcw, MoreHorizontal, Flame } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -38,7 +38,11 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
   const deleteCheckIn = useDeleteCheckIn()
   const isDone = todayCount > 0
 
-  // 3D tilt motion values
+  // 3D tilt motion values (pointer devices only; touch screens never fire these)
+  const canHover = useMemo(
+    () => typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches,
+    [],
+  )
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
   const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [4, -4]), { stiffness: 300, damping: 30 })
@@ -49,13 +53,13 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
   const iconY = useSpring(useTransform(mouseY, [-0.5, 0.5], [-3, 3]), { stiffness: 200, damping: 20 })
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    if (reduceMotion) return
+    if (reduceMotion || !canHover) return
     const rect = e.currentTarget.getBoundingClientRect()
     const x = (e.clientX - rect.left) / rect.width - 0.5
     const y = (e.clientY - rect.top) / rect.height - 0.5
     mouseX.set(x)
     mouseY.set(y)
-  }, [reduceMotion, mouseX, mouseY])
+  }, [reduceMotion, canHover, mouseX, mouseY])
 
   const handleMouseLeave = useCallback(() => {
     mouseX.set(0)
@@ -308,7 +312,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
   ) : null
 
   // Shared 3D style for card
-  const tiltStyle = reduceMotion ? undefined : {
+  const tiltStyle = reduceMotion || !canHover ? undefined : {
     rotateX,
     rotateY,
     transformPerspective: 800,
@@ -362,7 +366,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
               )}
               style={{
                 background: `linear-gradient(135deg, ${habit.color}14, ${habit.color}22)`,
-                ...(reduceMotion ? {} : { x: iconX, y: iconY }),
+                ...(!reduceMotion && canHover ? { x: iconX, y: iconY } : {}),
               }}
             >
               <HabitIcon icon={habit.icon} className="w-5 h-5" color={habit.color} fallback="📌" />
@@ -480,7 +484,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
             )}
             style={{
               background: `linear-gradient(135deg, ${habit.color}14, ${habit.color}22)`,
-              ...(reduceMotion ? {} : { x: iconX, y: iconY }),
+              ...(!reduceMotion && canHover ? { x: iconX, y: iconY } : {}),
             }}
           >
             <HabitIcon icon={habit.icon} className="w-[18px] h-[18px]" color={habit.color} fallback="📌" />

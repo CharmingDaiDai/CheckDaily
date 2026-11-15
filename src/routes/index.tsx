@@ -7,16 +7,21 @@ import {
   LayoutGrid,
   List,
   CalendarClock,
+  ListCheck,
+  Hand,
+  Search,
+  X,
 } from "lucide-react";
 import { Check } from "lucide-react";
 import { useHabits } from '@/hooks/useHabits';
 import { useCombos } from '@/hooks/useCombos';
-import { useTodayCheckIns, useCheckIns, useCheckInCombo, useDeleteCheckIn } from '@/hooks/useCheckIns';
+import { useTodayCheckIns, useCheckIns, useCheckInCombo, useDeleteCheckIn, useStreakCheckIns } from '@/hooks/useCheckIns';
 import { toast } from '@/hooks/useToast';
 import { HabitCard } from "@/components/habits/HabitCard";
 import { CheckInDayDetailDialog } from "@/components/habits/CheckInDayDetailDialog";
 import { SimpleBarChart } from "@/components/charts/BarCharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { BackdateSheet } from "@/components/habits/BackdateSheet";
 import { formatDate, getLast7Days, computeStreak } from "@/lib/utils";
 import { pageChoreography, sectionReveal } from "@/lib/motion";
@@ -30,6 +35,8 @@ function Dashboard() {
   const [backdateOpen, setBackdateOpen] = useState(false);
   const [dayDetailOpen, setDayDetailOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [query, setQuery] = useState("");
+  const [onlyPending, setOnlyPending] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 300);
@@ -59,21 +66,12 @@ function Dashboard() {
     endDate: last7[last7.length - 1],
   });
 
-  // Fetch last 60 days of check-ins for streak calculation
-  const streakRange = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 60);
-    return formatDate(d);
-  }, []);
   const {
     data: streakCheckIns,
     isFetching: streakFetching,
     error: streakError,
     refetch: refetchStreak,
-  } = useCheckIns({
-    startDate: streakRange,
-    endDate: formatDate(new Date()),
-  });
+  } = useStreakCheckIns();
 
   const [selectedDate, setSelectedDate] = useState(() =>
     formatDate(new Date()),
@@ -112,46 +110,62 @@ function Dashboard() {
     return map;
   }, [streakCheckIns, habits]);
 
-  // Combos status
+  // Combos status — ignore habit ids that no longer resolve to an active habit
   const renderedCombos = useMemo(() => {
     if (!combos || !habits) return [];
-    return combos.map(combo => {
-      const isDone = combo.habit_ids.length > 0 && combo.habit_ids.every(id => (todayCountMap[id] ?? 0) > 0);
-      return { ...combo, isDone };
-    }).sort((a, b) => (a.isDone === b.isDone ? 0 : a.isDone ? 1 : -1));
+    const activeIds = new Set(habits.map((h) => h.id));
+    return combos
+      .map((combo) => {
+        const validIds = combo.habit_ids.filter((id) => activeIds.has(id));
+        const missingCount = combo.habit_ids.length - validIds.length;
+        const isDone =
+          validIds.length > 0 && validIds.every((id) => (todayCountMap[id] ?? 0) > 0);
+        return { ...combo, validIds, missingCount, isDone };
+      })
+      .sort((a, b) => (a.isDone === b.isDone ? 0 : a.isDone ? 1 : -1));
   }, [combos, habits, todayCountMap]);
 
-  const handleComboCheckIn = async (combo: any) => {
-    if (checkInCombo.isPending) return;
+  const handleComboCheckIn = async (combo: (typeof renderedCombos)[number]) => {
+    if (checkInCombo.isPending || combo.validIds.length === 0) return;
     try {
-      const result = await checkInCombo.mutateAsync({ habitIds: combo.habit_ids });
+      const result = await checkInCombo.mutateAsync({ habitIds: combo.validIds });
       if (result && result.length > 0) {
         toast.success(`已打卡组合「${combo.name}」`, {
           action: {
             label: '撤销',
             onClick: async () => {
               try {
-                await deleteCheckIn.mutateAsync(result.map(r => r.id));
+                await deleteCheckIn.mutateAsync(result.map((r) => r.id));
                 toast.success('已撤销组合打卡');
               } catch {
                 // error handled in useDeleteCheckIn
               }
-            }
-          }
+            },
+          },
         });
       }
-    } catch {}
+    } catch {
+      // error handled in useCheckInCombo
+    }
   };
 
-  // Sort: incomplete first, completed at bottom
+  // Apply search + pending filter, then sort: incomplete first, completed at bottom
+  const normalizedQuery = query.trim().toLowerCase();
+  const isFiltering = normalizedQuery.length > 0 || onlyPending;
   const sortedHabits = useMemo(() => {
     if (!habits) return [];
-    return [...habits].sort((a, b) => {
+    const filtered = habits.filter((h) => {
+      const isDone = (todayCountMap[h.id] ?? 0) > 0;
+      if (onlyPending && isDone) return false;
+      if (normalizedQuery && !h.name.toLowerCase().includes(normalizedQuery)) return false;
+      return true;
+    });
+    return filtered.sort((a, b) => {
       const aDone = (todayCountMap[a.id] ?? 0) > 0 ? 1 : 0;
       const bDone = (todayCountMap[b.id] ?? 0) > 0 ? 1 : 0;
       return aDone - bDone;
     });
-  }, [habits, todayCountMap]);
+  }, [habits, todayCountMap, normalizedQuery, onlyPending]);
 
   // Last 7 days bar chart data
   const weekData = useMemo(() => {
@@ -198,11 +212,14 @@ function Dashboard() {
   const isRefreshing = !isLoading && (habitsFetching || todayFetching || recentFetching || streakFetching);
   const hasLoadError = Boolean(habitsError || todayError || recentError || streakError);
 
-  // Index where completed habits start (-1 = none done, 0 = all done)
+  // Index where completed habits start (-1 = none done, 0 = all done) within the visible list
   const firstDoneIdx = sortedHabits.findIndex(
     (h) => (todayCountMap[h.id] ?? 0) > 0,
   );
-  const hasMixed = firstDoneIdx > 0 && doneCount < totalCount;
+  const visibleDoneCount = sortedHabits.filter(
+    (h) => (todayCountMap[h.id] ?? 0) > 0,
+  ).length;
+  const hasMixed = firstDoneIdx > 0;
 
   const gridClass = compact
     ? "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2"
@@ -222,7 +239,7 @@ function Dashboard() {
           {todayStr}
         </div>
         <div className="flex items-center justify-between">
-          <h1 className="headline-premium text-[2.05rem] sm:text-[2.35rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">
+          <h1 className="headline-premium text-[2.05rem] sm:text-[2.35rem] text-[var(--color-ink-950)]">
             今日打卡
           </h1>
           {totalCount > 0 && !isLoading && (
@@ -321,6 +338,42 @@ function Dashboard() {
         </motion.div>
       )}
 
+      {/* Filter row — only worth showing once there are enough habits to lose track of */}
+      {!isLoading && totalCount > 5 && (
+        <motion.div variants={sectionReveal} className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+            <Input
+              placeholder="搜索习惯…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="pl-10 pr-10 h-11"
+              aria-label="搜索习惯"
+            />
+            {query && (
+              <button
+                className="absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/70 transition-colors"
+                onClick={() => setQuery("")}
+                aria-label="清除搜索"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <button
+            onClick={() => setOnlyPending((v) => !v)}
+            aria-pressed={onlyPending}
+            className={
+              onlyPending
+                ? "h-11 shrink-0 rounded-[var(--radius-control)] border border-brand-300 bg-brand-50 px-3.5 text-xs font-semibold text-brand-700 transition-colors"
+                : "h-11 shrink-0 rounded-[var(--radius-control)] border border-[var(--color-line-soft)] bg-white/70 px-3.5 text-xs font-semibold text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] transition-colors"
+            }
+          >
+            只看未打卡
+          </button>
+        </motion.div>
+      )}
+
       {/* All Done celebration banner */}
       {!isLoading && doneCount === totalCount && totalCount > 0 && (
         <motion.div variants={sectionReveal} className="relative overflow-hidden glass-card rounded-[var(--radius-card-lg)] px-5 py-4">
@@ -333,11 +386,11 @@ function Dashboard() {
                 style={{
                   backgroundColor: [
                     "#f97316",
-                    "#eab308",
-                    "#3b82f6",
-                    "#22c55e",
-                    "#ec4899",
-                    "#8b5cf6",
+                    "#fb923c",
+                    "#fbbf24",
+                    "#fdba74",
+                    "#ea6c0c",
+                    "#fed7aa",
                   ][i % 6],
                   left: `${8 + i * 7.5}%`,
                   top: `-8px`,
@@ -356,29 +409,6 @@ function Dashboard() {
         </motion.div>
       )}
 
-      {/* Last 7 days mini chart */}
-      {totalCount > 0 && (
-        <motion.div variants={sectionReveal} className="glass-card rounded-[var(--radius-card-lg)] p-5">
-          <div className="flex items-center gap-2 mb-4 pb-3 border-b luxury-divider">
-            <TrendingUp className="w-4 h-4 text-brand-500" strokeWidth={2.5} />
-            <span className="font-bold text-[var(--color-ink-900)] text-sm">
-              近7天打卡
-            </span>
-          </div>
-          <SimpleBarChart
-            data={weekData}
-            height={130}
-            highlightToday
-            showYAxis={false}
-            activeDate={selectedDate}
-            onBarClick={(date) => {
-              setSelectedDate(date);
-              setDayDetailOpen(true);
-            }}
-          />
-        </motion.div>
-      )}
-
       <CheckInDayDetailDialog
         open={dayDetailOpen}
         onOpenChange={setDayDetailOpen}
@@ -388,14 +418,14 @@ function Dashboard() {
       />
 
       {/* Combos grid */}
-      {!isLoading && renderedCombos.length > 0 && (
+      {!isLoading && !isFiltering && renderedCombos.length > 0 && (
         <motion.div variants={sectionReveal} className="space-y-3 mb-8">
           <div className="text-sm font-bold text-stone-500 px-1 border-b border-stone-100 pb-2">运动组合</div>
           <div className={gridClass}>
             {renderedCombos.map(combo => (
               <button
                 key={combo.id}
-                disabled={checkInCombo.isPending || combo.habit_ids.length === 0}
+                disabled={checkInCombo.isPending || combo.validIds.length === 0}
                 onClick={() => handleComboCheckIn(combo)}
                 className={`group relative flex items-center gap-2.5 px-3 py-2.5 rounded-2xl tap-scale text-left select-none overflow-hidden transition-[box-shadow,transform] duration-200 ${
                   combo.isDone 
@@ -441,7 +471,10 @@ function Dashboard() {
                       </span>
                     ) : (
                       <span className="text-[11px] text-stone-400 font-medium">
-                        包含 {combo.habit_ids.length} 项
+                        包含 {combo.validIds.length} 项
+                        {combo.missingCount > 0 && (
+                          <span className="text-amber-600"> · {combo.missingCount} 项已删除</span>
+                        )}
                       </span>
                     )}
                   </div>
@@ -507,7 +540,7 @@ function Dashboard() {
             <div className="flex items-center gap-2 py-0.5">
               <div className="h-px flex-1 bg-stone-100" />
               <span className="text-xs text-stone-400 font-medium px-1">
-                已完成 {doneCount} 项
+                已完成 {visibleDoneCount} 项
               </span>
               <div className="h-px flex-1 bg-stone-100" />
             </div>
@@ -530,12 +563,33 @@ function Dashboard() {
             </div>
           )}
         </motion.div>
+      ) : isFiltering ? (
+        <motion.div variants={sectionReveal} className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mb-4">
+            <Search className="w-7 h-7 text-stone-300" strokeWidth={1.5} />
+          </div>
+          <div className="font-semibold text-stone-700 text-base mb-1">
+            {normalizedQuery ? `没有找到「${query.trim()}」` : "今天的项目都已打卡"}
+          </div>
+          <div className="text-stone-400 text-sm mb-5">
+            {normalizedQuery ? "换个关键词试试，或清除筛选" : "可以切回全部项目看看"}
+          </div>
+          <button
+            className="px-4 py-2 rounded-xl border border-[var(--color-line-soft)] bg-white/80 text-brand-700 font-semibold text-sm hover:bg-white transition-colors tap-scale"
+            onClick={() => {
+              setQuery("");
+              setOnlyPending(false);
+            }}
+          >
+            清除筛选
+          </button>
+        </motion.div>
       ) : (
         <motion.div variants={sectionReveal} className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mb-4">
-            <span className="text-4xl animate-float">📋</span>
+            <ListCheck className="w-9 h-9 text-stone-300" strokeWidth={1.5} />
           </div>
-          <div className="font-bold text-stone-700 text-lg mb-1">
+          <div className="font-semibold text-stone-700 text-lg mb-1">
             还没有打卡项目
           </div>
           <div className="text-stone-400 text-sm mb-5">
@@ -553,9 +607,32 @@ function Dashboard() {
       {/* Onboarding hint */}
       {!isLoading && sortedHabits.length > 0 && doneCount === 0 && (
         <div className="flex items-center justify-center gap-1.5 py-1 text-stone-300">
-          <span className="text-sm">👆</span>
+          <Hand className="w-3.5 h-3.5" strokeWidth={1.8} />
           <span className="text-xs font-medium">轻触卡片即可完成今日打卡</span>
         </div>
+      )}
+
+      {/* Last 7 days mini chart */}
+      {totalCount > 0 && (
+        <motion.div variants={sectionReveal} className="surface-frame rounded-[var(--radius-card-lg)] p-5">
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b luxury-divider">
+            <TrendingUp className="w-4 h-4 text-brand-500" strokeWidth={2.5} />
+            <span className="font-semibold text-[var(--color-ink-900)] text-sm">
+              近7天打卡
+            </span>
+          </div>
+          <SimpleBarChart
+            data={weekData}
+            height={130}
+            highlightToday
+            showYAxis={false}
+            activeDate={selectedDate}
+            onBarClick={(date) => {
+              setSelectedDate(date);
+              setDayDetailOpen(true);
+            }}
+          />
+        </motion.div>
       )}
 
       {/* Backdate sheet */}

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'motion/react'
-import { LogOut, User, Mail, Info, Shield, ChevronRight, Eye, EyeOff, Lock, Download, Database } from 'lucide-react'
+import { LogOut, User, Mail, Info, Shield, ChevronRight, Eye, EyeOff, Lock, Download, Database, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/useToast'
 import { Spinner } from '@/components/ui/spinner'
 import { useFormDialog } from '@/hooks/useFormDialog'
+import { parseExportPayload, useImportData } from '@/hooks/useImportData'
 import { pageChoreography, sectionReveal } from '@/lib/motion'
 
 function ProfilePage() {
@@ -40,6 +41,28 @@ function ProfilePage() {
 
   // Export data
   const [exporting, setExporting] = useState(false)
+
+  // Import data
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const importData = useImportData()
+
+  async function handleImportFile(file: File) {
+    try {
+      const text = await file.text()
+      const payload = parseExportPayload(JSON.parse(text))
+      await importData.mutateAsync(payload)
+    } catch (err) {
+      const message =
+        err instanceof SyntaxError
+          ? '文件不是有效的 JSON'
+          : err instanceof Error
+            ? err.message
+            : '导入失败，请检查文件格式'
+      toast.error(message)
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   async function handleExport() {
     if (!user) return
@@ -129,7 +152,7 @@ function ProfilePage() {
       animate="animate"
     >
       <div>
-        <h1 className="headline-premium text-[2rem] sm:text-[2.28rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">我的</h1>
+        <h1 className="headline-premium text-[2rem] sm:text-[2.28rem] text-[var(--color-ink-950)]">我的</h1>
       </div>
 
       {/* User card */}
@@ -183,9 +206,9 @@ function ProfilePage() {
           <span className="font-semibold text-stone-700 text-sm">数据管理</span>
         </div>
         <button
-          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/65 transition-colors text-left disabled:opacity-50"
+          className="w-full flex items-center justify-between px-5 py-4 border-b luxury-divider hover:bg-white/65 transition-colors text-left disabled:opacity-50"
           onClick={handleExport}
-          disabled={exporting}
+          disabled={exporting || importData.isPending}
         >
           <div className="flex items-center gap-3">
             <Download className="w-4 h-4 text-stone-400" />
@@ -200,6 +223,34 @@ function ProfilePage() {
             <ChevronRight className="w-4 h-4 text-stone-300" />
           )}
         </button>
+        <button
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/65 transition-colors text-left disabled:opacity-50"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={exporting || importData.isPending}
+        >
+          <div className="flex items-center gap-3">
+            <Upload className="w-4 h-4 text-stone-400" />
+            <div>
+              <div className="text-sm font-medium text-stone-700">导入数据</div>
+              <div className="text-xs text-stone-400 mt-0.5">从导出的 JSON 恢复，同名项目会自动合并</div>
+            </div>
+          </div>
+          {importData.isPending ? (
+            <Spinner variant="muted" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-stone-300" />
+          )}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) void handleImportFile(file)
+          }}
+        />
       </motion.div>
 
       {/* App info */}

@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   Search,
   X,
+  Inbox,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -260,7 +261,7 @@ function StatsPage() {
     >
       {/* Header */}
       <motion.div variants={sectionReveal}>
-        <h1 className="headline-premium text-[2.02rem] sm:text-[2.3rem] font-normal tracking-[0.01em] text-[var(--color-ink-950)]">
+        <h1 className="headline-premium text-[2.02rem] sm:text-[2.3rem] text-[var(--color-ink-950)]">
           统计分析
         </h1>
         <div className="flex items-center gap-2 mt-0.5">
@@ -332,7 +333,6 @@ function StatsPage() {
           label="当前连续"
           value={`${streak} 天`}
           icon={Flame}
-          iconColor="#f97316"
           loading={isLoading}
           primary
         />
@@ -341,26 +341,24 @@ function StatsPage() {
           value={thisMonthCount}
           sublabel="次"
           icon={Target}
-          iconColor="#3b82f6"
           loading={isLoading}
         />
         <StatCard
           label="最长连续"
           value={`${longest} 天`}
           icon={Trophy}
-          iconColor="#eab308"
           loading={isLoading}
         />
         <StatCard
           label="全年总计"
           value={
-            (allCheckIns ?? []).filter(
-              (ci) => formatDate(ci.checked_at) >= yearStart,
-            ).length
+            (allCheckIns ?? []).filter((ci) => {
+              const d = formatDate(ci.checked_at);
+              return d >= yearStart && d <= yearEnd;
+            }).length
           }
           sublabel="次"
           icon={BarChart2}
-          iconColor="#22c55e"
           loading={isLoading}
         />
       </motion.div>
@@ -407,7 +405,7 @@ function StatsPage() {
             {todayTimeline.length === 0 ? (
               <div className="flex flex-col items-center py-8 text-stone-400 gap-3">
                 <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center">
-                  <span className="text-2xl">📭</span>
+                  <Inbox className="w-7 h-7 text-stone-300" strokeWidth={1.5} />
                 </div>
                 <span className="text-sm font-medium">今天还没有打卡记录</span>
               </div>
@@ -650,8 +648,10 @@ function StatsPage() {
                 h.name.toLowerCase().includes(habitSearch.toLowerCase()),
               )
               .map((h) => {
-                const habitDates = checkInsByHabit.get(h.id) ?? [];
-                const cnt = habitDates.filter((d) => d >= yearStart).length;
+                const habitDates = (checkInsByHabit.get(h.id) ?? []).filter(
+                  (d) => d >= yearStart && d <= yearEnd,
+                );
+                const cnt = habitDates.length;
                 const habitStreak = computeStreak(habitDates);
                 return (
                   <Link

@@ -11,6 +11,7 @@ interface StatCardProps {
   value: string | number
   sublabel?: string
   icon?: LucideIcon
+  /** Accent tint. Defaults to the brand accent; pass a habit color on habit pages. */
   iconColor?: string
   loading?: boolean
   className?: string
@@ -33,7 +34,7 @@ function AnimatedValue({ value }: { value: string | number }) {
   return <>{animated}{suffix}</>
 }
 
-export function StatCard({ label, value, sublabel, icon: Icon, iconColor = '#f97316', loading, className, primary }: StatCardProps) {
+export function StatCard({ label, value, sublabel, icon: Icon, iconColor = 'var(--color-brand-500)', loading, className, primary }: StatCardProps) {
   const reduceMotion = useReducedMotion()
 
   if (loading) {
@@ -57,14 +58,14 @@ export function StatCard({ label, value, sublabel, icon: Icon, iconColor = '#f97
         className,
         primary && 'shine-border',
       )}
-      style={primary ? { background: `linear-gradient(152deg, ${iconColor}1f 0%, rgba(255,255,255,0.96) 46%, rgba(255,248,238,0.88) 100%)`, borderColor: 'rgb(130 108 87 / 0.26)' } : undefined}
+      style={primary ? { borderColor: 'rgb(130 108 87 / 0.26)' } : undefined}
     >
       <div className="flex items-start justify-between">
-        <div className="text-[11px] font-semibold text-[var(--color-ink-500)] uppercase tracking-[0.08em]">{label}</div>
+        <div className="text-[11px] font-semibold text-[var(--color-ink-500)] tracking-[0.07em]">{label}</div>
         {Icon && (
           <motion.div
             className="w-8 h-8 rounded-xl flex items-center justify-center border border-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.66)]"
-            style={{ backgroundColor: iconColor + '18' }}
+            style={{ backgroundColor: `color-mix(in srgb, ${iconColor} 10%, transparent)` }}
             initial={reduceMotion ? false : { scale: 0.9 }}
             animate={reduceMotion ? undefined : { scale: 1 }}
             transition={spring.snappy}

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { Check } from 'lucide-react'
-import { cn, formatDate } from '@/lib/utils'
+import { cn, formatDate, localNoonIso } from '@/lib/utils'
 import type { Habit } from '@/types'
 import { ModalOverlay } from '@/components/ui/modal-overlay'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ import { toast } from '@/hooks/useToast'
 import { HabitIcon } from '@/lib/habitIcons'
 
 const MAX_PER_DAY = 3
+const MAX_BACKDATE_DAYS = 7
 
 interface BackdateSheetProps {
   open: boolean
@@ -19,9 +20,9 @@ interface BackdateSheetProps {
 }
 
 export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps) {
-  // Generate last 3 days (excluding today)
+  // Generate the backdatable window (excluding today)
   const backdateDays = useMemo(() => {
-    return [-1, -2, -3].map((offset) => {
+    return Array.from({ length: MAX_BACKDATE_DAYS }, (_, i) => -(i + 1)).map((offset) => {
       const d = new Date()
       d.setDate(d.getDate() + offset)
       return formatDate(d)
@@ -37,7 +38,7 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
 
   const checkIn = useCheckIn()
 
-  // Fetch check-ins for the 3-day range
+  // Fetch check-ins for the whole backdatable window
   const {
     data: recentCheckIns,
     isLoading: recentLoading,
@@ -45,8 +46,8 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
     error: recentError,
     refetch: refetchRecent,
   } = useCheckIns({
-    startDate: backdateDays[2], // earliest
-    endDate: backdateDays[0],   // most recent
+    startDate: backdateDays[backdateDays.length - 1], // earliest
+    endDate: backdateDays[0],                          // most recent
   })
 
   // Reset state when sheet closes or date changes
@@ -116,7 +117,7 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
         [...selectedHabits].map(habitId =>
           checkIn.mutateAsync({
             habit_id: habitId,
-            checked_at: `${selectedDate}T12:00:00.000Z`,
+            checked_at: localNoonIso(selectedDate),
             note: note.trim() || undefined,
           })
         )
@@ -142,9 +143,9 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
   }
 
   return (
-    <ModalOverlay open={open} onOpenChange={onOpenChange} title="补卡 📆">
+    <ModalOverlay open={open} onOpenChange={onOpenChange} title="补卡">
         <div className="space-y-4 pt-1">
-          <p className="text-sm text-stone-500 font-medium mb-4 -mt-2">补录最近3天遗漏的打卡记录。</p>
+          <p className="text-sm text-stone-500 font-medium mb-4 -mt-2">补录最近 {MAX_BACKDATE_DAYS} 天遗漏的打卡记录，每日最多补 {MAX_PER_DAY} 项。</p>
           
           {recentError && (
             <div className="rounded-2xl border border-rose-200 bg-rose-50/70 px-3.5 py-3">
@@ -163,14 +164,14 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
 
           {recentFetching && !recentLoading && !recentError && (
             <div className="rounded-xl border border-brand-100 bg-brand-50/70 px-3 py-2 text-xs font-medium text-brand-700">
-              正在同步最近 3 天补卡记录…
+              正在同步最近 {MAX_BACKDATE_DAYS} 天补卡记录…
             </div>
           )}
 
           {/* Date selector */}
           <div className="space-y-2">
             <Label className="text-xs text-stone-500 font-semibold">选择日期</Label>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
               {backdateDays.map((date) => {
                 const { month, day, weekday } = formatShortDate(date)
                 const isSelected = date === selectedDate
@@ -184,11 +185,12 @@ export function BackdateSheet({ open, onOpenChange, habits }: BackdateSheetProps
                   <button
                     key={date}
                     aria-label={`${month}月${day}日 周${weekday}${dayRemaining <= 0 ? ' 已满' : ''}`}
+                    aria-pressed={isSelected}
                     className={cn(
-                      'flex-1 flex flex-col items-center gap-0.5 py-2.5 px-2 rounded-xl border-2 transition-all',
+                      'flex flex-col items-center gap-0.5 py-2.5 px-1 rounded-xl border-2 transition-all',
                       isSelected
                         ? 'border-brand-500 bg-brand-50'
-                        : 'border-stone-200 bg-white hover:border-stone-300',
+                        : 'border-[var(--color-line-soft)] bg-white hover:border-stone-300',
                       dayRemaining <= 0 && !isSelected && 'opacity-50',
                     )}
                     onClick={() => setSelectedDate(date)}
