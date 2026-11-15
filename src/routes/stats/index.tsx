@@ -394,7 +394,7 @@ function StatsPage() {
                 : "animate-slide-in-left"
             }
           >
-            <div className="text-sm font-semibold text-stone-500 mb-3">
+            <div className="text-sm font-semibold text-[var(--color-ink-500)] mb-3">
               今日打卡 {todayTimeline.length} 次
             </div>
             {todayTimeline.length === 0 ? (
@@ -410,7 +410,6 @@ function StatsPage() {
                   const h = habitsMap[ci.habit_id];
                   return (
                     <div key={ci.id} className="flex items-start gap-3 py-2">
-                      <div className="w-1 h-full self-stretch bg-stone-100 rounded-full mt-1 shrink-0" />
                       <div className="w-1 h-full self-stretch bg-white/60 rounded-full mt-1 shrink-0" />
                       <div
                         className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
@@ -456,7 +455,7 @@ function StatsPage() {
                 : "animate-slide-in-left"
             }
           >
-            <div className="text-sm font-semibold text-stone-500 mb-3">
+            <div className="text-sm font-semibold text-[var(--color-ink-500)] mb-3">
               本周打卡趋势
             </div>
             {isLoading ? (

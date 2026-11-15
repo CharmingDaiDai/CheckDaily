@@ -373,7 +373,7 @@ function ProfilePage() {
                   />
                   <button
                     type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/70 active:scale-95 transition-all"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/70 active:scale-95 transition-all"
                     aria-label={showPw ? '隐藏密码' : '显示密码'}
                     onClick={() => setShowPw((v) => !v)}
                     tabIndex={-1}
@@ -397,7 +397,7 @@ function ProfilePage() {
                   />
                   <button
                     type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-white/70 active:scale-95 transition-all"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-[var(--radius-control)] flex items-center justify-center text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/70 active:scale-95 transition-all"
                     aria-label={showConfirm ? '隐藏确认密码' : '显示确认密码'}
                     onClick={() => setShowConfirm((v) => !v)}
                     tabIndex={-1}

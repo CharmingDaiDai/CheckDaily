@@ -11,6 +11,15 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
+  server: {
+    // 5173 sits inside a Windows reserved range (5118-5217) on some machines that
+    // run Hyper-V / WSL2 / Docker, which makes bind() fail with EACCES. Vite only
+    // falls back on EADDRINUSE, so pick a port outside those ranges explicitly.
+    port: 5473,
+  },
+  preview: {
+    port: 5474,
+  },
   plugins: [
     TanStackRouterVite({ routesDirectory: './src/routes', generatedRouteTree: './src/routeTree.gen.ts' }),
     react(),

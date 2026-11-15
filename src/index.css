@@ -50,13 +50,37 @@
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 }
 
+/* Registers the specular sheen strength so it can be transitioned in browsers
+   that support @property; everywhere else it simply snaps, which is fine. */
+@property --glass-sheen {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
 :root {
   color-scheme: light;
   --bottom-nav-height: 4.5rem;
   --focus-ring-offset: #f7f5f1;
+
+  /* ── Glass material ──
+     A panel is built from four stacked layers: the page shows through a
+     saturated blur, a warm tint gradient veils it, a masked rim catches the
+     light along the top-left edge, and a pointer-following specular sheen
+     slides across the front surface. The three depth shadows keep it
+     physically seated on the page. */
+  --glass-blur: 24px;
+  --glass-sat: 158%;
+  --glass-brightness: 1.04;
+  --glass-x: 50%;
+  --glass-y: -40%;
+  --glass-sheen: 0;
+  --glass-tint: rgb(255 255 255 / 0.5);
+  --glass-rim: rgb(255 255 255 / 0.62);
+
   --material-bg: rgba(255, 255, 255, 0.68);
   --material-bg-strong: rgba(255, 255, 255, 0.86);
-  --material-border: rgba(255, 255, 255, 0.58);
+  --material-border: rgba(255, 255, 255, 0.62);
   --material-shadow: 0 18px 42px rgb(61 52 41 / 0.14), inset 0 1px 0 rgb(255 255 255 / 0.7);
 }
 
@@ -70,10 +94,11 @@ body {
   font-weight: 450;
   letter-spacing: 0.002em;
   background:
-    radial-gradient(circle at 10% -12%, rgb(216 111 47 / 0.12), transparent 30%),
-    radial-gradient(circle at 86% -10%, rgb(53 118 132 / 0.08), transparent 28%),
-    radial-gradient(circle at 70% 20%, rgb(93 137 78 / 0.06), transparent 40%),
-    linear-gradient(180deg, #fffdf9 0%, #f5f1ea 52%, #ece7dd 100%);
+    radial-gradient(circle at 8% -8%, rgb(226 128 62 / 0.2), transparent 32%),
+    radial-gradient(circle at 92% -4%, rgb(46 118 136 / 0.14), transparent 30%),
+    radial-gradient(circle at 78% 26%, rgb(104 148 88 / 0.1), transparent 38%),
+    radial-gradient(circle at 22% 74%, rgb(226 128 62 / 0.08), transparent 40%),
+    linear-gradient(180deg, #fffdf9 0%, #f6f1e9 48%, #ebe5d9 100%);
   color: var(--color-ink-900);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
