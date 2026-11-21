@@ -16,10 +16,10 @@ export function Sidebar() {
   const pathname = location.pathname
 
   return (
-    <aside className="hidden md:flex md:h-dvh md:min-h-0 flex-col w-52 lg:w-60 shrink-0 border-r border-white/55 bg-white/54 backdrop-blur-2xl">
+    <aside className="glass-rail hidden md:flex md:h-dvh md:min-h-0 flex-col w-52 lg:w-60 shrink-0">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-6">
-        <div className="w-10 h-10 rounded-[0.8rem] bg-gradient-to-b from-brand-400 to-brand-600 flex items-center justify-center shadow-[0_10px_18px_rgb(185_84_34/0.22)]" style={{ '--glow-color': 'rgba(216,111,47,0.18)' } as React.CSSProperties}>
+        <div className="w-10 h-10 rounded-[0.8rem] bg-[linear-gradient(160deg,#e99658_0%,#d86f2f_46%,#a94b22_100%)] flex items-center justify-center shadow-[0_1px_1px_rgb(90_45_18/0.18),0_8px_16px_-6px_rgb(185_84_34/0.42),inset_0_1px_0_rgb(255_255_255/0.42)]">
           <Flame className="w-5 h-5 text-white" strokeWidth={2.5} />
         </div>
         <div>
@@ -48,7 +48,7 @@ export function Sidebar() {
                 {active && (
                   <motion.div
                     layoutId="sidebar-indicator"
-                    className="absolute inset-0 rounded-[var(--radius-control)] border border-white/62 bg-[linear-gradient(160deg,rgba(255,255,255,0.76),rgba(216,111,47,0.14))] shadow-[0_8px_20px_rgb(185_84_34/0.13)]"
+                    className="absolute inset-0 rounded-[var(--radius-control)] border border-white/70 bg-[linear-gradient(160deg,rgba(255,255,255,0.9)_0%,rgba(216,111,47,0.16)_100%)] shadow-[inset_0_1px_0_rgb(255_255_255/0.9),0_1px_1px_rgb(61_52_41/0.05),0_8px_18px_-8px_rgb(185_84_34/0.34)]"
                     transition={spring.smooth}
                   />
                 )}
@@ -70,7 +70,7 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-5 py-4 border-t border-white/50">
+      <div className="px-5 py-4 border-t border-[color:rgb(39_35_31/0.07)]">
         <div className="text-xs text-[var(--color-ink-500)] font-medium tracking-[0.01em]">打卡 · 习惯追踪</div>
       </div>
     </aside>

@@ -52,13 +52,13 @@ export function StatCard({ label, value, sublabel, icon: Icon, iconColor = 'var(
       initial={reduceMotion ? false : { opacity: 0, y: 12, scale: 0.98 }}
       animate={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
       transition={reduceMotion ? undefined : spring.gentle}
-      whileHover={reduceMotion ? undefined : { y: -3, boxShadow: 'var(--shadow-card-hover)', transition: spring.smooth }}
+      whileHover={reduceMotion ? undefined : { y: -3, transition: spring.smooth }}
       className={cn(
         'surface-frame rounded-[var(--radius-card)] p-4',
         className,
-        primary && 'shine-border',
+        primary && 'glass-accent',
       )}
-      style={primary ? { borderColor: 'rgb(130 108 87 / 0.22)' } : undefined}
+      style={primary ? { ['--glass-rim' as string]: 'rgb(255 224 196 / 0.92)' } : undefined}
     >
       <div className="flex items-start justify-between">
         <div className="text-[11px] font-semibold text-[var(--color-ink-500)]">{label}</div>

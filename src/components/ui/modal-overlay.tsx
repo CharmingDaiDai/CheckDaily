@@ -37,7 +37,7 @@ export function ModalOverlay({ open, onOpenChange, title, children, className }:
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="absolute inset-0 bg-[rgb(22_18_13/0.34)] backdrop-blur-[12px]"
+            className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgb(60_46_32/0.24),rgb(22_18_13/0.42))] backdrop-blur-[16px]"
             onClick={() => onOpenChange(false)}
             // prevent touch events on backdrop from affecting body
             onTouchMove={(e) => {
@@ -46,18 +46,21 @@ export function ModalOverlay({ open, onOpenChange, title, children, className }:
               }
             }}
           />
-          
+
           {/* Modal Content */}
           <motion.div
-            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: 24, filter: 'blur(3px)' }}
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: 26, filter: 'blur(4px)' }}
             animate={reduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
             exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.985, y: 18, filter: 'blur(2px)' }}
             transition={reduceMotion ? { duration: 0.14 } : spring.momentum}
             className={cn(
-              "surface-frame relative w-full max-w-md rounded-[1rem] flex flex-col overflow-hidden",
+              "surface-frame glass-modal relative w-full max-w-md rounded-[1.1rem] flex flex-col overflow-hidden",
               className
             )}
-            style={{ maxHeight: '85vh', overscrollBehavior: 'contain' }}
+            style={{
+              maxHeight: '85vh',
+              overscrollBehavior: 'contain',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {title && (

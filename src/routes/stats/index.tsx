@@ -32,7 +32,7 @@ import {
   computeLongestStreak,
 } from "@/lib/utils";
 import type { CalendarDatum } from "@/types";
-import { sectionReveal } from "@/lib/motion";
+import { sectionReveal, pageChoreography } from "@/lib/motion";
 import { HabitIcon } from '@/lib/habitIcons'
 
 type TabValue = "day" | "week" | "month" | "year";
@@ -253,7 +253,12 @@ function StatsPage() {
   const hasStatsError = Boolean(habitsError || yearError || rollingError || yearCountsError);
 
   return (
-    <div className="app-page space-y-6">
+    <motion.div
+      className="app-page space-y-6"
+      variants={pageChoreography}
+      initial="initial"
+      animate="animate"
+    >
       {/* Header */}
       <motion.div variants={sectionReveal}>
         <h1 className="headline-premium text-[2.08rem] sm:text-[2.42rem] text-[var(--color-ink-950)]">
@@ -690,7 +695,7 @@ function StatsPage() {
           </div>
         </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

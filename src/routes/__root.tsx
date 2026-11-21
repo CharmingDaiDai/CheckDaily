@@ -4,6 +4,7 @@ import { useRouterState } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import { useAuthInit } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/authStore'
+import { useGlassSheen } from '@/hooks/useGlassSheen'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Toaster } from '@/components/ui/toast'
 import { OfflineBanner } from '@/components/OfflineBanner'
@@ -14,6 +15,7 @@ import type { RouterContext } from '@/main'
 
 function RootLayout() {
   useAuthInit()
+  useGlassSheen()
   const { loading, user } = useAuthStore()
   const { location } = useRouterState()
   const navigate = useNavigate()

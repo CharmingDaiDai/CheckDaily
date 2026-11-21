@@ -26,6 +26,9 @@
   --color-ink-700: #58524a;
   --color-ink-600: #756e64;
   --color-ink-500: #938b7f;
+  --color-ink-400: #b0a89c;
+  --color-ink-300: #cbc4b9;
+  --color-ink-200: #e2dcd3;
   --color-line-soft: rgb(39 35 31 / 0.1);
   --color-line-strong: rgb(39 35 31 / 0.18);
   --color-panel: rgba(255, 255, 255, 0.72);
@@ -51,10 +54,12 @@
 }
 
 /* Registers the specular sheen strength so it can be transitioned in browsers
-   that support @property; everywhere else it simply snaps, which is fine. */
+   that support @property. It must inherit: pseudo-elements are children of
+   their originating element, so a non-inherited property would never reach
+   ::after. */
 @property --glass-sheen {
   syntax: "<number>";
-  inherits: false;
+  inherits: true;
   initial-value: 0;
 }
 
@@ -124,13 +129,22 @@ body::before {
 body::after {
   content: '';
   position: fixed;
-  inset: 0;
+  inset: -12%;
   pointer-events: none;
   background:
-    radial-gradient(circle at 22% 18%, rgb(255 255 255 / 0.44), transparent 26%),
-    radial-gradient(circle at 86% 10%, rgb(255 255 255 / 0.3), transparent 24%);
-  opacity: 0.7;
+    radial-gradient(circle at 22% 18%, rgb(255 255 255 / 0.46), transparent 24%),
+    radial-gradient(circle at 86% 10%, rgb(255 255 255 / 0.32), transparent 22%),
+    radial-gradient(circle at 64% 82%, rgb(226 128 62 / 0.13), transparent 30%);
+  opacity: 0.72;
   z-index: -1;
+  animation: ambient-drift 46s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes ambient-drift {
+  0%   { transform: translate3d(-1.5%, -1%, 0) scale(1.02); }
+  50%  { transform: translate3d(1%, 1.5%, 0) scale(1.05); }
+  100% { transform: translate3d(2%, -0.5%, 0) scale(1.03); }
 }
 
 #root {
@@ -435,100 +449,275 @@ body::after {
   transform: scale(0.975) translateY(1px);
 }
 
-.surface-frame {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--radius-card-lg);
-  border: 1px solid var(--material-border);
-  background: linear-gradient(155deg, rgb(255 255 255 / 0.84) 0%, rgb(250 248 243 / 0.72) 100%);
-  box-shadow: var(--material-shadow);
-  backdrop-filter: blur(22px) saturate(160%);
-  transition:
-    box-shadow var(--duration-base) var(--ease-standard),
-    border-color var(--duration-base) var(--ease-standard),
-    transform var(--duration-fast) var(--ease-standard);
-}
+/* ══════════════════════════════════════════════════════════════
+   Glass material
 
-.surface-frame::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(130deg, rgb(255 255 255 / 0.62) 0%, transparent 42%, rgb(216 111 47 / 0.05) 100%);
-}
+   Every panel is built from four stacked layers, back to front:
 
-.surface-frame::after {
-  content: '';
-  position: absolute;
-  inset: 1px;
-  border-radius: calc(var(--radius-card-lg) - 1px);
-  pointer-events: none;
-  border: 1px solid rgb(255 255 255 / 0.36);
-}
+     1. the page itself, seen through a saturated blur
+     2. a warm tint gradient, so a surface never reads as flat white
+     3. a masked rim — lit at the top-left, warming to terracotta at the
+        bottom-right, with faint chromatic edges on the sides
+     4. a specular sheen that follows the pointer (--glass-x/y/sheen,
+        driven by useGlassSheen)
 
-.surface-frame > * {
-  position: relative;
-  z-index: 1;
-}
+   Declared in the components layer so any utility class on the same
+   element still wins — `rounded-[...]`, `bg-...`, `p-...` all behave.
+   ══════════════════════════════════════════════════════════════ */
+@layer components {
+  .surface-frame,
+  .glass-card,
+  .glass-tile,
+  .floating-chrome {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: var(--radius-card-lg);
+    border: 1px solid var(--glass-rim);
+    /* Own value, so a nested panel never inherits its parent's highlight. */
+    --glass-sheen: 0;
+    background: linear-gradient(
+      158deg,
+      rgb(255 255 255 / var(--glass-top, 0.72)) 0%,
+      rgb(251 248 241 / var(--glass-mid, 0.44)) 54%,
+      rgb(255 255 255 / var(--glass-bottom, 0.58)) 100%
+    );
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(var(--glass-brightness));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(var(--glass-brightness));
+    box-shadow:
+      0 1px 1px rgb(61 52 41 / 0.05),
+      0 10px 22px -8px rgb(61 52 41 / 0.13),
+      0 28px 54px -20px rgb(61 52 41 / 0.2),
+      inset 0 1px 0 rgb(255 255 255 / 0.8),
+      inset 0 -1px 0 rgb(255 255 255 / 0.24),
+      inset 1px 0 0 rgb(255 238 218 / 0.28),
+      inset -1px 0 0 rgb(216 238 246 / 0.26);
+    transition:
+      box-shadow var(--duration-base) var(--ease-standard),
+      border-color var(--duration-base) var(--ease-standard);
+  }
 
-@media (hover: hover) and (pointer: fine) {
-  .surface-frame:hover {
-    border-color: rgb(130 108 87 / 0.28);
-    box-shadow: 0 20px 40px rgb(26 22 17 / 0.14), inset 0 1px 0 rgb(255 255 255 / 0.82);
+  /* Rim: a 1px light ring, brightest where the light lands. */
+  .surface-frame::before,
+  .glass-card::before,
+  .glass-tile::before,
+  .floating-chrome::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      148deg,
+      rgb(255 255 255 / 0.96) 0%,
+      rgb(255 255 255 / 0.34) 15%,
+      rgb(255 255 255 / 0.05) 42%,
+      rgb(216 111 47 / 0.13) 74%,
+      rgb(255 255 255 / 0.42) 100%
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Sheen: the specular sweep under the cursor. */
+  .surface-frame::after,
+  .glass-card::after,
+  .glass-tile::after,
+  .floating-chrome::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(
+      26rem circle at var(--glass-x) var(--glass-y),
+      rgb(255 255 255 / 0.4) 0%,
+      rgb(255 255 255 / 0.14) 26%,
+      transparent 64%
+    );
+    opacity: var(--glass-sheen);
+    transition: opacity 460ms var(--ease-standard);
+  }
+
+  /* Denser list rows sit flatter and closer to the page. */
+  .glass-card {
+    --glass-top: 0.64;
+    --glass-mid: 0.4;
+    --glass-bottom: 0.5;
+    --glass-blur: 20px;
+  }
+
+  /* Habit tiles: lighter than a panel, because a screenful of them stacked
+     over blurred text is heavy. The rim still reads as glass. */
+  .glass-tile {
+    --glass-top: 0.72;
+    --glass-mid: 0.46;
+    --glass-bottom: 0.56;
+    --glass-blur: 16px;
+    --glass-sat: 148%;
+    box-shadow:
+      0 1px 1px rgb(61 52 41 / 0.04),
+      0 6px 14px -8px rgb(61 52 41 / 0.14),
+      0 16px 30px -18px rgb(61 52 41 / 0.16),
+      inset 0 1px 0 rgb(255 255 255 / 0.78),
+      inset 0 -1px 0 rgb(255 255 255 / 0.2);
+  }
+
+  .glass-tile-done {
+    --glass-top: 0.54;
+    --glass-mid: 0.34;
+    --glass-bottom: 0.44;
+  }
+
+  .glass-modal {
+    --glass-top: 0.9;
+    --glass-mid: 0.78;
+    --glass-bottom: 0.84;
+    --glass-blur: 34px;
+  }
+
+  /* Floating chrome hangs highest above the page. */
+  .floating-chrome {
+    --glass-top: 0.8;
+    --glass-mid: 0.52;
+    --glass-bottom: 0.6;
+    --glass-blur: 30px;
+    --glass-sat: 172%;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .surface-frame:hover,
+    .glass-card:hover,
+    .glass-tile:hover,
+    .floating-chrome:hover {
+      border-color: rgb(255 255 255 / 0.84);
+      box-shadow:
+        0 1px 1px rgb(61 52 41 / 0.05),
+        0 14px 28px -8px rgb(61 52 41 / 0.15),
+        0 34px 64px -20px rgb(61 52 41 / 0.22),
+        inset 0 1px 0 rgb(255 255 255 / 0.9),
+        inset 0 -1px 0 rgb(255 255 255 / 0.3),
+        inset 1px 0 0 rgb(255 238 218 / 0.34),
+        inset -1px 0 0 rgb(216 238 246 / 0.3);
+    }
+    .glass-tile:hover {
+      box-shadow:
+        0 1px 1px rgb(61 52 41 / 0.04),
+        0 10px 20px -8px rgb(61 52 41 / 0.16),
+        0 22px 40px -18px rgb(61 52 41 / 0.18),
+        inset 0 1px 0 rgb(255 255 255 / 0.86),
+        inset 0 -1px 0 rgb(255 255 255 / 0.26);
+    }
+  }
+
+  /* ── Recessed well ──
+     The inverse of a panel: carved into the surface rather than resting
+     on it. Used for inputs, tracks and thumbnails. */
+  .glass-well {
+    background: linear-gradient(
+      168deg,
+      rgb(246 241 233 / 0.92) 0%,
+      rgb(255 255 255 / 0.74) 62%,
+      rgb(250 246 239 / 0.86) 100%
+    );
+    border: 1px solid rgb(39 35 31 / 0.1);
+    box-shadow:
+      inset 0 1px 2px rgb(61 52 41 / 0.11),
+      inset 0 6px 14px -10px rgb(61 52 41 / 0.18),
+      0 1px 0 rgb(255 255 255 / 0.72);
+    -webkit-backdrop-filter: blur(10px) saturate(125%);
+    backdrop-filter: blur(10px) saturate(125%);
   }
 }
 
-/* ── Glass card with hover enhancement ── */
-.glass-card {
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(145deg, rgb(255 255 255 / 0.78) 0%, rgb(250 248 243 / 0.64) 100%);
-  border: 1px solid rgb(255 255 255 / 0.54);
-  box-shadow: var(--shadow-card), inset 0 1px 0 rgb(255 255 255 / 0.66);
-  backdrop-filter: blur(18px) saturate(150%);
-  transition:
-    box-shadow var(--duration-base) var(--ease-standard),
-    border-color var(--duration-base) var(--ease-standard),
-    transform var(--duration-fast) var(--ease-standard);
+/* ══════════════════════════════════════════════════════════════
+   Glass accent — the primary stat surface. Identical construction to
+   a panel, but the rim and veil pick up the brand hue, so the card
+   reads as lit from within rather than merely outlined.
+   ══════════════════════════════════════════════════════════════ */
+.glass-accent {
+  background: linear-gradient(
+    158deg,
+    rgb(255 252 247 / 0.82) 0%,
+    rgb(255 244 232 / 0.62) 52%,
+    rgb(255 249 242 / 0.72) 100%
+  );
 }
 
-.glass-card::before {
+.glass-accent::before {
+  background: linear-gradient(
+    148deg,
+    rgb(255 255 255 / 0.98) 0%,
+    rgb(255 213 176 / 0.52) 18%,
+    rgb(216 111 47 / 0.16) 52%,
+    rgb(233 140 76 / 0.22) 78%,
+    rgb(255 255 255 / 0.5) 100%
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Glass rail — the desktop sidebar. Full-height chrome with the
+   same layered construction as a panel, but no card shadow: it is
+   part of the frame, not an object resting on the page.
+   ══════════════════════════════════════════════════════════════ */
+.glass-rail {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(
+    175deg,
+    rgb(255 255 255 / 0.66) 0%,
+    rgb(252 249 244 / 0.44) 46%,
+    rgb(255 255 255 / 0.54) 100%
+  );
+  -webkit-backdrop-filter: blur(28px) saturate(165%);
+  backdrop-filter: blur(28px) saturate(165%);
+  box-shadow:
+    inset -1px 0 0 rgb(255 255 255 / 0.6),
+    inset 0 1px 0 rgb(255 255 255 / 0.7),
+    1px 0 18px -8px rgb(61 52 41 / 0.1);
+}
+
+.glass-rail::after {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: inherit;
+  z-index: -1;
   pointer-events: none;
-  background: linear-gradient(140deg, rgb(255 255 255 / 0.5) 0%, transparent 42%, rgb(53 118 132 / 0.045) 100%);
+  background: linear-gradient(200deg, rgb(216 111 47 / 0.07) 0%, transparent 32%);
 }
 
-.glass-card > * {
-  position: relative;
-  z-index: 1;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .glass-card:hover {
-    box-shadow: var(--shadow-card-hover), inset 0 1px 0 rgb(255 255 255 / 0.74);
-    border-color: rgb(255 255 255 / 0.7);
-    transform: translateY(-1px);
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-rail {
+    background: rgb(252 250 246 / 0.96);
   }
 }
 
-.floating-chrome {
-  border: 1px solid rgb(255 255 255 / 0.58);
-  background: linear-gradient(160deg, rgb(255 255 255 / 0.76), rgb(248 246 240 / 0.64));
-  box-shadow: 0 18px 42px rgb(61 52 41 / 0.16), inset 0 1px 0 rgb(255 255 255 / 0.75);
-  backdrop-filter: blur(24px) saturate(175%);
+/* Touch devices pay for backdrop-filter with battery and frame time, and a
+   screenful of tiles is the worst case. Shallow the blur there: the material
+   still reads as glass, but the compositor keeps up. */
+@media (hover: none), (pointer: coarse) {
+  .surface-frame,
+  .glass-card,
+  .floating-chrome {
+    --glass-blur: 18px;
+  }
+  .glass-tile {
+    --glass-blur: 11px;
+  }
 }
 
-.ios-list-row,
-.tap-scale,
-.icon-action,
-.surface-frame,
-.glass-card,
-.floating-chrome {
-  -webkit-backdrop-filter: blur(24px) saturate(175%);
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .surface-frame,
+  .glass-card,
+  .glass-tile,
+  .floating-chrome {
+    background: linear-gradient(158deg, rgb(255 253 250 / 0.96) 0%, rgb(250 246 239 / 0.94) 100%);
+  }
 }
 
 .scroll-edge-top {
@@ -537,17 +726,14 @@ body::after {
   z-index: 2;
 }
 
+/* List rows already carry the glass material; this only owns the press
+   response so the two rules never fight over the same property. */
 .ios-list-row {
-  transition: background-color var(--duration-fast) var(--ease-standard), transform var(--duration-micro) var(--ease-standard);
-}
-
-.ios-list-row:hover {
-  background: rgb(255 255 255 / 0.56);
+  transition: transform var(--duration-micro) var(--ease-standard);
 }
 
 .ios-list-row:active {
-  transform: scale(0.992);
-  background: rgb(255 255 255 / 0.72);
+  transform: scale(0.994);
 }
 
 @media (min-width: 768px) {
@@ -587,9 +773,20 @@ body::after {
   .shine-border::before {
     animation: none !important;
   }
+  body::after {
+    animation: none !important;
+  }
   .surface-frame,
-  .glass-card {
+  .glass-card,
+  .glass-tile,
+  .floating-chrome {
     transition-duration: 0.01ms !important;
+  }
+  .surface-frame::after,
+  .glass-card::after,
+  .glass-tile::after,
+  .floating-chrome::after {
+    display: none !important;
   }
   .tap-scale:active { transform: none; }
   html {
@@ -602,21 +799,51 @@ body::after {
 }
 
 @media (prefers-reduced-transparency: reduce) {
+  body::after {
+    animation: none !important;
+  }
   .surface-frame,
   .glass-card,
-  .floating-chrome {
+  .glass-tile,
+  .floating-chrome,
+  .glass-rail {
     background: rgb(255 255 255 / 0.96) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .surface-frame::after,
+  .glass-card::after,
+  .glass-tile::after,
+  .floating-chrome::after {
+    display: none !important;
+  }
+  .glass-well {
+    background: rgb(247 244 238 / 0.98) !important;
+    -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
 }
 
 @media (prefers-contrast: more) {
+  body::after {
+    animation: none !important;
+  }
   .surface-frame,
   .glass-card,
-  .floating-chrome {
-    border-color: rgb(39 35 31 / 0.38) !important;
+  .glass-tile,
+  .floating-chrome,
+  .glass-rail,
+  .glass-well {
+    border: 1px solid rgb(39 35 31 / 0.38) !important;
     background: white !important;
+    -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
+  }
+  .surface-frame::after,
+  .glass-card::after,
+  .glass-tile::after,
+  .floating-chrome::after {
+    display: none !important;
   }
 }
 

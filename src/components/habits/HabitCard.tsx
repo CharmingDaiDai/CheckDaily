@@ -336,9 +336,8 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
             'rounded-[var(--radius-card-lg)] tap-scale w-full select-none overflow-hidden',
             'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
               isQuickSubmitting && 'pointer-events-none',
-            isDone
-              ? 'bg-white/52 border border-white/56 shadow-sm'
-              : 'bg-white/78 border border-white/64 shadow-[var(--shadow-card)]',
+            'glass-tile',
+            isDone && 'glass-tile-done',
             celebrating && 'animate-celebrate',
           )}
           aria-label={`打卡：${habit.name}`}
@@ -391,7 +390,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
           {/* Name */}
           <div className={cn(
             'text-[11px] font-semibold text-center line-clamp-1 w-full px-0.5 leading-snug',
-            isDone ? 'text-[var(--color-ink-500)]' : 'text-[var(--color-ink-800)]',
+            isDone ? 'text-[var(--color-ink-600)]' : 'text-[var(--color-ink-800)]',
           )}>
             {habit.name}
           </div>
@@ -450,9 +449,8 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
           'text-left w-full select-none overflow-hidden',
           'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
           isQuickSubmitting && 'pointer-events-none',
-          isDone
-            ? 'bg-white/52 border border-white/56 shadow-sm'
-            : 'bg-white/78 border border-white/64 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] transition-[box-shadow,transform,background-color] duration-200',
+          'glass-tile',
+          isDone && 'glass-tile-done',
           celebrating && 'animate-celebrate',
         )}
         aria-label={`打卡：${habit.name}`}
@@ -511,7 +509,7 @@ export function HabitCard({ habit, todayCount, streak = 0, style, compact = fals
         <div className="flex-1 min-w-0">
           <div className={cn(
             'font-semibold text-[13px] leading-snug line-clamp-1',
-            isDone ? 'text-[var(--color-ink-500)]' : 'text-[var(--color-ink-950)]',
+            isDone ? 'text-[var(--color-ink-600)]' : 'text-[var(--color-ink-950)]',
           )}>
             {habit.name}
           </div>

@@ -15,7 +15,7 @@ import { toast } from '@/hooks/useToast'
 import { Spinner } from '@/components/ui/spinner'
 import { useFormDialog } from '@/hooks/useFormDialog'
 import { parseExportPayload, useImportData } from '@/hooks/useImportData'
-import { sectionReveal } from '@/lib/motion'
+import { sectionReveal, pageChoreography } from '@/lib/motion'
 
 function ProfilePage() {
   const user = useAuthStore((s) => s.user)
@@ -145,7 +145,12 @@ function ProfilePage() {
 
 
   return (
-    <div className="app-page space-y-6">
+    <motion.div
+      className="app-page space-y-6"
+      variants={pageChoreography}
+      initial="initial"
+      animate="animate"
+    >
       <div>
         <h1 className="headline-premium text-[2.08rem] sm:text-[2.42rem] text-[var(--color-ink-950)]">我的</h1>
       </div>
@@ -425,7 +430,7 @@ function ProfilePage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   )
 }
 

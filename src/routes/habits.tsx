@@ -13,7 +13,7 @@ import { useHabits, useArchiveHabit, useRestoreHabit } from '@/hooks/useHabits'
 import { useCombos, useDeleteCombo } from '@/hooks/useCombos'
 import { toast } from '@/hooks/useToast'
 import type { Habit, HabitCombo } from '@/types'
-import { sectionReveal, listItemSlide } from '@/lib/motion'
+import { sectionReveal, sectionStagger, listItemSlide, pageChoreography } from '@/lib/motion'
 import { HabitIcon } from '@/lib/habitIcons'
 import {
   DropdownMenu,
@@ -87,7 +87,12 @@ export default function HabitsPage() {
   )
 
   return (
-    <div className="app-page space-y-6">
+    <motion.div
+      className="app-page space-y-6"
+      variants={pageChoreography}
+      initial="initial"
+      animate="animate"
+    >
       {/* Header */}
       <motion.div variants={sectionReveal} className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -211,7 +216,7 @@ export default function HabitsPage() {
           )}
 
           {activeTab === 'habits' && (
-            <motion.div key="habits-list" variants={sectionReveal} initial="initial" animate="animate">
+            <motion.div key="habits-list" variants={sectionStagger} initial="initial" animate="animate">
               {(habits?.length ?? 0) === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <div className="w-20 h-20 rounded-[1.25rem] bg-white/62 border border-white/70 shadow-[var(--shadow-card)] flex items-center justify-center mb-4">
@@ -294,7 +299,7 @@ export default function HabitsPage() {
           )}
 
           {activeTab === 'combos' && (
-            <motion.div key="combos-list" variants={sectionReveal} initial="initial" animate="animate">
+            <motion.div key="combos-list" variants={sectionStagger} initial="initial" animate="animate">
               {(combos?.length ?? 0) === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <div className="w-20 h-20 rounded-[1.25rem] bg-brand-50/80 border border-white/70 shadow-[var(--shadow-card)] flex items-center justify-center mb-4">
@@ -357,6 +362,6 @@ export default function HabitsPage() {
           )}
         </>
       )}
-    </div>
+    </motion.div>
   )
 }

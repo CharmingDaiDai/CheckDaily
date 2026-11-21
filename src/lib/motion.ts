@@ -1,5 +1,3 @@
-import { useReducedMotion } from 'motion/react'
-
 /* ── Durations (seconds) ── */
 export const durations = {
   micro: 0.1,
@@ -9,7 +7,11 @@ export const durations = {
   glacial: 0.72,
 } as const
 
-/* ── Spring transitions ── */
+/* ── Spring transitions ──
+   Pick by intent, not by feel: `snappy` for direct manipulation (presses,
+   toggles), `smooth` for things that follow the pointer or settle into
+   place, `gentle` for large surfaces entering, `emphasized` for a single
+   celebratory beat, `momentum` for sheets carrying release velocity. */
 export const spring = {
   smooth:     { type: 'spring' as const, stiffness: 420, damping: 34 },
   gentle:     { type: 'spring' as const, stiffness: 260, damping: 30, mass: 1 },
@@ -26,7 +28,10 @@ export const easing = {
   exit:      [0.4, 0, 1, 1] as const,
 } as const
 
-/* ── Page choreography (stagger container) ── */
+/* ── Page choreography ──
+   The container every route root mounts. It does nothing to itself and
+   sequences its children, so `sectionReveal` / `sectionStagger` below only
+   need to declare a variant name to participate. */
 export const pageChoreography = {
   initial: {},
   animate: {
@@ -46,17 +51,6 @@ export const sectionReveal = {
     y: 0,
     scale: 1,
     transition: spring.gentle,
-  },
-}
-
-/* ── Card entrance (playful bounce) ── */
-export const cardEntrance = {
-  initial: { opacity: 0, y: 14, scale: 0.98 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: spring.emphasized,
   },
 }
 
@@ -81,66 +75,9 @@ export const listItemSlide = {
   },
 }
 
-/* ── Route transition (spring + blur) ── */
-export const routeTransition = {
-  initial: { opacity: 0, y: 12, filter: 'blur(2px)' },
-  animate: {
-    opacity: 1,
-    y: 0,
-    filter: 'blur(0px)',
-    transition: spring.gentle,
-  },
-  exit: {
-    opacity: 0,
-    y: -6,
-    filter: 'blur(2px)',
-    transition: spring.exit,
-  },
-}
-
-export const routeTransitionReduced = {
-  initial: { opacity: 0 },
-  animate: {
-    opacity: 1,
-    transition: { duration: durations.fast, ease: easing.smooth },
-  },
-  exit: {
-    opacity: 0,
-    transition: { duration: durations.micro, ease: easing.exit },
-  },
-}
-
-/* ── Directional route transition ── */
-export const directionalRouteTransition = {
-  initial: { opacity: 0, scale: 0.985, y: 10, filter: 'blur(2px)' },
-  animate: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    filter: 'blur(0px)',
-    transition: spring.gentle,
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.992,
-    filter: 'blur(1px)',
-    transition: spring.exit,
-  },
-}
-
-export const directionalRouteTransitionReduced = {
-  initial: { opacity: 0 },
-  animate: {
-    opacity: 1,
-    transition: { duration: durations.fast, ease: easing.smooth },
-  },
-  exit: {
-    opacity: 0,
-    transition: { duration: durations.micro, ease: easing.exit },
-  },
-}
-
-/* ── Section stagger ── */
+/* ── Section stagger ──
+   For lists whose items each animate individually: the container sequences
+   the rows without revealing itself, so the rows carry the motion. */
 export const sectionStagger = {
   initial: { opacity: 0 },
   animate: {
@@ -151,30 +88,4 @@ export const sectionStagger = {
       delayChildren: 0.05,
     },
   },
-}
-
-/* ── Item rise (legacy compat) ── */
-export const itemRise = {
-  initial: { opacity: 0, y: 14 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    transition: spring.smooth,
-  },
-}
-
-/* ── Hover / press presets ── */
-export const hoverLift = {
-  whileHover: { y: -3, transition: spring.smooth },
-  whileTap: { scale: 0.97, transition: spring.snappy },
-}
-
-export const pressScale = {
-  whileTap: { scale: 0.96, transition: spring.snappy },
-}
-
-/* ── Reduced motion helper ── */
-export function useReducedMotionVariants<T>(full: T, reduced: T): T {
-  const shouldReduce = useReducedMotion()
-  return shouldReduce ? reduced : full
 }

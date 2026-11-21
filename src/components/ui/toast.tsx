@@ -1,6 +1,6 @@
 import * as ToastPrimitive from '@radix-ui/react-toast'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { X } from 'lucide-react'
+import { X, CheckCircle2, AlertCircle, TriangleAlert, Info } from 'lucide-react'
 import { useToastStore } from '@/hooks/useToast'
 import { cn } from '@/lib/utils'
 import { spring, durations, easing } from '@/lib/motion'
@@ -40,23 +40,21 @@ export function Toaster() {
               role={t.variant === 'error' ? 'alert' : 'status'}
               aria-live={t.variant === 'error' ? 'assertive' : 'polite'}
               className={cn(
-                'group pointer-events-auto relative flex items-center gap-3 overflow-hidden rounded-[var(--radius-control)] px-4 py-3 shadow-[var(--shadow-card-hover)] border transition-all duration-[var(--duration-fast)]',
+                'group pointer-events-auto relative flex items-center gap-3 overflow-hidden rounded-[var(--radius-control)] px-4 py-3 border transition-all duration-[var(--duration-fast)]',
+                'backdrop-blur-2xl backdrop-saturate-150',
                 'data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)]',
                 'data-[swipe=cancel]:translate-x-0 data-[swipe=cancel]:transition-transform',
                 t.variant === 'error'
-                  ? 'bg-brand-50 border-brand-200 text-brand-800'
-                  : t.variant === 'success'
-                    ? 'bg-brand-50 border-brand-200 text-brand-800'
-                    : t.variant === 'warning'
-                      ? 'bg-brand-50 border-brand-200 text-brand-800'
-                    : 'bg-white/86 border-white/70 text-[var(--color-ink-800)]',
+                  ? 'bg-[linear-gradient(160deg,rgb(255_250_245/0.95)_0%,rgb(254_243_234/0.88)_100%)] border-brand-200/70 text-brand-800 shadow-[0_1px_1px_rgb(61_52_41/0.05),0_12px_26px_-8px_rgb(61_52_41/0.2),0_30px_56px_-24px_rgb(61_52_41/0.24),inset_0_1px_0_rgb(255_255_255/0.92)]'
+                  : 'bg-[linear-gradient(160deg,rgb(255_255_255/0.95)_0%,rgb(250_247_241/0.88)_100%)] border-white/80 text-[var(--color-ink-800)] shadow-[0_1px_1px_rgb(61_52_41/0.05),0_12px_26px_-8px_rgb(61_52_41/0.2),0_30px_56px_-24px_rgb(61_52_41/0.24),inset_0_1px_0_rgb(255_255_255/0.92)]',
               )}
-              // Success: green glow pulse on border
-              style={t.variant === 'success' ? {
-                animation: 'glow-pulse 1.2s ease-in-out 1',
-                '--glow-color': 'rgba(34,197,94,0.3)',
-              } as React.CSSProperties : undefined}
             >
+              <span className="shrink-0" aria-hidden="true">
+                {t.variant === 'success' ? <CheckCircle2 className="h-4 w-4 text-[#4f7642]" />
+                  : t.variant === 'error' ? <AlertCircle className="h-4 w-4 text-red-700" />
+                    : t.variant === 'warning' ? <TriangleAlert className="h-4 w-4 text-amber-700" />
+                      : <Info className="h-4 w-4 text-[var(--color-ink-600)]" />}
+              </span>
               <ToastPrimitive.Description className="text-sm font-medium flex-1">
                 {t.message}
               </ToastPrimitive.Description>
@@ -78,7 +76,7 @@ export function Toaster() {
                   {t.action.label}
                 </button>
               )}
-              <ToastPrimitive.Close className="shrink-0 rounded-lg p-1 opacity-50 hover:opacity-100 transition-opacity text-[var(--color-ink-500)] hover:text-[var(--color-ink-800)]">
+              <ToastPrimitive.Close aria-label="关闭通知" className="shrink-0 rounded-lg p-1 opacity-50 hover:opacity-100 transition-opacity text-[var(--color-ink-500)] hover:text-[var(--color-ink-800)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
                 <X className="w-3.5 h-3.5" />
               </ToastPrimitive.Close>
             </ToastPrimitive.Root>

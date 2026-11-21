@@ -18,6 +18,8 @@ import {
 } from '@/lib/utils'
 import type { CalendarDatum } from '@/types'
 import { HabitIcon } from '@/lib/habitIcons'
+import { motion } from 'motion/react'
+import { pageChoreography, sectionReveal } from '@/lib/motion'
 
 function HabitStatsPage() {
   const { habitId } = Route.useParams()
@@ -92,7 +94,12 @@ function HabitStatsPage() {
   const color = habit?.color ?? '#f97316'
 
   return (
-    <div className="app-page pb-32 md:pb-10 space-y-6">
+    <motion.div
+      className="app-page pb-32 md:pb-10 space-y-6"
+      variants={pageChoreography}
+      initial="initial"
+      animate="animate"
+    >
       {/* Header */}
       <div>
         <Link to="/stats" className="inline-flex min-h-10 items-center gap-1.5 rounded-[var(--radius-control)] px-2 -ml-2 text-sm text-[var(--color-ink-500)] font-semibold hover:text-[var(--color-ink-700)] hover:bg-white/48 active:scale-[0.98] transition-all mb-4">
@@ -136,15 +143,15 @@ function HabitStatsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3">
+      <motion.div variants={sectionReveal} className="grid grid-cols-2 gap-3">
         <StatCard label="当前连续" value={`${streak} 天`} icon={Flame} iconColor={color} loading={isLoading} primary />
         <StatCard label="全年总计" value={total} sublabel="次" icon={Hash} iconColor={color} loading={isLoading} />
         <StatCard label="最长连续" value={`${longest} 天`} icon={Trophy} iconColor={color} loading={isLoading} />
         <StatCard label="日均次数" value={avgPerDay} sublabel="次/打卡日" icon={Target} iconColor={color} loading={isLoading} />
-      </div>
+      </motion.div>
 
       {/* Heatmap */}
-      <div className="surface-frame rounded-[var(--radius-card-lg)] p-5">
+      <motion.div variants={sectionReveal} className="surface-frame rounded-[var(--radius-card-lg)] p-5">
         <div className="text-sm font-semibold text-[var(--color-ink-500)] mb-4 pb-3 border-b luxury-divider">{selectedYear} 年日历热力图</div>
         {isLoading ? (
           <Skeleton className="h-40 w-full" />
@@ -158,7 +165,7 @@ function HabitStatsPage() {
             />
           </Suspense>
         )}
-      </div>
+      </motion.div>
 
       {/* 30-day trend */}
       <div className="surface-frame rounded-[var(--radius-card-lg)] p-5">
@@ -252,7 +259,7 @@ function HabitStatsPage() {
           if (deleteTarget) await deleteCheckIn.mutateAsync(deleteTarget)
         }}
       />
-    </div>
+    </motion.div>
   )
 }
 

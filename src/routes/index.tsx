@@ -24,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { BackdateSheet } from "@/components/habits/BackdateSheet";
 import { formatDate, getLast7Days, computeStreak } from "@/lib/utils";
-import { sectionReveal } from "@/lib/motion";
+import { sectionReveal, pageChoreography } from "@/lib/motion";
 import { HabitIcon } from '@/lib/habitIcons'
 
 function Dashboard() {
@@ -226,7 +226,12 @@ function Dashboard() {
     : "grid grid-cols-2 sm:grid-cols-3 gap-2";
 
   return (
-    <div className="app-page space-y-6">
+    <motion.div
+      className="app-page space-y-6"
+      variants={pageChoreography}
+      initial="initial"
+      animate="animate"
+    >
       {/* Header */}
       <motion.div variants={sectionReveal}>
         <div className="page-kicker mb-1">
@@ -422,10 +427,8 @@ function Dashboard() {
                 key={combo.id}
                 disabled={checkInCombo.isPending || combo.validIds.length === 0}
                 onClick={() => handleComboCheckIn(combo)}
-                className={`group relative flex items-center gap-2.5 px-3 py-2.5 rounded-[var(--radius-card-lg)] tap-scale text-left select-none overflow-hidden transition-[box-shadow,transform,background-color] duration-200 ${
-                  combo.isDone
-                    ? 'bg-white/52 shadow-sm opacity-90'
-                    : 'bg-white/82 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]'
+                className={`group relative flex items-center gap-2.5 px-3 py-2.5 rounded-[var(--radius-card-lg)] glass-tile tap-scale text-left select-none overflow-hidden ${
+                  combo.isDone ? 'glass-tile-done' : ''
                 }`}
               >
                 {/* Left color accent bar */}
@@ -638,7 +641,7 @@ function Dashboard() {
           habits={habits}
         />
       )}
-    </div>
+    </motion.div>
   );
 }
 

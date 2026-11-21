@@ -10,11 +10,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'text-white border-brand-500/35 bg-[linear-gradient(155deg,#e99658_0%,#d86f2f_46%,#a94b22_100%)] shadow-[0_10px_24px_rgb(185_84_34/0.24),inset_0_1px_0_rgb(255_255_255/0.28)] hover:shadow-[0_14px_28px_rgb(185_84_34/0.3),inset_0_1px_0_rgb(255_255_255/0.36)] hover:brightness-[1.03] active:brightness-[0.96]',
-        secondary: 'text-[var(--color-ink-800)] border-[color:rgb(255_255_255/0.58)] bg-[linear-gradient(160deg,rgba(255,255,255,0.8)_0%,rgba(248,246,240,0.66)_100%)] shadow-[0_8px_18px_rgb(61_52_41/0.1),inset_0_1px_0_rgb(255_255_255/0.76)] backdrop-blur-xl hover:border-[color:rgb(255_255_255/0.76)] hover:bg-[linear-gradient(160deg,rgba(255,255,255,0.92)_0%,rgba(248,246,240,0.8)_100%)] hover:shadow-[0_12px_24px_rgb(61_52_41/0.12)]',
-        outline: 'border-[color:rgb(39_35_31/0.16)] bg-[rgba(255,255,255,0.6)] text-[var(--color-ink-800)] shadow-[0_2px_10px_rgb(61_52_41/0.06)] backdrop-blur-md hover:bg-[rgba(255,255,255,0.84)] hover:border-[color:rgb(39_35_31/0.24)] active:bg-[rgba(255,255,255,0.94)]',
+        default: 'text-white border-brand-500/35 bg-[linear-gradient(155deg,#e99658_0%,#d86f2f_46%,#a94b22_100%)] shadow-[0_1px_1px_rgb(90_45_18/0.16),0_8px_18px_-6px_rgb(185_84_34/0.42),0_18px_36px_-16px_rgb(140_60_22/0.5),inset_0_1px_0_rgb(255_255_255/0.42),inset_0_-1px_0_rgb(90_40_12/0.18)] hover:shadow-[0_1px_1px_rgb(90_45_18/0.16),0_12px_24px_-6px_rgb(185_84_34/0.46),0_22px_44px_-16px_rgb(140_60_22/0.54),inset_0_1px_0_rgb(255_255_255/0.52),inset_0_-1px_0_rgb(90_40_12/0.16)] hover:brightness-[1.04] active:brightness-[0.95]',
+        secondary: 'text-[var(--color-ink-800)] border-[color:rgb(255_255_255/0.72)] bg-[linear-gradient(160deg,rgba(255,255,255,0.86)_0%,rgba(248,246,240,0.6)_100%)] shadow-[0_1px_1px_rgb(61_52_41/0.05),0_8px_18px_-8px_rgb(61_52_41/0.16),inset_0_1px_0_rgb(255_255_255/0.9),inset_0_-1px_0_rgb(255_255_255/0.32)] backdrop-blur-xl hover:border-[color:rgb(255_255_255/0.9)] hover:bg-[linear-gradient(160deg,rgba(255,255,255,0.96)_0%,rgba(248,246,240,0.76)_100%)] hover:shadow-[0_1px_1px_rgb(61_52_41/0.05),0_12px_26px_-8px_rgb(61_52_41/0.2),inset_0_1px_0_rgb(255_255_255/0.96)]',
+        outline: 'border-[color:rgb(39_35_31/0.14)] bg-[rgba(255,255,255,0.56)] text-[var(--color-ink-800)] shadow-[inset_0_1px_0_rgb(255_255_255/0.72),0_2px_10px_-4px_rgb(61_52_41/0.12)] backdrop-blur-md hover:bg-[rgba(255,255,255,0.84)] hover:border-[color:rgb(39_35_31/0.22)] active:bg-[rgba(255,255,255,0.94)]',
         ghost: 'text-[var(--color-ink-700)] bg-transparent hover:bg-[rgba(255,255,255,0.56)] hover:text-[var(--color-ink-900)] active:bg-[rgba(255,255,255,0.72)]',
-        danger: 'text-white border-red-600/40 bg-[linear-gradient(160deg,#fb7a7a_0%,#ef4444_48%,#dc2626_100%)] shadow-[0_10px_20px_rgb(239_68_68/0.24)] hover:brightness-[1.03] active:brightness-[0.95]',
+        danger: 'text-white border-red-600/40 bg-[linear-gradient(160deg,#fb7a7a_0%,#ef4444_48%,#dc2626_100%)] shadow-[0_1px_1px_rgb(90_16_16/0.18),0_8px_18px_-6px_rgb(239_68_68/0.4),0_18px_34px_-16px_rgb(180_30_30/0.48),inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-1px_0_rgb(90_16_16/0.2)] hover:brightness-[1.04] active:brightness-[0.95]',
         'danger-ghost': 'text-red-700 hover:bg-red-50/85 active:bg-red-100/70',
       },
       size: {
@@ -118,7 +118,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         <span className="pointer-events-none absolute inset-0 z-0">
-          <span className="absolute inset-x-[12%] top-0 h-px bg-white/55 opacity-75" />
+          <span className="absolute inset-x-[10%] top-0 h-px bg-[linear-gradient(90deg,transparent,rgb(255_255_255/0.72)_22%,rgb(255_255_255/0.92)_50%,rgb(255_255_255/0.72)_78%,transparent)]" />
+          <span className="absolute inset-y-[18%] left-0 w-px bg-[linear-gradient(180deg,transparent,rgb(255_255_255/0.4),transparent)]" />
+          <span className="absolute inset-y-[18%] right-0 w-px bg-[linear-gradient(180deg,transparent,rgb(255_255_255/0.3),transparent)]" />
         </span>
 
         {showLoadingOverlay && (
