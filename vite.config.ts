@@ -26,19 +26,20 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'icons/*.svg', 'icons/*.png'],
+      includeAssets: ['favicon.ico', 'favicon.svg', 'icons/*.svg', 'icons/*.png'],
       manifest: {
         name: '打卡 · 习惯追踪',
         short_name: '打卡',
         description: '个人习惯打卡追踪应用',
-        theme_color: '#f97316',
-        background_color: '#fafaf9',
+        theme_color: '#b95422',
+        background_color: '#f8f6f1',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
-          { src: '/icons/app-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
-          { src: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-          { src: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+          { src: '/icons/app-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          { src: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {
