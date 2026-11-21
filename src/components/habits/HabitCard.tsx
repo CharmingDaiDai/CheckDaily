@@ -1,553 +1,257 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { motion, useReducedMotion, useMotionValue, useSpring, useTransform, AnimatePresence } from 'motion/react'
-import { Check, RotateCcw, MoreHorizontal, Flame } from 'lucide-react'
+import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
+import { Check, Flame, LoaderCircle, MoreHorizontal, Plus, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { celebrate } from '@/lib/celebrate'
-import { spring } from '@/lib/motion'
 import type { Habit } from '@/types'
 import { ModalOverlay } from '@/components/ui/modal-overlay'
-import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useCheckIn, useDeleteCheckIn } from '@/hooks/useCheckIns'
-import { toast } from '@/hooks/useToast'
 import { HabitIcon, getHabitIconLabel } from '@/lib/habitIcons'
 
 interface HabitCardProps {
   habit: Habit
   todayCount: number
   streak?: number
-  style?: React.CSSProperties
+  style?: CSSProperties
   compact?: boolean
   latestCheckInId?: string
+  onCheckInSuccess?: (habitId: string, previousCount: number) => void
 }
 
-export function HabitCard({ habit, todayCount, streak = 0, style, compact = false, latestCheckInId }: HabitCardProps) {
-  const reduceMotion = useReducedMotion()
+type PendingAction = 'quick' | 'confirm' | 'undo'
+
+const CHECK_IN_REPEAT_WINDOW_MS = 350
+const pressFeedback = 'touch-manipulation active:opacity-70 active:duration-0'
+const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2'
+const sheetButtonClass = cn('inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] px-3 text-sm font-semibold disabled:opacity-60', pressFeedback, focusRing)
+
+function preventRepeatingActivation(event: KeyboardEvent<HTMLButtonElement>) {
+  if (event.repeat && (event.key === 'Enter' || event.key === ' ')) event.preventDefault()
+}
+
+export function HabitCard({ habit, todayCount, streak = 0, style, compact = false, latestCheckInId, onCheckInSuccess }: HabitCardProps) {
+  const noteId = useId()
   const [open, setOpen] = useState(false)
   const [note, setNote] = useState('')
   const [showNote, setShowNote] = useState(false)
-  const [celebrating, setCelebrating] = useState(false)
-  const [isLongPressing, setIsLongPressing] = useState(false)
-  const [isQuickSubmitting, setIsQuickSubmitting] = useState(false)
-  const cardRef = useRef<HTMLButtonElement>(null)
-  const prevDoneRef = useRef(todayCount > 0)
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const didLongPress = useRef(false)
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
+  const inFlight = useRef(false)
+  const moreButtonRef = useRef<HTMLButtonElement>(null)
+  const checkButtonRef = useRef<HTMLButtonElement>(null)
+  const quickFocus = useRef<{ count: number; succeeded: boolean } | null>(null)
+  const restoreFocus = useRef(false)
+  const lastCheckInAt = useRef(-Infinity)
   const checkIn = useCheckIn()
   const deleteCheckIn = useDeleteCheckIn()
   const isDone = todayCount > 0
+  const isPending = pendingAction !== null || checkIn.isPending || deleteCheckIn.isPending
+  const isQuickPending = pendingAction === 'quick'
+  const isConfirmPending = pendingAction === 'confirm'
+  const isUndoPending = pendingAction === 'undo'
+  const hasStreak = streak >= 2
+  const canUndo = isDone && Boolean(latestCheckInId)
+  const focusSheet = useCallback((element: HTMLDivElement | null) => {
+    element?.focus()
+  }, [])
 
-  // 3D tilt motion values (pointer devices only; touch screens never fire these)
-  const canHover = useMemo(
-    () => typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches,
-    [],
-  )
-  const mouseX = useMotionValue(0)
-  const mouseY = useMotionValue(0)
-  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [1.4, -1.4]), { stiffness: 360, damping: 34 })
-  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-1.4, 1.4]), { stiffness: 360, damping: 34 })
-
-  // Magnetic icon follow
-  const iconX = useSpring(useTransform(mouseX, [-0.5, 0.5], [-1.5, 1.5]), { stiffness: 260, damping: 24 })
-  const iconY = useSpring(useTransform(mouseY, [-0.5, 0.5], [-1.5, 1.5]), { stiffness: 260, damping: 24 })
-
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    if (reduceMotion || !canHover) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    const x = (e.clientX - rect.left) / rect.width - 0.5
-    const y = (e.clientY - rect.top) / rect.height - 0.5
-    mouseX.set(x)
-    mouseY.set(y)
-  }, [reduceMotion, canHover, mouseX, mouseY])
-
-  const handleMouseLeave = useCallback(() => {
-    mouseX.set(0)
-    mouseY.set(0)
-  }, [mouseX, mouseY])
-
-  // Reset sheet state when closed
   useEffect(() => {
-    if (!open) {
+    if (open || isPending || !restoreFocus.current) return
+    restoreFocus.current = false
+    moreButtonRef.current?.focus()
+  }, [open, isPending])
+
+  useEffect(() => {
+    if (isPending || !quickFocus.current) return
+    // Disabling or reordering a native button can drop focus to the body.
+    // Restore only when the user has not moved focus to another control.
+    if (document.activeElement === document.body || document.activeElement === checkButtonRef.current) {
+      checkButtonRef.current?.focus({ preventScroll: true })
+    }
+    if (!quickFocus.current.succeeded || todayCount > quickFocus.current.count) quickFocus.current = null
+  }, [isPending, todayCount])
+
+  function changeSheet(nextOpen: boolean) {
+    if (inFlight.current) return
+    if (nextOpen) {
+      restoreFocus.current = true
       setNote('')
       setShowNote(false)
     }
-  }, [open])
+    setOpen(nextOpen)
+  }
 
-  useEffect(() => {
-    return () => {
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current)
-        longPressTimer.current = null
-      }
+  async function runAction(action: PendingAction) {
+    if (inFlight.current || isPending) return
+    if (action === 'undo' && !latestCheckInId) return
+    if (action !== 'undo' && Date.now() - lastCheckInAt.current < CHECK_IN_REPEAT_WINDOW_MS) return
+
+    if (action === 'quick') {
+      quickFocus.current = document.activeElement === checkButtonRef.current
+        ? { count: todayCount, succeeded: false } : null
     }
-  }, [])
-
-  // Trigger celebration when first check-in of the day happens
-  useEffect(() => {
-    const wasZero = !prevDoneRef.current
-    const isNowDone = isDone
-    if (wasZero && isNowDone) {
-      setCelebrating(true)
-      const timer = setTimeout(() => setCelebrating(false), 800)
-      prevDoneRef.current = isNowDone
-      return () => clearTimeout(timer)
-    }
-    prevDoneRef.current = isNowDone
-  }, [isDone])
-
-  // One-tap check-in (directly on card click)
-  const handleQuickCheckIn = useCallback(async () => {
-    if (checkIn.isPending || isQuickSubmitting) return
-    const wasFirstCheckIn = !isDone
-    setIsQuickSubmitting(true)
+    // Block a second activation before React renders the disabled controls.
+    inFlight.current = true
+    setPendingAction(action)
     try {
-      await checkIn.mutateAsync({ habit_id: habit.id })
-      navigator.vibrate?.(wasFirstCheckIn ? [10, 30, 20] : 15)
-
-      // Fire confetti on first check-in of the day
-      if (wasFirstCheckIn && cardRef.current) {
-        const rect = cardRef.current.getBoundingClientRect()
-        celebrate({
-          colors: [habit.color || '#f97316', '#fbbf24', '#ffffff'],
-          origin: {
-            x: (rect.left + rect.width / 2) / window.innerWidth,
-            y: (rect.top + rect.height / 2) / window.innerHeight,
-          },
-        })
+      if (action === 'undo') {
+        if (latestCheckInId) await deleteCheckIn.mutateAsync(latestCheckInId)
+      } else {
+        await checkIn.mutateAsync({ habit_id: habit.id, note: action === 'confirm' ? note.trim() || undefined : undefined })
+        lastCheckInAt.current = Date.now()
+        if (quickFocus.current) quickFocus.current.succeeded = true
+        onCheckInSuccess?.(habit.id, todayCount)
+        // The state/count change also gives static feedback when motion is reduced.
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) navigator.vibrate?.(15)
       }
+      if (action !== 'quick') setOpen(false)
     } catch {
-      toast.error('打卡失败，请重试')
+      // The mutation hook reports the error. Keep the sheet and note available for retry.
     } finally {
-      setIsQuickSubmitting(false)
-    }
-  }, [checkIn, habit.id, habit.color, isDone, isQuickSubmitting])
-
-  // Check-in with note (from bottom sheet)
-  async function handleCheckIn() {
-    const wasFirstCheckIn = !isDone
-    try {
-      await checkIn.mutateAsync({ habit_id: habit.id, note: note.trim() || undefined })
-      setOpen(false)
-      navigator.vibrate?.(wasFirstCheckIn ? [10, 30, 20] : 15)
-
-      if (wasFirstCheckIn) {
-        celebrate({
-          colors: [habit.color || '#f97316', '#fbbf24', '#ffffff'],
-          origin: { x: 0.5, y: 0.6 },
-        })
-      }
-    } catch {
-      toast.error('打卡失败，请重试')
+      inFlight.current = false
+      setPendingAction(null)
     }
   }
 
-  async function handleUndo() {
-    if (!latestCheckInId) return
-    try {
-      await deleteCheckIn.mutateAsync(latestCheckInId)
-      setOpen(false)
-    } catch {
-      toast.error('撤销失败，请重试')
-    }
-  }
-
-  // Long-press handlers
-  const onPointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
-    if (e.button !== 0) return
-    e.currentTarget.setPointerCapture?.(e.pointerId)
-    didLongPress.current = false
-    setIsLongPressing(true)
-    longPressTimer.current = setTimeout(() => {
-      didLongPress.current = true
-      setIsLongPressing(false)
-      setOpen(true)
-    }, 500)
-  }, [])
-
-  const onPointerUpOrLeave = useCallback(() => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current)
-      longPressTimer.current = null
-    }
-    setIsLongPressing(false)
-  }, [])
-
-  const handleCardClick = useCallback(() => {
-    // If long-press just fired, don't also do a quick check-in
-    if (didLongPress.current) {
-      didLongPress.current = false
-      return
-    }
-    handleQuickCheckIn()
-  }, [handleQuickCheckIn])
-
-  const sheetContent = (
-    <div className="space-y-4">
-      <div className="mb-6 -mt-2">
-        <p className="text-sm text-[var(--color-ink-600)] font-medium">
-          今日已打卡 <strong className="text-[var(--color-ink-950)] mx-0.5">{todayCount}</strong> 次 · 确认新增一次打卡
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        {showNote ? (
-          <div className="space-y-2">
-            <Label htmlFor="note">备注</Label>
-            <Textarea
-              id="note"
-              placeholder="记录一下这次的感受、数据或备注…"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={3}
-              autoFocus
-            />
-          </div>
-        ) : (
-          <button
-            type="button"
-            className="rounded-[var(--radius-control)] px-2 py-1 text-xs text-[var(--color-ink-500)] hover:text-brand-600 hover:bg-white/62 active:scale-[0.98] transition-all font-semibold"
-            onClick={() => setShowNote(true)}
-          >
-            + 添加备注
-          </button>
-        )}
-
-        <div className="flex gap-3">
-          <Button variant="outline" className="flex-1" onClick={() => setOpen(false)}>
-            取消
-          </Button>
-          <Button
-            className="flex-1"
-            style={{ backgroundColor: habit.color }}
-            onClick={() => void handleCheckIn()}
-            isLoading={checkIn.isPending}
-            loadingText="打卡中…"
-            requestGuard
-          >
-            <Check className="w-4 h-4" strokeWidth={2.5} />
-            确认打卡
-          </Button>
-        </div>
-
-        {isDone && latestCheckInId && (
-          <button
-            className="w-full flex items-center justify-center gap-1.5 py-1 text-xs text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] transition-colors disabled:opacity-50"
-            onClick={handleUndo}
-            disabled={deleteCheckIn.isPending}
-          >
-            <RotateCcw className="w-3 h-3" />
-            撤销最近一次打卡
-          </button>
-        )}
-      </div>
-    </div>
-  )
-
-  // More-options trigger (opens BottomSheet)
-  const moreButton = (
-    <div
-      role="button"
-      tabIndex={0}
-      className={cn(
-        'absolute top-1.5 right-1.5 z-10 w-11 h-11 rounded-[var(--radius-control)]',
-        'flex items-center justify-center cursor-pointer',
-        'text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/72 bg-white/54 backdrop-blur-md',
-        'transition-all duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
-        isDone ? 'opacity-70' : 'opacity-80 sm:opacity-0 sm:group-hover:opacity-100',
-      )}
-      onPointerDown={(e) => e.stopPropagation()}
-      onPointerUp={(e) => e.stopPropagation()}
-      onClick={(e) => {
-        e.stopPropagation()
-        setIsLongPressing(false)
-        setOpen(true)
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          e.stopPropagation()
-          setOpen(true)
-        }
-      }}
-      aria-label="更多选项"
-    >
-      <MoreHorizontal className="w-4 h-4" />
-    </div>
-  )
-
-  const longPressIndicator = isLongPressing ? (
-    <div className="pointer-events-none absolute left-2 right-2 top-1.5 z-10 h-1.5 overflow-hidden rounded-full bg-brand-100/90">
-      <motion.span
-        className="block h-full origin-left rounded-full bg-brand-500"
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 0.5, ease: 'linear' }}
-      />
-    </div>
-  ) : null
-
-  const quickPendingIndicator = isQuickSubmitting ? (
-    <div className="pointer-events-none absolute left-2 right-2 bottom-1.5 z-10 h-1.5 overflow-hidden rounded-full bg-brand-100/85">
-      <span className="absolute inset-y-0 left-0 w-full origin-left rounded-full bg-brand-500/80 animate-request-progress" />
-    </div>
-  ) : null
-
-  // Ripple element shown during celebration — motion-driven
-  const rippleElement = celebrating ? (
-    <motion.span
-      className="absolute left-1/2 top-1/2 w-16 h-16 rounded-full pointer-events-none"
-      style={{ backgroundColor: habit.color + '60' }}
-      initial={{ scale: 0, opacity: 0.5, x: '-50%', y: '-50%' }}
-      animate={{ scale: 4, opacity: 0 }}
-      transition={{ duration: 0.82, ease: [0.22, 0.61, 0.36, 1] }}
-    />
-  ) : null
-
-  // Streak badge (inline, shows when streak >= 2)
-  const streakBadge = streak >= 2 ? (
-    <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-amber-600">
-      <Flame className="w-3 h-3" strokeWidth={2.5} />
-      {streak}天
-    </span>
-  ) : null
-
-  // Shared 3D style for card
-  const tiltStyle = reduceMotion || !canHover ? undefined : {
-    rotateX,
-    rotateY,
-    transformPerspective: 800,
-  }
-
-  // ── Compact mode ──────────────────────────────────────────
-  if (compact) {
-    return (
-      <>
-      <motion.button
-          whileTap={reduceMotion ? undefined : { scale: 0.975, transition: spring.snappy }}
-          whileHover={reduceMotion || isDone ? undefined : { y: -1 }}
-          style={{
-            ...style,
-            ...tiltStyle,
-          }}
-          ref={cardRef}
-          className={cn(
-            'group relative flex flex-col items-center gap-1 pt-3 pb-2 px-1.5',
-            'rounded-[var(--radius-card-lg)] tap-scale w-full select-none overflow-hidden',
-            'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
-              isQuickSubmitting && 'pointer-events-none',
-            'glass-tile',
-            isDone && 'glass-tile-done',
-            celebrating && 'animate-celebrate',
-          )}
-          aria-label={`打卡：${habit.name}`}
-          onClick={handleCardClick}
-          onPointerDown={onPointerDown}
-          onPointerUp={onPointerUpOrLeave}
-          onPointerLeave={(e) => { onPointerUpOrLeave(); handleMouseLeave(); void e; }}
-          onMouseMove={handleMouseMove}
-        >
-          {moreButton}
-          {longPressIndicator}
-          {quickPendingIndicator}
-          {rippleElement}
-          {/* Left color accent */}
-          <motion.div
-            className="absolute top-0 left-0 w-1 h-full rounded-l-2xl"
-            animate={{ backgroundColor: isDone ? habit.color : '#e7e5e4' }}
-            transition={{ duration: 0.3 }}
-          />
-          {/* Icon with layered background */}
-          <div className="relative">
-            <motion.div
-              className={cn(
-                'w-10 h-10 rounded-[var(--radius-control)] flex items-center justify-center text-xl',
-                'shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)]',
-              )}
-              style={{
-                background: `linear-gradient(135deg, ${habit.color}14, ${habit.color}22)`,
-                ...(!reduceMotion && canHover ? { x: iconX, y: iconY } : {}),
-              }}
-            >
-              <HabitIcon icon={habit.icon} className="w-5 h-5" color={habit.color} fallback="📌" />
-            </motion.div>
-            {/* Check overlay on icon */}
-            <AnimatePresence>
-              {isDone && (
-                <motion.div
-                  className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-white"
-                  style={{ backgroundColor: habit.color }}
-                  initial={{ scale: 0, rotate: -45 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  exit={{ scale: 0, rotate: 45 }}
-                  transition={spring.emphasized}
-                >
-                  <Check className="w-2.5 h-2.5 text-white" strokeWidth={3.5} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-          {/* Name */}
-          <div className={cn(
-            'text-[11px] font-semibold text-center line-clamp-1 w-full px-0.5 leading-snug',
-            isDone ? 'text-[var(--color-ink-600)]' : 'text-[var(--color-ink-800)]',
-          )}>
-            {habit.name}
-          </div>
-          {/* Streak or count */}
-          <div className="h-4 flex items-center">
-            <AnimatePresence mode="wait">
-              {todayCount > 1 ? (
-                <motion.span
-                  key="count"
-                  className="text-[10px] font-bold px-1.5 rounded-full leading-4"
-                  style={{ backgroundColor: habit.color + '18', color: habit.color }}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={spring.snappy}
-                >
-                  ×{todayCount}
-                </motion.span>
-              ) : streak >= 2 ? (
-                <motion.span
-                  key="streak"
-                  className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-brand-700"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <Flame className="w-2.5 h-2.5" strokeWidth={2.5} />
-                  {streak}
-                </motion.span>
-              ) : (
-                <span key="empty" className="text-[10px] text-transparent">.</span>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.button>
-        <ModalOverlay open={open} onOpenChange={setOpen} title={`${getHabitIconLabel(habit.icon)} ${habit.name}`}>
-          {sheetContent}
-        </ModalOverlay>
-      </>
-    )
-  }
-
-  // ── Normal mode (2-column grid card) ─────────────────────
   return (
     <>
-      <motion.button
-        whileTap={reduceMotion ? undefined : { scale: 0.975, transition: spring.snappy }}
-        whileHover={reduceMotion || isDone ? undefined : { y: -1, transition: spring.smooth }}
-        style={{
-          ...style,
-          ...tiltStyle,
-        }}
-        ref={cardRef}
-        className={cn(
-          'group relative flex items-center gap-2.5 px-3 py-2.5 rounded-[var(--radius-card-lg)] tap-scale',
-          'text-left w-full select-none overflow-hidden',
-          'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2',
-          isQuickSubmitting && 'pointer-events-none',
-          'glass-tile',
-          isDone && 'glass-tile-done',
-          celebrating && 'animate-celebrate',
-        )}
-        aria-label={`打卡：${habit.name}`}
-        onClick={handleCardClick}
-        onPointerDown={onPointerDown}
-        onPointerUp={onPointerUpOrLeave}
-        onPointerLeave={(e) => { onPointerUpOrLeave(); handleMouseLeave(); void e; }}
-        onMouseMove={handleMouseMove}
+      <article
+        style={style}
+        aria-busy={isPending}
+        className={cn('habit-row', isDone && 'habit-row-done', compact && 'habit-row-compact')}
       >
-        {moreButton}
-        {longPressIndicator}
-        {quickPendingIndicator}
-        {rippleElement}
-        {/* Left color accent bar */}
-        <motion.div
-          className="absolute top-0 left-0 w-1 h-full rounded-l-2xl"
-          animate={{
-            backgroundColor: isDone ? habit.color : '#e7e5e4',
-            opacity: isDone ? 1 : 0.6,
-          }}
-          transition={{ duration: 0.3 }}
-        />
-
-        {/* Icon */}
-        <div className="relative shrink-0">
-          <motion.div
-            className={cn(
-              'w-9 h-9 rounded-[var(--radius-control)] flex items-center justify-center text-lg',
-              'shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)]',
-            )}
-            style={{
-              background: `linear-gradient(135deg, ${habit.color}14, ${habit.color}22)`,
-              ...(!reduceMotion && canHover ? { x: iconX, y: iconY } : {}),
-            }}
-          >
-            <HabitIcon icon={habit.icon} className="w-[18px] h-[18px]" color={habit.color} fallback="📌" />
-          </motion.div>
-          {/* Check overlay */}
-          <AnimatePresence>
-            {isDone && (
-              <motion.div
-                className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-white"
-                style={{ backgroundColor: habit.color }}
-                initial={{ scale: 0, rotate: -45 }}
-                animate={{ scale: 1, rotate: 0 }}
-                exit={{ scale: 0, rotate: 45 }}
-                transition={spring.emphasized}
-              >
-                <Check className="w-2.5 h-2.5 text-white" strokeWidth={3.5} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <div className="habit-icon shrink-0" style={{ '--habit-color': habit.color } as CSSProperties} aria-hidden="true">
+          <HabitIcon icon={habit.icon} className={compact ? 'size-5' : 'size-[22px]'} color={habit.color} fallback="📌" />
         </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
+        <div className={cn('min-w-0', compact ? 'w-full text-center' : 'flex-1')}>
           <div className={cn(
-            'font-semibold text-[13px] leading-snug line-clamp-1',
-            isDone ? 'text-[var(--color-ink-600)]' : 'text-[var(--color-ink-950)]',
-          )}>
+            'font-semibold leading-snug break-words text-[var(--color-ink-950)]',
+            compact ? 'line-clamp-1 text-xs' : 'line-clamp-2 text-[15px] sm:text-base',
+          )} title={habit.name}>
             {habit.name}
           </div>
-          <div className="mt-0.5 flex items-center gap-1.5">
-            <AnimatePresence mode="wait">
-              {isDone ? (
-                <motion.span
-                  key="done"
-                  className="inline-flex items-center gap-0.5 text-[11px] font-semibold"
-                  style={{ color: habit.color }}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={spring.snappy}
-                >
-                  <Check className="w-3 h-3" strokeWidth={2.5} />
-                  {todayCount > 1 ? `×${todayCount}` : '已完成'}
-                </motion.span>
-              ) : (
-                <motion.span
-                  key="undone"
-                  className="text-[11px] text-[var(--color-ink-500)] font-medium"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={spring.snappy}
-                >
-                  待打卡
-                </motion.span>
-              )}
-            </AnimatePresence>
-            {streakBadge && <span className="text-[var(--color-ink-300)]">·</span>}
-            {streakBadge}
+          <div className={cn(
+            'mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-medium leading-snug tabular-nums',
+            compact ? 'justify-center text-[11px]' : 'text-xs',
+          )}>
+            <span aria-live="polite" aria-atomic="true" className={cn(isDone ? 'text-brand-700' : 'text-[var(--color-ink-600)]')}>
+              {isQuickPending ? '打卡中…' : todayCount > 1 ? `×${todayCount}` : isDone ? '已完成' : '待打卡'}
+            </span>
+            {hasStreak ? (
+              <span className="inline-flex items-center gap-0.5 whitespace-nowrap font-semibold text-brand-700">
+                <Flame className="size-3" aria-hidden="true" />
+                <span className="sr-only">连续打卡</span>{streak}天
+              </span>
+            ) : null}
           </div>
         </div>
-      </motion.button>
-      <ModalOverlay open={open} onOpenChange={setOpen} title={`${getHabitIconLabel(habit.icon)} ${habit.name}`}>
-        {sheetContent}
+
+        <div className={cn('flex shrink-0 items-center', compact ? 'justify-center gap-0.5' : 'gap-1')}>
+          <button
+            type="button"
+            ref={checkButtonRef}
+            className={cn('habit-check-button inline-grid min-h-11 min-w-11 place-items-center disabled:opacity-60', isDone && 'habit-check-button-done', pressFeedback, focusRing)}
+            onClick={() => void runAction('quick')}
+            onKeyDown={preventRepeatingActivation}
+            aria-label={`${isDone ? '再次打卡' : '打卡'}：${habit.name}`}
+            aria-busy={isQuickPending}
+            disabled={isPending}
+          >
+            {isQuickPending ? <LoaderCircle className="size-5 motion-safe:animate-spin" aria-hidden="true" />
+              : isDone ? <Plus className="size-5" aria-hidden="true" />
+              : <Check className="size-5" aria-hidden="true" />}
+          </button>
+          <button
+            type="button"
+            className={cn('habit-more-button inline-grid min-h-11 min-w-11 place-items-center disabled:opacity-60', pressFeedback, focusRing)}
+            ref={moreButtonRef}
+            onClick={() => changeSheet(true)}
+            aria-label={`更多选项：${habit.name}`}
+            aria-haspopup="dialog"
+            disabled={isPending}
+          >
+            <MoreHorizontal className="size-5" aria-hidden="true" />
+          </button>
+        </div>
+      </article>
+
+      <ModalOverlay open={open} onOpenChange={changeSheet} title={`${getHabitIconLabel(habit.icon)} ${habit.name}`}>
+        <div
+          ref={focusSheet}
+          tabIndex={-1}
+          className="space-y-4"
+          role="dialog"
+          aria-label={`打卡选项：${habit.name}`}
+          aria-busy={isPending}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') changeSheet(false)
+          }}
+        >
+          <p className="text-sm font-medium text-[var(--color-ink-600)]">
+            今日已打卡 <strong className="tabular-nums text-[var(--color-ink-950)]">{todayCount}</strong> 次
+          </p>
+
+          {showNote ? (
+            <div className="space-y-2">
+              <Label htmlFor={noteId}>备注</Label>
+              <Textarea
+                id={noteId}
+                placeholder="记录一下这次的感受或数据…"
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+                rows={3}
+                autoFocus
+                disabled={isPending}
+              />
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={cn(sheetButtonClass, 'px-0 text-brand-700 hover:text-brand-600')}
+              onClick={() => setShowNote(true)}
+              disabled={isPending}
+            >
+              <Plus className="size-4" aria-hidden="true" />
+              添加备注
+            </button>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              className={cn(sheetButtonClass, 'flex-1 border border-[var(--color-line-soft)] bg-white text-[var(--color-ink-800)] hover:bg-brand-50')}
+              onClick={() => changeSheet(false)}
+              disabled={isPending}
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              className={cn(sheetButtonClass, 'flex-1 bg-brand-700 text-white hover:bg-brand-600')}
+              onClick={() => void runAction('confirm')}
+              onKeyDown={preventRepeatingActivation}
+              aria-busy={isConfirmPending}
+              disabled={isPending}
+            >
+              <Check className="size-4" aria-hidden="true" />
+              {isConfirmPending ? '打卡中…' : '确认打卡'}
+            </button>
+          </div>
+
+          {canUndo ? (
+            <button
+              type="button"
+              className={cn(sheetButtonClass, 'w-full text-xs text-[var(--color-ink-600)] hover:text-[var(--color-ink-950)]')}
+              onClick={() => void runAction('undo')}
+              onKeyDown={preventRepeatingActivation}
+              aria-busy={isUndoPending}
+              disabled={isPending}
+            >
+              <RotateCcw className="size-3.5" aria-hidden="true" />
+              {isUndoPending ? '撤销中…' : '撤销最近一次打卡'}
+            </button>
+          ) : null}
+        </div>
       </ModalOverlay>
     </>
   )

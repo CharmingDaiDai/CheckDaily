@@ -8,7 +8,9 @@ import {
   List,
   CalendarClock,
   ListCheck,
-  Hand,
+  ChevronDown,
+  ArrowUpRight,
+  Plus,
   Search,
   X,
 } from "lucide-react";
@@ -22,8 +24,9 @@ import { CheckInDayDetailDialog } from "@/components/habits/CheckInDayDetailDial
 import { SimpleBarChart } from "@/components/charts/BarCharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { BackdateSheet } from "@/components/habits/BackdateSheet";
-import { formatDate, getLast7Days, computeStreak } from "@/lib/utils";
+import { cn, formatDate, getLast7Days, computeStreak } from "@/lib/utils";
 import { sectionReveal, pageChoreography } from "@/lib/motion";
 import { HabitIcon } from '@/lib/habitIcons'
 
@@ -34,14 +37,11 @@ function Dashboard() {
   );
   const [backdateOpen, setBackdateOpen] = useState(false);
   const [dayDetailOpen, setDayDetailOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [completedCollapsed, setCompletedCollapsed] = useState(false);
   const [query, setQuery] = useState("");
   const [onlyPending, setOnlyPending] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 300);
-    return () => clearTimeout(timer);
-  }, []);
+  const [announcement, setAnnouncement] = useState("");
+  const [recentCompletion, setRecentCompletion] = useState<{ id: string; previousCount: number } | null>(null);
 
   const { data: habits, isLoading: habitsLoading, isFetching: habitsFetching, error: habitsError, refetch: refetchHabits } = useHabits();
   const { data: combos, isLoading: combosLoading } = useCombos();
@@ -85,6 +85,22 @@ function Dashboard() {
     }
     return map;
   }, [todayCheckIns]);
+
+  useEffect(() => {
+    if (!recentCompletion || (todayCountMap[recentCompletion.id] ?? 0) <= recentCompletion.previousCount) return;
+    const frame = requestAnimationFrame(() => {
+      // A filtered or collapsed row has intentionally left the DOM.
+      // Hand focus to the next action only if focus has fallen back to body.
+      if ((onlyPending || completedCollapsed) && document.activeElement === document.body) {
+        const next = document.querySelector<HTMLElement>(".dashboard-page .habit-row:not(.habit-row-done) .habit-check-button")
+          ?? document.querySelector<HTMLElement>(".dashboard-page .completed-toggle")
+          ?? document.querySelector<HTMLElement>(".dashboard-page .dashboard-filter");
+        next?.focus({ preventScroll: true });
+      }
+      setRecentCompletion(null);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [recentCompletion, todayCountMap, onlyPending, completedCollapsed]);
 
   // Latest check-in id per habit (for undo) — todayCheckIns is ordered desc by checked_at
   const latestCheckInMap = useMemo(() => {
@@ -205,442 +221,201 @@ function Dashboard() {
     day: "numeric",
     weekday: "long",
   });
-  const doneCount = Object.values(todayCountMap).filter((c) => c > 0).length;
+  const doneCount = (habits ?? []).filter((habit) => (todayCountMap[habit.id] ?? 0) > 0).length;
   const totalCount = habits?.length ?? 0;
 
   const isLoading = habitsLoading || todayLoading || combosLoading;
   const isRefreshing = !isLoading && (habitsFetching || todayFetching || recentFetching || streakFetching);
   const hasLoadError = Boolean(habitsError || todayError || recentError || streakError);
 
-  // Index where completed habits start (-1 = none done, 0 = all done) within the visible list
-  const firstDoneIdx = sortedHabits.findIndex(
-    (h) => (todayCountMap[h.id] ?? 0) > 0,
-  );
-  const visibleDoneCount = sortedHabits.filter(
-    (h) => (todayCountMap[h.id] ?? 0) > 0,
-  ).length;
-  const hasMixed = firstDoneIdx > 0;
+  const pendingHabits = sortedHabits.filter((habit) => !(todayCountMap[habit.id] > 0));
+  const completedHabits = sortedHabits.filter((habit) => todayCountMap[habit.id] > 0);
+  const remaining = Math.max(0, totalCount - doneCount);
+  const todayUnavailable = Boolean(habitsError || todayError);
+  const allDone = totalCount > 0 && remaining === 0 && !todayUnavailable;
+  const progress = totalCount ? doneCount / totalCount : 0;
+  const gridClass = compact ? "habit-grid-compact" : "space-y-2.5";
+  const summaryText = todayUnavailable ? "今日数据待同步"
+    : totalCount === 0 ? "从一个小习惯开始"
+      : allDone ? "今天的清单，完成了。" : `还有 ${remaining} 项，按自己的节奏来。`;
 
-  const gridClass = compact
-    ? "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2"
-    : "grid grid-cols-2 sm:grid-cols-3 gap-2";
+  const renderHabit = (habit: NonNullable<typeof habits>[number]) => (
+    <HabitCard
+      key={habit.id}
+      habit={habit}
+      todayCount={todayCountMap[habit.id] ?? 0}
+      streak={streakMap[habit.id] ?? 0}
+      compact={compact}
+      latestCheckInId={latestCheckInMap[habit.id]}
+      onCheckInSuccess={(id, previousCount) => {
+        setAnnouncement(`${habit.name}已打卡，今日第 ${previousCount + 1} 次。`);
+        setRecentCompletion({ id, previousCount });
+      }}
+    />
+  );
+
+  const retryAll = () => {
+    void refetchHabits();
+    void refetchToday();
+    void refetchRecent();
+    void refetchStreak();
+  };
 
   return (
-    <motion.div
-      className="app-page space-y-6"
-      variants={pageChoreography}
-      initial="initial"
-      animate="animate"
-    >
-      {/* Header */}
-      <motion.div variants={sectionReveal}>
-        <div className="page-kicker mb-1">
-          <CalendarDays className="w-3.5 h-3.5" />
-          {todayStr}
+    <motion.div className="app-page dashboard-page space-y-7" variants={pageChoreography} initial="initial" animate="animate">
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</p>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div className="page-kicker mb-2"><CalendarDays className="h-3.5 w-3.5" />{todayStr}</div>
+          <h1 className="headline-premium text-[2rem] sm:text-[2.5rem]">今日打卡</h1>
         </div>
-        <div className="flex items-center justify-between">
-          <h1 className="headline-premium text-[2.15rem] sm:text-[2.5rem] text-[var(--color-ink-950)]">
-            今日打卡
-          </h1>
-          {totalCount > 0 && !isLoading && (
-            <div className="page-actions">
-              <button
-                onClick={() => setBackdateOpen(true)}
-                className="icon-action"
-                aria-label="补卡"
-              >
-                <CalendarClock className="w-4 h-4" strokeWidth={2} />
-                <span className="text-xs font-medium">补卡</span>
-              </button>
-              <button
-                onClick={() =>
-                  setCompact((v) => {
-                    const next = !v;
-                    localStorage.setItem("dashboard-compact", String(next));
-                    return next;
-                  })
-                }
-                className="icon-action"
-                aria-label={compact ? "切换到卡片视图" : "切换到紧凑视图"}
-              >
-                {compact ? (
-                  <LayoutGrid className="w-4 h-4" strokeWidth={2} />
-                ) : (
-                  <List className="w-4 h-4" strokeWidth={2} />
-                )}
-                <span className="text-xs font-medium">
-                  {compact ? "卡片" : "紧凑"}
-                </span>
-              </button>
+        {totalCount > 0 && !isLoading && (
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setBackdateOpen(true)} className="dashboard-tool" aria-label="补卡">
+              <CalendarClock className="h-4 w-4" /><span>补卡</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCompact((value) => {
+                const next = !value;
+                localStorage.setItem("dashboard-compact", String(next));
+                return next;
+              })}
+              className="dashboard-tool"
+              aria-label="紧凑视图"
+              title={compact ? "切换到列表视图" : "切换到紧凑视图"}
+              aria-pressed={compact}
+            >
+              {compact ? <List className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
+              <span>{compact ? "列表" : "紧凑"}</span>
+            </button>
+          </div>
+        )}
+      </header>
+
+      <motion.section variants={sectionReveal} className={cn("daily-summary", allDone && "daily-summary-complete")} aria-label="今日摘要">
+        <div>
+          <div className="dashboard-eyebrow">今日进度</div>
+          {isLoading ? <Skeleton className="mt-3 h-12 w-40" /> : (
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="daily-summary-number">{todayUnavailable ? "—" : doneCount}</span>
+              <span className="text-lg text-[var(--color-ink-600)] tabular-nums">/ {totalCount}</span>
+              <span className="ml-1 text-sm text-[var(--color-ink-600)]">项已完成</span>
             </div>
           )}
         </div>
-        <div className="mt-3 flex items-center gap-3">
-          {!isLoading && (
-            <>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-brand-500" />
-                <span className="text-sm font-semibold text-[var(--color-ink-700)]">
-                  已完成 {doneCount} / {totalCount} 项
-                </span>
+        <div className="daily-summary-detail">
+          <p className="text-[15px] font-semibold text-[var(--color-ink-800)]" aria-live="polite">
+            {isLoading ? "正在准备今天的清单…" : summaryText}
+          </p>
+          <div className="daily-progress-track" role="progressbar" aria-label="今日完成进度" aria-valuenow={isLoading || todayUnavailable ? undefined : doneCount} aria-valuemin={0} aria-valuemax={totalCount || 1} aria-valuetext={isLoading || todayUnavailable ? "等待同步" : `${doneCount} / ${totalCount} 项已完成`}>
+            <motion.div className="daily-progress-fill" initial={false} animate={{ scaleX: isLoading || todayUnavailable ? 0 : progress }} transition={{ duration: 0.3 }} />
+          </div>
+          <p className="mt-2 text-xs text-[var(--color-ink-600)]">{allDone ? "完成之后，也给自己留一点休息时间。" : "每完成一项，都算向前。"}</p>
+        </div>
+      </motion.section>
+
+      {isRefreshing && <div role="status" className="flex items-center gap-2 text-xs text-[var(--color-ink-600)]"><span className="h-1.5 w-1.5 rounded-full bg-brand-500" />正在同步今日与趋势数据…</div>}
+      {hasLoadError && (
+        <div role="alert" className="dashboard-error">
+          <div><p className="font-semibold">部分数据暂时未能同步</p><p className="mt-1 text-xs">请重新同步后确认今日进度与连续记录。</p></div>
+          <Button variant="outline" size="sm" onClick={retryAll}>重新同步</Button>
+        </div>
+      )}
+
+      <div className="dashboard-layout">
+        <section className="min-w-0 space-y-5" aria-labelledby="habit-list-title">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="habit-list-title" className="dashboard-section-title">今日清单 <span className="dashboard-count">{totalCount}</span></h2>
+            {totalCount > 0 && <button type="button" onClick={() => void navigate({ to: "/habits" })} className="dashboard-text-link">管理项目<ArrowUpRight className="h-3.5 w-3.5" /></button>}
+          </div>
+
+          {!isLoading && (totalCount > 5 || isFiltering) && (
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative min-w-[140px] flex-1">
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[var(--color-ink-600)]" />
+                <Input placeholder="搜索习惯…" value={query} onChange={(event) => setQuery(event.target.value)} className="h-11 pl-10 pr-11" aria-label="搜索习惯" />
+                {query && <button type="button" onClick={() => setQuery("")} aria-label="清除搜索" className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-xl text-[var(--color-ink-600)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"><X className="h-4 w-4" /></button>}
               </div>
-              {totalCount > 0 && (
-                <div
-                  className="h-2.5 flex-1 bg-white/60 rounded-full overflow-hidden border border-white/65 shadow-[inset_0_1px_2px_rgb(61_52_41/0.08)]"
-                  role="progressbar"
-                  aria-valuenow={doneCount}
-                  aria-valuemin={0}
-                  aria-valuemax={totalCount}
-                  aria-label={`今日进度：${doneCount}/${totalCount} 项已完成`}
-                >
-                  <div
-                    className={`h-full rounded-full transition-all duration-700 ${doneCount === totalCount ? "bg-gradient-to-r from-brand-400 via-brand-500 to-[#5d894e] animate-shimmer" : "bg-gradient-to-r from-brand-400 to-brand-500"}`}
-                    style={{
-                      width: mounted
-                        ? `${(doneCount / totalCount) * 100}%`
-                        : "0%",
-                    }}
-                  />
-                </div>
-              )}
+              <button type="button" onClick={() => setOnlyPending((value) => !value)} aria-pressed={onlyPending} className={cn("dashboard-filter", onlyPending && "dashboard-filter-active")}>只看未打卡</button>
+            </div>
+          )}
+
+          {isLoading ? (
+            <div className={gridClass} aria-label="正在加载习惯">
+              {Array.from({ length: compact ? 6 : 4 }, (_, index) => <Skeleton key={index} className={compact ? "h-40 rounded-2xl" : "h-24 rounded-2xl"} />)}
+            </div>
+          ) : todayUnavailable && sortedHabits.length === 0 ? (
+            <div className="dashboard-empty"><ListCheck className="mb-4 h-8 w-8 text-[var(--color-ink-600)]" /><h3>今日清单暂时不可用</h3><p>检查网络后重新同步，即可继续打卡。</p><Button variant="outline" onClick={retryAll}>重新同步</Button></div>
+          ) : sortedHabits.length === 0 ? (
+            <div className="dashboard-empty">
+              {isFiltering ? <Search className="mb-4 h-8 w-8 text-[var(--color-ink-600)]" /> : <ListCheck className="mb-4 h-8 w-8 text-brand-600" />}
+              <h3>{isFiltering ? normalizedQuery ? `没有找到「${query.trim()}」` : "今天的项目都已打卡" : "让一个小习惯，成为日常"}</h3>
+              <p>{isFiltering ? "清除筛选，看看全部习惯。" : "添加第一个项目，从今天开始记录。"}</p>
+              {isFiltering ? <Button variant="outline" onClick={() => { setQuery(""); setOnlyPending(false); }}>清除筛选</Button> : <Button onClick={() => void navigate({ to: "/habits" })}><Plus className="h-4 w-4" />添加项目</Button>}
+            </div>
+          ) : (
+            <>
+              <div className={gridClass}>
+                {[
+                  ...pendingHabits.map(renderHabit),
+                  ...(completedHabits.length > 0 ? [
+                    <button
+                      key="completed-heading"
+                      type="button"
+                      className="completed-toggle"
+                      aria-expanded={normalizedQuery ? true : !completedCollapsed}
+                      onClick={() => setCompletedCollapsed((value) => !value)}
+                      disabled={Boolean(normalizedQuery)}
+                    >
+                      <span className="flex items-center gap-2"><Check className="h-4 w-4 text-[#4f7642]" />已完成<span className="dashboard-count">{completedHabits.length}</span></span>
+                      <span className="flex items-center gap-1 text-xs text-[var(--color-ink-600)]">{normalizedQuery ? "搜索结果" : completedCollapsed ? "展开" : "收起"}<ChevronDown className={cn("h-4 w-4 transition-transform", (normalizedQuery || !completedCollapsed) && "rotate-180")} /></span>
+                    </button>,
+                    ...((normalizedQuery || !completedCollapsed) ? completedHabits.map(renderHabit) : []),
+                  ] : []),
+                ]}
+              </div>
+              <p className="px-1 text-xs leading-relaxed text-[var(--color-ink-600)]">点击右侧按钮打卡，更多选项中可添加备注或撤销记录。</p>
             </>
           )}
-        </div>
-      </motion.div>
+        </section>
 
-      {isRefreshing && (
-        <motion.div
-          variants={sectionReveal}
-          className="floating-chrome rounded-[var(--radius-control)] px-3.5 py-2 text-xs font-semibold text-brand-700"
-        >
-          正在同步今日与趋势数据…
-        </motion.div>
-      )}
-
-      {hasLoadError && (
-        <motion.div
-          variants={sectionReveal}
-          className="surface-frame px-4 py-3"
-        >
-          <div className="text-sm font-semibold text-[var(--color-ink-900)]">首页数据加载失败</div>
-          <div className="mt-0.5 text-xs text-[var(--color-ink-600)]">部分卡片可能展示不完整，请重新同步。</div>
-          <button
-            className="mt-3 inline-flex h-9 items-center rounded-[var(--radius-control)] border border-brand-200 bg-white/78 px-3 text-xs font-semibold text-brand-700 transition-colors hover:bg-white"
-            onClick={() => {
-              void refetchHabits();
-              void refetchToday();
-              void refetchRecent();
-              void refetchStreak();
-            }}
-          >
-            重新同步
-          </button>
-        </motion.div>
-      )}
-
-      {/* Filter row — only worth showing once there are enough habits to lose track of */}
-      {!isLoading && totalCount > 5 && (
-        <motion.div variants={sectionReveal} className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-ink-500)]" />
-            <Input
-              placeholder="搜索习惯…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="pl-10 pr-10 h-11"
-              aria-label="搜索习惯"
-            />
-            {query && (
-              <button
-                className="absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 rounded-[var(--radius-control)] flex items-center justify-center text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] hover:bg-white/70 transition-colors"
-                onClick={() => setQuery("")}
-                aria-label="清除搜索"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-          <button
-            onClick={() => setOnlyPending((v) => !v)}
-            aria-pressed={onlyPending}
-            className={
-              onlyPending
-                ? "h-11 shrink-0 rounded-[var(--radius-control)] border border-brand-300 bg-brand-50 px-3.5 text-xs font-semibold text-brand-700 transition-colors"
-                : "h-11 shrink-0 rounded-[var(--radius-control)] border border-[var(--color-line-soft)] bg-white/70 px-3.5 text-xs font-semibold text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] transition-colors"
-            }
-          >
-            只看未打卡
-          </button>
-        </motion.div>
-      )}
-
-      {/* All Done celebration banner */}
-      {!isLoading && doneCount === totalCount && totalCount > 0 && (
-        <motion.div variants={sectionReveal} className="relative overflow-hidden glass-card rounded-[var(--radius-card-lg)] px-5 py-4">
-          {/* Confetti particles */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <span
-                key={i}
-                className="absolute w-2 h-2 rounded-sm animate-confetti"
-                style={{
-                  backgroundColor: [
-                    "#f97316",
-                    "#fb923c",
-                    "#fbbf24",
-                    "#fdba74",
-                    "#ea6c0c",
-                    "#fed7aa",
-                  ][i % 6],
-                  left: `${8 + i * 7.5}%`,
-                  top: `-8px`,
-                  animationDelay: `${i * 80}ms`,
-                  animationDuration: `${1000 + (i % 3) * 200}ms`,
-                }}
-              />
-            ))}
-          </div>
-          <div className="font-semibold text-[var(--color-ink-900)]">
-            今日已全部完成
-          </div>
-          <div className="text-sm text-[var(--color-ink-600)] mt-0.5">
-            继续保持，养成好习惯
-          </div>
-        </motion.div>
-      )}
-
-      <CheckInDayDetailDialog
-        open={dayDetailOpen}
-        onOpenChange={setDayDetailOpen}
-        dateLabel={selectedDate}
-        checkIns={selectedDateCheckIns}
-        habitsMap={habitsMap}
-      />
-
-      {/* Combos grid */}
-      {!isLoading && !isFiltering && renderedCombos.length > 0 && (
-        <motion.div variants={sectionReveal} className="space-y-3 mb-8">
-          <div className="text-sm font-bold text-[var(--color-ink-600)] px-1 pb-1">运动组合</div>
-          <div className={gridClass}>
-            {renderedCombos.map(combo => (
-              <button
-                key={combo.id}
-                disabled={checkInCombo.isPending || combo.validIds.length === 0}
-                onClick={() => handleComboCheckIn(combo)}
-                className={`group relative flex items-center gap-2.5 px-3 py-2.5 rounded-[var(--radius-card-lg)] glass-tile tap-scale text-left select-none overflow-hidden ${
-                  combo.isDone ? 'glass-tile-done' : ''
-                }`}
-              >
-                {/* Left color accent bar */}
-                <div
-                  className={`absolute top-0 left-0 w-1 h-full rounded-l-2xl transition-colors duration-300 ${combo.isDone ? 'opacity-100' : 'opacity-60'}`}
-                  style={{ backgroundColor: combo.isDone ? combo.color : '#e7e5e4' }}
-                />
-
-                <div className="relative shrink-0">
-                  <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)] transition-all ${combo.isDone ? 'grayscale-[30%]' : ''}`}
-                    style={{ background: `linear-gradient(135deg, ${combo.color}14, ${combo.color}22)` }}
-                  >
-                    <HabitIcon icon={combo.icon} className="w-[18px] h-[18px]" color={combo.color} fallback="🚀" />
-                  </div>
-                  {combo.isDone && (
-                    <div
-                      className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-white"
-                      style={{ backgroundColor: combo.color }}
+        {totalCount > 0 && (
+          <aside className="dashboard-aside space-y-5" aria-label="快捷组合与回顾">
+            {!isLoading && !isFiltering && renderedCombos.length > 0 && (
+              <section aria-labelledby="combo-title" className="content-panel p-5">
+                <div className="mb-4 flex items-center justify-between"><h2 id="combo-title" className="dashboard-section-title text-sm">快捷组合</h2><span className="text-xs text-[var(--color-ink-600)]">一键完成多项</span></div>
+                <div className="space-y-2">
+                  {renderedCombos.map((combo) => (
+                    <button
+                      key={combo.id}
+                      type="button"
+                      disabled={checkInCombo.isPending || combo.validIds.length === 0}
+                      aria-busy={checkInCombo.isPending}
+                      onClick={() => void handleComboCheckIn(combo)}
+                      className="combo-shortcut"
+                      aria-label={combo.isDone ? `再次打卡组合：${combo.name}` : `打卡组合：${combo.name}`}
                     >
-                      <Check className="w-2.5 h-2.5 text-white" strokeWidth={3.5} />
-                    </div>
-                  )}
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: combo.color + "12" }}><HabitIcon icon={combo.icon} className="h-5 w-5" color={combo.color} fallback="📌" /></span>
+                      <span className="min-w-0 flex-1 text-left"><span className="block break-words text-sm font-semibold">{combo.name}</span><span className="mt-1 block text-xs text-[var(--color-ink-600)]">{checkInCombo.isPending ? "正在打卡…" : combo.isDone ? "已完成 · 可再记一次" : `包含 ${combo.validIds.length} 项`}{combo.missingCount > 0 && ` · ${combo.missingCount} 项已删除`}</span></span>
+                      {combo.isDone ? <Check className="h-4 w-4 shrink-0 text-[#4f7642]" /> : <Plus className="h-4 w-4 shrink-0 text-brand-600" />}
+                    </button>
+                  ))}
                 </div>
+              </section>
+            )}
+            <section className="content-panel p-5" aria-labelledby="week-title">
+              <div className="mb-2 flex items-center gap-2"><TrendingUp className="h-4 w-4 text-brand-600" /><h2 id="week-title" className="dashboard-section-title text-sm">近七天</h2></div>
+              <p className="mb-5 text-xs text-[var(--color-ink-600)]">每天的积累，都在这里。</p>
+              {recentError ? <div className="py-5 text-sm text-[var(--color-ink-600)]"><p>趋势暂时无法加载</p><button type="button" className="dashboard-text-link mt-3" onClick={() => void refetchRecent()}>重新加载<ArrowUpRight className="h-3.5 w-3.5" /></button></div> : <SimpleBarChart data={weekData} color="#b95422" height={150} highlightToday showYAxis={false} activeDate={selectedDate} onBarClick={(date) => { setSelectedDate(date); setDayDetailOpen(true); }} />}
+              <p className="mt-3 border-t border-[var(--color-line-soft)] pt-3 text-[11px] text-[var(--color-ink-600)]">点选柱形，查看当天的打卡记录</p>
+            </section>
+          </aside>
+        )}
+      </div>
 
-                <div className="flex-1 min-w-0 pr-1">
-                  <div className={`font-bold text-[13px] leading-snug line-clamp-1 ${combo.isDone ? 'text-[var(--color-ink-500)]' : 'text-[var(--color-ink-900)]'}`}>
-                    {combo.name}
-                  </div>
-                  <div className={`mt-0.5 flex flex-wrap items-center gap-1.5`}>
-                    {combo.isDone ? (
-                      <span
-                        className="inline-flex items-center gap-0.5 text-[11px] font-semibold"
-                        style={{ color: combo.color }}
-                      >
-                        <Check className="w-3 h-3" strokeWidth={2.5} />
-                        全项已完成
-                      </span>
-                    ) : (
-                      <span className="text-[11px] text-[var(--color-ink-500)] font-medium">
-                        包含 {combo.validIds.length} 项
-                        {combo.missingCount > 0 && (
-                          <span className="text-amber-600"> · {combo.missingCount} 项已删除</span>
-                        )}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Habit grid */}
-      {hasLoadError && !isLoading && sortedHabits.length === 0 ? (
-        <motion.div variants={sectionReveal} className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="font-bold text-rose-700 text-lg mb-1">今日数据暂时不可用</div>
-          <div className="text-rose-500/80 text-sm mb-5">请检查网络后重试同步</div>
-          <button
-            className="px-5 py-2.5 bg-rose-600 text-white rounded-xl font-semibold text-sm hover:bg-rose-700 transition-colors tap-scale"
-            onClick={() => {
-              void refetchHabits();
-              void refetchToday();
-              void refetchRecent();
-              void refetchStreak();
-            }}
-          >
-            重新同步
-          </button>
-        </motion.div>
-      ) : isLoading ? (
-        <motion.div variants={sectionReveal} className="space-y-3">
-          <div className="text-xs text-[var(--color-ink-500)] font-medium">加载今日打卡内容…</div>
-          <div className={gridClass}>
-            {Array.from({ length: compact ? 8 : 6 }).map((_, i) => (
-              <Skeleton
-                key={i}
-                className={compact ? "h-24 rounded-[var(--radius-card-lg)]" : "h-14 rounded-[var(--radius-card-lg)]"}
-              />
-            ))}
-          </div>
-        </motion.div>
-      ) : sortedHabits.length > 0 ? (
-        <motion.div variants={sectionReveal} className="space-y-3">
-          {/* Incomplete habits */}
-          {firstDoneIdx !== 0 && (
-            <div className={gridClass}>
-              {sortedHabits
-                .slice(0, firstDoneIdx === -1 ? undefined : firstDoneIdx)
-                .map((habit, i) => (
-                  <HabitCard
-                    key={habit.id}
-                    habit={habit}
-                    todayCount={todayCountMap[habit.id] ?? 0}
-                    streak={streakMap[habit.id] ?? 0}
-                    compact={compact}
-                    latestCheckInId={latestCheckInMap[habit.id]}
-                    style={{ animationDelay: `${i * 40}ms` }}
-                  />
-                ))}
-            </div>
-          )}
-
-          {/* Divider between incomplete and completed */}
-          {hasMixed && (
-            <div className="flex items-center gap-2 py-0.5">
-              <div className="h-px flex-1 bg-[var(--color-line-soft)]" />
-              <span className="text-xs text-[var(--color-ink-500)] font-semibold px-1">
-                已完成 {visibleDoneCount} 项
-              </span>
-              <div className="h-px flex-1 bg-[var(--color-line-soft)]" />
-            </div>
-          )}
-
-          {/* Completed habits */}
-          {firstDoneIdx >= 0 && (
-            <div className={gridClass}>
-              {sortedHabits.slice(firstDoneIdx).map((habit, i) => (
-                <HabitCard
-                  key={habit.id}
-                  habit={habit}
-                  todayCount={todayCountMap[habit.id] ?? 0}
-                  streak={streakMap[habit.id] ?? 0}
-                  compact={compact}
-                  latestCheckInId={latestCheckInMap[habit.id]}
-                  style={{ animationDelay: `${i * 40}ms` }}
-                />
-              ))}
-            </div>
-          )}
-        </motion.div>
-      ) : isFiltering ? (
-        <motion.div variants={sectionReveal} className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-16 h-16 rounded-full bg-white/72 border border-white/72 shadow-[0_12px_28px_rgb(61_52_41/0.08)] flex items-center justify-center mb-4">
-            <Search className="w-7 h-7 text-[var(--color-ink-500)]" strokeWidth={1.5} />
-          </div>
-          <div className="font-semibold text-[var(--color-ink-900)] text-base mb-1">
-            {normalizedQuery ? `没有找到「${query.trim()}」` : "今天的项目都已打卡"}
-          </div>
-          <div className="text-[var(--color-ink-500)] text-sm mb-5">
-            {normalizedQuery ? "换个关键词试试，或清除筛选" : "可以切回全部项目看看"}
-          </div>
-          <button
-            className="px-4 py-2 rounded-[var(--radius-control)] border border-[var(--color-line-soft)] bg-white/80 text-brand-700 font-semibold text-sm hover:bg-white transition-colors tap-scale"
-            onClick={() => {
-              setQuery("");
-              setOnlyPending(false);
-            }}
-          >
-            清除筛选
-          </button>
-        </motion.div>
-      ) : (
-        <motion.div variants={sectionReveal} className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-20 h-20 rounded-full bg-white/72 border border-white/72 shadow-[0_12px_28px_rgb(61_52_41/0.08)] flex items-center justify-center mb-4">
-            <ListCheck className="w-9 h-9 text-[var(--color-ink-500)]" strokeWidth={1.5} />
-          </div>
-          <div className="font-semibold text-[var(--color-ink-900)] text-lg mb-1">
-            还没有打卡项目
-          </div>
-          <div className="text-[var(--color-ink-500)] text-sm mb-5">
-            去添加你的第一个习惯吧
-          </div>
-          <button
-            className="px-5 py-2.5 bg-[linear-gradient(155deg,#e98c4c_0%,#d86f2f_48%,#a94b22_100%)] text-white rounded-[var(--radius-control)] font-semibold text-sm shadow-[0_10px_24px_rgb(185_84_34/0.22)] hover:brightness-[1.02] transition-colors tap-scale"
-            onClick={() => void navigate({ to: "/habits" })}
-          >
-            添加项目
-          </button>
-        </motion.div>
-      )}
-
-      {/* Onboarding hint */}
-      {!isLoading && sortedHabits.length > 0 && doneCount === 0 && (
-        <div className="flex items-center justify-center gap-1.5 py-1 text-[var(--color-ink-500)]/80">
-          <Hand className="w-3.5 h-3.5" strokeWidth={1.8} />
-          <span className="text-xs font-medium">轻触卡片即可完成今日打卡</span>
-        </div>
-      )}
-
-      {/* Last 7 days mini chart */}
-      {totalCount > 0 && (
-        <motion.div variants={sectionReveal} className="surface-frame rounded-[var(--radius-card-lg)] p-5">
-          <div className="flex items-center gap-2 mb-4 pb-3 border-b luxury-divider">
-            <TrendingUp className="w-4 h-4 text-brand-500" strokeWidth={2.5} />
-            <span className="font-semibold text-[var(--color-ink-900)] text-sm">
-              近7天打卡
-            </span>
-          </div>
-          <SimpleBarChart
-            data={weekData}
-            height={130}
-            highlightToday
-            showYAxis={false}
-            activeDate={selectedDate}
-            onBarClick={(date) => {
-              setSelectedDate(date);
-              setDayDetailOpen(true);
-            }}
-          />
-        </motion.div>
-      )}
-
-      {/* Backdate sheet */}
-      {habits && (
-        <BackdateSheet
-          open={backdateOpen}
-          onOpenChange={setBackdateOpen}
-          habits={habits}
-        />
-      )}
+      <CheckInDayDetailDialog open={dayDetailOpen} onOpenChange={setDayDetailOpen} dateLabel={selectedDate} checkIns={selectedDateCheckIns} habitsMap={habitsMap} />
+      {habits && <BackdateSheet open={backdateOpen} onOpenChange={setBackdateOpen} habits={habits} />}
     </motion.div>
   );
 }
