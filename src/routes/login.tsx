@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import { Mail, Lock, Flame, ArrowRight, CheckCircle2, Eye, EyeOff } from 'lucide-react'
@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { sendMagicLink, signInWithPassword, signUpWithPassword } from '@/hooks/useAuth'
+import { sendMagicLink, verifyEmailCode, signInWithPassword, signUpWithPassword, getCurrentAuth } from '@/hooks/useAuth'
+import { authErrorMessage, getAuthCallbackError } from '@/lib/auth'
 import { useAuthStore } from '@/store/authStore'
 import { spring } from '@/lib/motion'
 
@@ -16,13 +17,16 @@ function LoginPage() {
 
   // Redirect to home when user becomes authenticated (e.g. after password login)
   useEffect(() => {
-    if (user) void navigate({ to: '/' })
+    if (user && !getAuthCallbackError()) void navigate({ to: '/', replace: true })
   }, [user, navigate])
   // Magic link state
   const [mlEmail, setMlEmail] = useState('')
   const [mlLoading, setMlLoading] = useState(false)
   const [mlSent, setMlSent] = useState(false)
-  const [mlError, setMlError] = useState('')
+  const [emailCode, setEmailCode] = useState('')
+  const [mlError, setMlError] = useState(() => getAuthCallbackError() ?? '')
+  const mlSubmitting = useRef(false)
+  const pwSubmitting = useRef(false)
 
   // Password login state
   const [mode, setMode] = useState<'login' | 'register'>('login')
@@ -37,21 +41,41 @@ function LoginPage() {
 
   async function handleMagicLink(e: React.SyntheticEvent) {
     e.preventDefault()
-    if (!mlEmail.trim()) return
+    if (!mlEmail.trim() || mlSubmitting.current) return
+    mlSubmitting.current = true
     setMlLoading(true)
     setMlError('')
     try {
       await sendMagicLink(mlEmail.trim())
       setMlSent(true)
     } catch (err) {
-      setMlError(err instanceof Error ? err.message : '发送失败，请重试')
+      setMlError(authErrorMessage(err))
     } finally {
+      mlSubmitting.current = false
+      setMlLoading(false)
+    }
+  }
+
+  async function handleEmailCode(e: React.SyntheticEvent) {
+    e.preventDefault()
+    if (mlSubmitting.current || !emailCode.trim()) return
+    mlSubmitting.current = true
+    setMlLoading(true)
+    setMlError('')
+    try {
+      await verifyEmailCode(mlEmail, emailCode)
+      await navigate({ to: '/', replace: true })
+    } catch (error) {
+      setMlError(authErrorMessage(error))
+    } finally {
+      mlSubmitting.current = false
       setMlLoading(false)
     }
   }
 
   async function handlePassword(e: React.SyntheticEvent) {
     e.preventDefault()
+    if (pwSubmitting.current) return
     setPwError('')
 
     if (mode === 'register') {
@@ -65,23 +89,28 @@ function LoginPage() {
       }
     }
 
+    pwSubmitting.current = true
     setPwLoading(true)
     try {
       if (mode === 'login') {
         await signInWithPassword(pwEmail.trim(), password)
-        // onAuthStateChange will update store and trigger redirect
+        await navigate({ to: '/', replace: true })
       } else {
-        await signUpWithPassword(pwEmail.trim(), password)
-        setRegistered(true)
+        const data = await signUpWithPassword(pwEmail.trim(), password)
+        if (data.session) await navigate({ to: '/', replace: true })
+        else setRegistered(true)
       }
     } catch (err) {
-      setPwError(err instanceof Error ? err.message : '操作失败，请重试')
+      setPwError(authErrorMessage(err))
     } finally {
+      pwSubmitting.current = false
       setPwLoading(false)
     }
   }
 
   function switchMode(next: 'login' | 'register') {
+    if (pwSubmitting.current) return
+    setRegistered(false)
     setMode(next)
     setPwError('')
     setPassword('')
@@ -154,9 +183,17 @@ function LoginPage() {
                       点击邮件中的链接完成登录
                     </div>
                   </div>
+                  <form onSubmit={handleEmailCode} className="w-full space-y-3 text-left">
+                    <Label htmlFor="email-code">邮件中如包含验证码，也可以直接输入</Label>
+                    <Input id="email-code" inputMode="numeric" autoComplete="one-time-code" placeholder="输入邮件验证码" value={emailCode} onChange={(event) => setEmailCode(event.target.value)} required disabled={mlLoading} />
+                    {mlError && <p role="alert" className="text-sm text-red-700">{mlError}</p>}
+                    <Button type="submit" className="w-full" isLoading={mlLoading} loadingText="验证中…" disabled={!emailCode.trim()}>验证并登录</Button>
+                  </form>
                   <button
-                    className="text-sm text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] mt-2 font-medium underline-offset-2 hover:underline"
-                    onClick={() => { setMlSent(false); setMlEmail('') }}
+                    type="button"
+                    disabled={mlLoading}
+                    className="text-sm text-[var(--color-ink-500)] hover:text-[var(--color-ink-700)] mt-2 font-medium underline-offset-2 hover:underline disabled:opacity-50"
+                    onClick={() => { setMlSent(false); setEmailCode(''); setMlError('') }}
                   >
                     重新发送
                   </button>
@@ -216,7 +253,7 @@ function LoginPage() {
                     <CheckCircle2 className="w-8 h-8 text-brand-500" strokeWidth={2} />
                   </div>
                   <div>
-                    <div className="font-semibold text-[var(--color-ink-950)] text-lg">注册成功</div>
+                    <div className="font-semibold text-[var(--color-ink-950)] text-lg">请验证邮箱</div>
                     <div className="text-[var(--color-ink-600)] text-sm mt-1.5 leading-relaxed">
                       请查看 <strong className="text-[var(--color-ink-700)]">{pwEmail}</strong> 的收件箱，
                       点击验证链接激活账号后即可登录
@@ -372,8 +409,8 @@ function LoginPage() {
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
-  beforeLoad: ({ context }) => {
-    if (context.auth.loading) return
-    if (context.auth.user) throw redirect({ to: '/' })
+  beforeLoad: async () => {
+    const auth = await getCurrentAuth()
+    if (auth.user && !getAuthCallbackError()) throw redirect({ to: '/' })
   },
 })

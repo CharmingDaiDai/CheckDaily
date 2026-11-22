@@ -1,60 +1,76 @@
 import { useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
+import { applyAuthSession, authRedirectUrl, initializeAuth, clearAuthCallbackError } from '@/lib/auth'
 
 export function useAuthInit() {
-  const { setSession, setLoading } = useAuthStore()
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setLoading(false)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setLoading(false)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [setSession, setLoading])
+  useEffect(() => { void initializeAuth() }, [])
 }
 
 export async function sendMagicLink(email: string) {
+  await initializeAuth()
   const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: `${window.location.origin}/auth/callback`,
-    },
+    email: email.trim(),
+    options: { emailRedirectTo: authRedirectUrl() },
   })
   if (error) throw error
+}
+
+export async function verifyEmailCode(email: string, token: string) {
+  await initializeAuth()
+  const { data, error } = await supabase.auth.verifyOtp({ email: email.trim(), token: token.trim(), type: 'email' })
+  if (error) throw error
+  if (!data.session) throw new Error('验证码未返回有效会话，请重新发送邮件。')
+  clearAuthCallbackError()
+  applyAuthSession(data.session)
+  return data
 }
 
 export async function signOut() {
   const { error } = await supabase.auth.signOut()
   if (error) throw error
+  applyAuthSession(null)
 }
 
 export async function signInWithPassword(email: string, password: string) {
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  await initializeAuth()
+  const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
   if (error) throw error
+  if (!data.session) throw new Error('登录未返回有效会话，请重试。')
+  clearAuthCallbackError()
+  applyAuthSession(data.session)
+  return data
 }
 
 export async function signUpWithPassword(email: string, password: string) {
-  const { data, error } = await supabase.auth.signUp({ email, password })
+  await initializeAuth()
+  const { data, error } = await supabase.auth.signUp({
+    email: email.trim(), password,
+    options: { emailRedirectTo: authRedirectUrl() },
+  })
   if (error) throw error
-  // identities 为空说明邮箱已注册（Supabase 防枚举机制会返回假成功）
-  if (data.user?.identities?.length === 0) {
+  if (!data.session && data.user?.identities?.length === 0) {
     throw new Error('该邮箱已注册，请直接登录或使用魔法链接')
   }
+  if (data.session) {
+    clearAuthCallbackError()
+    applyAuthSession(data.session)
+  }
+  return data
 }
 
 export async function updateEmail(newEmail: string) {
-  const { error } = await supabase.auth.updateUser({ email: newEmail })
+  const { error } = await supabase.auth.updateUser({ email: newEmail }, { emailRedirectTo: authRedirectUrl() })
   if (error) throw error
 }
 
 export async function updatePassword(newPassword: string) {
   const { error } = await supabase.auth.updateUser({ password: newPassword })
   if (error) throw error
+}
+
+/** Route context props may lag behind a synchronous SIGNED_IN event. */
+export async function getCurrentAuth() {
+  await initializeAuth()
+  return useAuthStore.getState()
 }

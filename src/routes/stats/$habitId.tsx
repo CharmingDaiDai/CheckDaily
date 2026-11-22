@@ -1,3 +1,4 @@
+import { getCurrentAuth } from '@/hooks/useAuth'
 import { useMemo, useState, lazy, Suspense } from 'react'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { ArrowLeft, Flame, Trophy, Target, Hash, Trash2, ChevronLeft, ChevronRight, Inbox } from 'lucide-react'
@@ -265,8 +266,8 @@ function HabitStatsPage() {
 
 export const Route = createFileRoute('/stats/$habitId')({
   component: HabitStatsPage,
-  beforeLoad: ({ context }) => {
-    if (context.auth.loading) return
-    if (!context.auth.user) throw redirect({ to: '/login' })
+  beforeLoad: async () => {
+    const auth = await getCurrentAuth()
+    if (!auth.user) throw redirect({ to: '/login' })
   },
 })

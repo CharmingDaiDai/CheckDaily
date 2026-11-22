@@ -1,3 +1,4 @@
+import { getCurrentAuth } from '@/hooks/useAuth'
 import { useState, useMemo } from 'react'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { motion, AnimatePresence } from 'motion/react'
@@ -25,9 +26,9 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export const Route = createFileRoute('/habits')({
   component: HabitsPage,
-  beforeLoad: ({ context }) => {
-    if (context.auth.loading) return
-    if (!context.auth.user) throw redirect({ to: '/login' })
+  beforeLoad: async () => {
+    const auth = await getCurrentAuth()
+    if (!auth.user) throw redirect({ to: '/login' })
   },
 })
 

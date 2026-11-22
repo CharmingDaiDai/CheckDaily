@@ -12,6 +12,8 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true,
+    // lib/auth.ts owns callback processing (implicit, PKCE and token_hash).
+    // A single owner prevents racing or double-consuming one-time codes.
+    detectSessionInUrl: false,
   },
 })

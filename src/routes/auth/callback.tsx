@@ -1,45 +1,58 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { supabase } from '@/lib/supabase'
-import { Flame } from 'lucide-react'
+import { Check, AlertCircle } from 'lucide-react'
+import { initializeAuth, getAuthCallbackError, authErrorMessage } from '@/lib/auth'
+import { useAuthStore } from '@/store/authStore'
+import { Button } from '@/components/ui/button'
 
 function AuthCallback() {
   const navigate = useNavigate()
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    // Supabase handles the token from the URL automatically
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        void navigate({ to: '/', replace: true })
-      } else {
-        // Try to exchange the code
-        const code = new URLSearchParams(window.location.search).get('code')
-        if (code) {
-          supabase.auth.exchangeCodeForSession(code).then(() => {
-            void navigate({ to: '/', replace: true })
-          })
-        } else {
-          void navigate({ to: '/login', replace: true })
+    let active = true
+    void (async () => {
+      try {
+        await initializeAuth()
+        if (!active) return
+        const callbackError = getAuthCallbackError()
+        if (callbackError) {
+          setError(callbackError)
+          return
         }
+        if (!useAuthStore.getState().session) {
+          setError('未获取到登录会话。请重新发送魔法链接，或使用密码登录。')
+          return
+        }
+        await navigate({ to: '/', replace: true })
+      } catch (reason) {
+        if (active) setError(authErrorMessage(reason))
       }
-    })
+    })()
+    return () => { active = false }
   }, [navigate])
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 bg-[radial-gradient(circle_at_50%_10%,rgb(216_111_47/0.12),transparent_34%),linear-gradient(180deg,#fffdf9_0%,#f5f1ea_58%,#eee9df_100%)]">
-      <div className="surface-frame w-full max-w-xs flex flex-col items-center gap-4 px-7 py-6 text-center">
-        <div className="w-14 h-14 rounded-[0.9rem] bg-brand-500 flex items-center justify-center shadow-[0_8px_24px_rgb(185_84_34/0.22)]">
-          <Flame className="w-8 h-8 text-white" strokeWidth={2.5} />
+    <div className="min-h-screen flex items-center justify-center px-6">
+      <div className="surface-frame w-full max-w-sm flex flex-col items-center gap-4 px-7 py-6 text-center">
+        <div className="w-14 h-14 rounded-[0.9rem] bg-brand-600 flex items-center justify-center">
+          {error ? <AlertCircle className="w-8 h-8 text-white" /> : <Check className="w-8 h-8 text-white" />}
         </div>
-        <div className="flex items-center gap-2 text-[var(--color-ink-600)] font-medium">
-          <div className="w-4 h-4 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin" />
-          正在登录…
-        </div>
+        {error ? (
+          <>
+            <h1 className="text-lg font-semibold">未能完成登录</h1>
+            <p role="alert" className="text-sm leading-relaxed text-[var(--color-ink-700)]">{error}</p>
+            <Button onClick={() => void navigate({ to: '/login', replace: true })}>返回登录，重新发送邮件</Button>
+          </>
+        ) : (
+          <div role="status" className="flex items-center gap-2 text-[var(--color-ink-600)]">
+            <div className="w-4 h-4 border-2 border-brand-500/30 border-t-brand-500 rounded-full motion-safe:animate-spin" />
+            正在验证登录会话…
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-export const Route = createFileRoute('/auth/callback')({
-  component: AuthCallback,
-})
+export const Route = createFileRoute('/auth/callback')({ component: AuthCallback })

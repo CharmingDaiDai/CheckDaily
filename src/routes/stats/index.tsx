@@ -1,3 +1,4 @@
+import { getCurrentAuth } from '@/hooks/useAuth'
 import { useState, useMemo, useRef, useEffect, lazy, Suspense } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { motion } from "motion/react";
@@ -701,8 +702,8 @@ function StatsPage() {
 
 export const Route = createFileRoute("/stats/")({
   component: StatsPage,
-  beforeLoad: ({ context }) => {
-    if (context.auth.loading) return;
-    if (!context.auth.user) throw redirect({ to: "/login" });
+  beforeLoad: async () => {
+    const auth = await getCurrentAuth();
+    if (!auth.user) throw redirect({ to: "/login" });
   },
 });

@@ -1,3 +1,4 @@
+import { getCurrentAuth } from '@/hooks/useAuth'
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
@@ -422,8 +423,8 @@ function Dashboard() {
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
-  beforeLoad: ({ context }) => {
-    if (context.auth.loading) return;
-    if (!context.auth.user) throw redirect({ to: "/login" });
+  beforeLoad: async () => {
+    const auth = await getCurrentAuth();
+    if (!auth.user) throw redirect({ to: "/login" });
   },
 });
